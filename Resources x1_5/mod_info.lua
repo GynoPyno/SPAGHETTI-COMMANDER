@@ -1,0 +1,15 @@
+name = "Resources x1.5"
+uid = "d5555575-6944-450b-b647-47deeefffdc8"
+version = 1
+copyright = ""
+description = "Increases resource production. (x1.5)"
+author = "Franck83"
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+requires = {}
+requiresNames = {}
+conflicts = {}
+before = {}
+after = {}

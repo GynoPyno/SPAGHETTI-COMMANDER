@@ -1,0 +1,160 @@
+UnitBlueprint {
+    AI = {
+        TargetBones = {
+            'AttackTarget001',
+            'AttackTarget002',
+            'AttackTarget003',
+            'AttackTarget004',
+        },
+    },
+    Audio = {
+        DeathExplosion = Sound {
+            Bank = 'URLDestroy',
+            Cue = 'URB_Destroy_Lrg_PreDestroy',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+        Destroyed = Sound {
+            Bank = 'URLDestroy',
+            Cue = 'URB_Destroy_Huge',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+        UISelection = Sound {
+            Bank = 'Interface',
+            Cue = 'Cybran_Select_Structure',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+    },
+    BuildIconSortPriority = 150,
+    Categories = {
+        'BUILTBYTIER2FIELD',
+        'BUILTBYTIER3FIELD',
+        'SELECTABLE',
+        'CYBRAN',
+        'STRUCTURE',
+        'WALL',
+        'DRAGBUILD',
+        'BENIGN',
+        'TECH2',
+        'VISIBLETORECON',
+        'RECLAIMABLE',
+        'SORTDEFENSE',
+        'MEDIUMWALL',
+    },
+    Defense = {
+        ArmorType = 'Structure',
+        Health = 20000,
+        MaxHealth = 20000,
+    },
+    Description = '<LOC sbui5210>Heavy Wall Segment',
+    Display = {
+        AdjacencyConnection = 'MEDIUMWALL',
+        AdjacencyBeamConnections = true,
+        AdjacencyConnectionInfo = {
+            Bones = {
+                North = {
+                    visibility = 'hide',
+                    bonetype = 'North',
+                    conflict = nil,
+                },
+                South = {
+                    visibility = 'hide',
+                    bonetype = 'South',
+                    conflict = nil,
+                },
+                East = {
+                    visibility = 'hide',
+                    bonetype = 'East',
+                    conflict = nil,
+                },
+                West = {
+                    visibility = 'hide',
+                    bonetype = 'West',
+                    conflict = nil,
+                },
+                N1 = {
+                    visibility = 'show',
+                    bonetype = 'Beam',
+                    conflict = nil,
+                    beamtype = '/effects/emitters/microwave_laser_beam_02_emit.bp',
+                },
+                N2 = {
+                    visibility = 'show',
+                    bonetype = 'Beam',
+                    conflict = nil,
+                    beamtype = '/effects/emitters/microwave_laser_beam_02_emit.bp',
+                },
+            },
+        },
+        Mesh = {
+            IconFadeInZoom = 130,
+            LODs = {
+                {LODCutoff = 250, ShaderName = 'Insect'},
+            },
+        },
+        UniformScale = 0.033333333333333333,
+    },
+    Economy = {
+        BuildCostEnergy = 50,
+        BuildCostMass = 10,
+        BuildTime = 10,
+        RebuildBonusIds = {'srb5210'},
+    },
+    Footprint = {
+        SizeX = 2,
+        SizeZ = 2,
+    },
+    General = {
+        CapCost = 0.1,
+        Category = 'Defense',
+        Classification = 'RULEUC_MiscSupport',
+        FactionName = 'Cybran',
+        SelectionPriority = 5,
+        TechLevel = 'RULEUTL_Basic',
+        UnitName = '<LOC srb5210_name>Bulkhead',
+        UnitWeight = 1,
+    },
+    Intel = {
+        VisionRadius = 0,
+    },
+    Interface = {
+        HelpText = '<LOC sbui5210>Heavy Wall Segment',
+    },
+    LifeBarHeight = 0.075,
+    LifeBarOffset = 0,
+    LifeBarSize = 0.075,
+    Physics = {
+        AltitudeToTerrain = {
+            'North',
+            'South',
+            'East',
+            'West',
+        },
+        MaxGroundVariation = 2,
+        FlattenSkirt = false,
+        MeshExtentsX = 3.2,
+        MeshExtentsY = 2.2,
+        MeshExtentsZ = 3.2,
+        MotionType = 'RULEUMT_None',
+        SkirtSizeX = 0,
+        SkirtSizeZ = 0,
+    },
+    SelectionSizeX = 0.8,
+    SelectionSizeZ = 0.8,
+    SelectionThickness = 0.8,
+    SizeX = 2,
+    SizeY = 2,
+    SizeZ = 2,
+    StrategicIconName = 'icon_structure_wall',
+    StrategicIconSortPriority = 208,
+    Wreckage = {
+        Blueprint = '/props/DefaultWreckage/DefaultWreckage_prop.bp',
+        EnergyMult = 0,
+        HealthMult = 0.9,
+        MassMult = 0.9,
+        ReclaimTimeMultiplier = 1,
+        WreckageLayers = {
+            Land = true,
+            Seabed = true,
+        },
+    },
+}

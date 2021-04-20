@@ -1,0 +1,29 @@
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "xsb4301", # Heavy Shield Generator
+    Categories = {
+        'SHOWQUEUE',
+    },
+    Display = {
+        Abilities = {
+            '<LOC ability_shielddome>Shield Dome',
+	          '<LOC ability_upgradable>Upgradeable',
+        },
+    },
+    Economy = {
+        BuildRate = 12,
+ 	      BuildableCategory = {
+            'FSB4401',
+        },
+    },
+    General = {
+      CommandCaps = {
+          RULEUCC_Pause = true,
+          RULEUCC_Stop = true,
+      },
+      UpgradesFrom = 'xsb4202',
+      UpgradesFromBase = 'xsb4202',
+      UpgradesTo = 'FSB4401',
+    },
+
+}

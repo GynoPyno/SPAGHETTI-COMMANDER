@@ -1,0 +1,191 @@
+UnitBlueprint {
+    AI = {
+        TargetBones = {
+            'AttackTarget001',
+            'AttackTarget002',
+            'AttackTarget003',
+            'AttackTarget004',
+        },
+    },
+    Audio = {
+        DeathExplosion = Sound {
+            Bank = 'URLDestroy',
+            Cue = 'URB_Destroy_Lrg_PreDestroy',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+        Destroyed = Sound {
+            Bank = 'URLDestroy',
+            Cue = 'URB_Destroy_Huge',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+        UISelection = Sound {
+            Bank = 'Interface',
+            Cue = 'Cybran_Select_Structure',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+    },
+    BuildIconSortPriority = 151,
+    Categories = {
+        'BUILTBYTIER3FIELD',
+        'SELECTABLE',
+        'UEF',
+        'STRUCTURE',
+        'DRAGBUILD',
+        'SIZE4',
+        'TECH3',
+        'BENIGN',
+        'VISIBLETORECON',
+        'RECLAIMABLE',
+        'SORTDEFENSE',
+        'HEAVYWALL',
+        'HEAVYWALLGATE',
+        'HEAVYGATEOPEN',
+        'WALL',
+    },
+    Defense = {
+        ArmorType = 'Structure',
+        Health = 40000,
+        MaxHealth = 40000,
+    },
+    Description = '<LOC srb5311_desc>Armored Gate Segment',
+    Display = {
+        AdjacencyConnection = 'HEAVYWALL',
+        AdjacencyConnectionInfo = {
+            Bones = {
+                North = {
+                    visibility = 'hide',
+                    bonetype = 'North',
+                    conflict = nil,
+                },
+                South = {
+                    visibility = 'hide',
+                    bonetype = 'South',
+                    conflict = nil,
+                },
+                East = {
+                    visibility = 'hide',
+                    bonetype = 'East',
+                    conflict = nil,
+                },
+                West = {
+                    visibility = 'hide',
+                    bonetype = 'West',
+                    conflict = nil,
+                },
+                Tower = {
+                    visibility = 'show',
+                    bonetype = 'Tower',
+                    conflict = nil,
+                },
+            },
+        },
+        GateEffects = {
+            GateSliderBone = 'Slider',
+        },
+        Mesh = {
+            IconFadeInZoom = 130,
+            LODs = {
+                {
+                    LODCutoff = 250,
+                    ShaderName = 'Unit',
+                    AlbedoName = '/mods/BrewLAN/units/seb5310/seb5310_albedo.dds',
+                    NormalsName = '/units/XEC8001/XEC8001_normalsts.dds',
+                    SpecularName = '/mods/BrewLAN/units/seb5310/seb5310_specteam.dds',
+                },
+                {
+                    LODCutoff = 500,
+                    ShaderName = 'Unit',
+                    AlbedoName = '/mods/BrewLAN/units/seb5310/seb5310_albedo.dds',
+                    SpecularName = '/mods/BrewLAN/units/seb5310/seb5310_specteam.dds',
+                },
+            },
+        },
+        Tarmacs = {
+            {
+                Albedo = '/mods/BrewLAN/env/Common/decals/Tarmacs/Tar7x_01_albedo.dds',
+                DeathLifetime = 300,
+                FadeOut = 150,
+                Length = 6.4,
+                Normal = '/mods/BrewLAN/env/Common/decals/Tarmacs/Tar7x_01_normals.dds',
+                Orientations = {0, 90, 180, 270},
+                RemoveWhenDead = false,
+                Width = 6.4,
+            },
+        },
+        UniformScale = 0.05,
+    },
+    Economy = {
+        BuildCostEnergy = 750,
+        BuildCostMass = 250,
+        BuildTime = 50,
+        RebuildBonusIds = {'seb5311'},
+    },
+    Footprint = {
+        SizeX = 3,
+        SizeZ = 3,
+    },
+    General = {
+        CapCost = 0.15,
+        Category = 'Defense',
+        Classification = 'RULEUC_MiscSupport',
+        FactionName = 'UEF',
+        SelectionPriority = 5,
+        TechLevel = 'RULEUTL_Secret',
+        OrderOverrides = {
+            RULEUTC_WeaponToggle = {
+                bitmapId = 'dive',
+                helpText = 'toggle_gate',
+            },
+        },
+        ToggleCaps = {
+            RULEUTC_WeaponToggle = true,
+        },
+        UnitName = '<LOC seb5311_name>Harrow',
+        UnitWeight = 1,
+    },
+    Intel = {
+        OpenVisionRadius = 0,
+        VisionRadius = 5,
+    },
+    Interface = {
+        HelpText = '<LOC srb5311_desc>Armored Gate Segment',
+    },
+    LifeBarHeight = 0.075,
+    LifeBarOffset = 0,
+    LifeBarSize = 0.075,
+    Physics = {
+        AltitudeToTerrain = {
+            'North',
+            'South',
+            'East',
+            'West',
+        },
+        MaxGroundVariation = 2,
+        FlattenSkirt = false,
+        MeshExtentsX = 3.2,
+        MeshExtentsY = 2.2,
+        MeshExtentsZ = 3.2,
+        MotionType = 'RULEUMT_None',
+        SkirtSizeX = 3,
+        SkirtSizeZ = 3,
+    },
+    SelectionSizeX = 1.8,
+    SelectionSizeZ = 1.8,
+    SelectionThickness = 0.31,
+    SizeX = 3,
+    SizeY = 2.3,
+    SizeZ = 3,
+    StrategicIconName = 'icon_structure_generic',
+    StrategicIconSortPriority = 207,
+    Wreckage = {
+        Blueprint = '/props/DefaultWreckage/DefaultWreckage_prop.bp',
+        EnergyMult = 0,
+        HealthMult = 0.9,
+        MassMult = 0.9,
+        ReclaimTimeMultiplier = 1,
+        WreckageLayers = {
+            Land = true,
+            Seabed = true,
+        },
+    },
+}

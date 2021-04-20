@@ -1,0 +1,17 @@
+MeshBlueprint {
+    IconFadeInZoom = 130,
+    LODs = {
+        {
+            MeshName = '/mods/BattlePack/units/WAB2303/WAB2303_lod0.scm',
+            AlbedoName = '/mods/BattlePack/units/WAB2303/WAB2303_albedo.dds',
+            NormalsName = '/mods/BattlePack/units/WAB2303/WAB2303_normalsTS.dds',
+            SpecularName = '/mods/BattlePack/units/WAB2303/WAB2303_specteam.dds',
+            LookupName = '/effects/entities/PhaseShield/PhaseShieldLookup.dds',
+
+            LODCutoff = 195,
+            
+            Scrolling = true,
+            ShaderName = 'PhaseShield',
+        },
+    },
+}

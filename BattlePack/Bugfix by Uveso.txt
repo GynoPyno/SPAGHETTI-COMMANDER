@@ -1,0 +1,219 @@
+*************************************************************************************************************************************
+V4 (27.May.2020)
+
+Fixed AI support for all units
+Added icon support for non FAF game version
+Removed unused directories
+Added modfiles validator
+Added missing SBOZhanaseeBomb01 projectile
+Deleted unused Icon "wrb0301_icon.dds"
+Deleted unused Icon "wrb0203_icon.dds"
+Deleted unused Icon "web0203_icon.dds"
+Deleted unused Icon "wab0302_icon.dds"
+Deleted unused Icon "wab0203_icon.dds"
+Deleted unused Icon "web0302_icon.dds"
+Deleted unused Icon "wsa0305_icon.dds"
+Deleted unused Icon "uel0416_icon.dds"
+Deleted unused Icon "wab0201_icon.dds"
+Deleted unused Icon "wrb0303_icon.dds"
+Deleted unused Icon "wab0301_icon.dds"
+Deleted unused Icon "web0301_icon.dds"
+Deleted unused Icon "wab0202_icon.dds"
+Deleted unused Icon "web0303_icon.dds"
+Deleted unused Icon "wes0302_icon.dds"
+Deleted unused Icon "url0216_icon.dds"
+Deleted unused Icon "wel0409_icon.dds"
+Deleted unused Icon "wsb0303_icon.dds"
+Deleted unused Icon "wsb0302_icon.dds"
+Deleted unused Icon "wsb0203_icon.dds"
+Deleted unused Icon "wsb0202_icon.dds"
+Deleted unused Icon "wsb0201_icon.dds"
+Deleted unused Icon "wsb0301_icon.dds"
+Deleted unused Icon "wrb0202_icon.dds"
+Deleted unused Icon "web0202_icon.dds"
+Deleted unused Icon "wab0303_icon.dds"
+Deleted unused Icon "wrb0302_icon.dds"
+Deleted unused Icon "wel03021_icon.dds"
+Unit wel0001 (Armoured Command Unit) Changed weapon.ProjectileId to "/mods/battlepack/projectiles/ucannon01/ucannon01_proj.bp" for Weapon: Zephyr Anti Matter Cannon
+Unit wel0001 (Armoured Command Unit) Changed weapon.ProjectileId to "/mods/battlepack/projectiles/uantiairmissile01/uantiairmissile01_proj.bp" for Weapon: Flayer SAM Launcher
+Unit wal0001 (Armored Command Unit) Changed weapon.ProjectileId to "/mods/battlepack/projectiles/ichroncannon03/ichroncannon03_proj.bp" for Weapon: Quantum Disruptor
+Unit wsl0302 (Siege Bot) Changed weapon.ProjectileId to "/Mods/BattlePack/projectiles/SBOZhanaseeBomb01/SBOZhanaseeBomb01_proj.bp" for Weapon: Heavy Zhanasee Cannon
+Unit wrs0303 (Battleship) Changed weapon.ProjectileId to "/mods/battlepack/projectiles/cantiair02/cantiair02_proj.bp" for Weapon: Nanite Missile System
+Unit web0404 (Anti Navy MKII Installation) Changed Display.Mesh.IconFadeInZoom from 150 to 130
+Unit wel0001 (Armoured Command Unit) Changed AnimationWalkName in LOD[-1] from "/units/WEL0001/" to "/mods/battlepack/units/wel0001/WEL0001_AWalk.sca"
+Unit wal0001 (Armored Command Unit) Changed AnimationWalkName in LOD[-1] from "/units/WAL0001/" to "/mods/battlepack/units/wal0001/WAL0001_Awalk.sca"
+Unit wsb1303 (Resource Manufacturing Facility) Changed AnimationDeathName in LOD[-1] from "/units/WSB1303/" to "/mods/battlepack/units/wsb1303/WSB1303_ADeath1.sca"
+Unit web0401 (Experimental Intelligence Center) Changed Display.Mesh.IconFadeInZoom = 200 to 130
+Unit wal4404 (Experimental Siege Bot) Changed Display.Mesh.IconFadeInZoom = 230 to 130
+Unit wsl0309 (Mobile Anti-Air Tank) Changed AnimationDeathName in LOD[-1] from "/units/WSL0309/" to "/mods/battlepack/units/wsl0309/WSL0309_adeath.sca"
+Unit web0204 (Engineering Station) Changed AnimationOpenName in LOD[-1] from "/units/WEB0204/" to "/mods/battlepack/units/web0204/WEB0204_aopen.sca"
+Unit wel4404 (Experimental Heavy Mech) Changed Display.Mesh.IconFadeInZoom = 200 to 130
+Unit wel0001 (Armoured Command Unit) Changed MeshName in LOD[1] from "/units/WEL0001/" to "/mods/battlepack/units/wel0001/WEL0001_lod1.scm"
+Unit wrb1302 (Advanced Hydrocarbon Power Plant) Changed AlbedoName in LOD[1] from "/mods/battlepack/units/wrb1302/" to "/mods/battlepack/units/wrb1302/wrb1302_lod1_Albedo.dds"
+Unit wrb1302 (Advanced Hydrocarbon Power Plant) Changed SpecularName in LOD[1] from "/mods/battlepack/units/wrb1302/" to "/mods/battlepack/units/wrb1302/wrb1302_lod1_SpecTeam.dds"
+Unit wrb4302 (Heavy Point Defense) Changed AlbedoName in LOD[1] from "/mods/battlepack/units/wrb4302/" to "/mods/battlepack/units/wrb4302/wrb4302_lod1_Albedo.dds"
+Unit wrb4302 (Heavy Point Defense) Changed SpecularName in LOD[1] from "/mods/battlepack/units/wrb4302/" to "/mods/battlepack/units/wrb4302/wrb4302_lod1_SpecTeam.dds"
+Unit wel0416 Name: Dragonite (Ultimate Assault Bot) resolving error in audio cue 'NewBasilisk_Roar' in bank 'XEL_Weapons'
+Unit wel0416 Name: Dragonite (Ultimate Assault Bot) resolving error in audio cue 'Revamp_StarAdder_Footstep' in bank 'XEL_Weapons'
+Unit wel0416 Name: Dragonite (Ultimate Assault Bot) resolving error in audio cue 'NewBasilisk_StopStep' in bank 'XEL_Weapons'
+Unit wel0416 Weapon: Gauss Cannon resolving error in audio cue 'UEFRevampEXP_MiniCannon_Fire' in bank 'XEL_Weapons'
+Unit wra0303 Name: Regegade MK II (Heavy Gunship) resolving error in audio cue 'URA_Destroy_Med' in bank 'URADestroy'
+Unit web0401 Name: Sedokin (Experimental Intelligence Center) resolving error in audio cue 'UES0305_Destroy' in bank 'UESDestroy'
+Unit web0401 (Experimental Intelligence Center) Added (General.UnitName = "Sedokin",)
+Unit wab1302 (Advanced Hydrocarbon Power Plant) Added (General.UnitName = "HCB4",)
+Unit wsb1302 (Advanced Hydrocarbon Power Plant) Added (General.UnitName = "EQ5",)
+Unit wal0401 (Experimental Assault Bot) Changed General.TechLevel from "RULEUTL_Secret" to "RULEUTL_Experimental"
+Unit wal0401 (Experimental Assault Bot) Added VeteranMassMult ( VeteranMassMult = 0.5, )
+Unit wel0416 (Ultimate Assault Bot) Changed General.TechLevel from "RULEUTL_Secret" to "RULEUTL_Experimental"
+Unit wel0416 (Ultimate Assault Bot) Added VeteranMassMult ( VeteranMassMult = 0.5, )
+Unit wel0416 (Ultimate Assault Bot) Added StandUpright = true,
+Unit web4301 (Advanced Tactical Missile Defense) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Secret"
+Unit web4301 (Advanced Tactical Missile Defense) Changed General.SelectionPriority from "1" to 5
+Unit wsa0201 (Combat Fighter) Changed General.TechLevel from "RULEUTL_Basic" to "RULEUTL_Advanced"
+Unit wsa0201 (Combat Fighter) Changed damage value in weapon (DeathImpact) from 25 to 44
+Unit wsa0201 (Combat Fighter) Changed damageradius in weapon (DeathImpact) from 1.000 to 0.675
+Unit web0404 (Anti Navy MKII Installation) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Secret"
+Unit wsl0403 (Experimental Tank) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Experimental"
+Unit wsl0403 (Experimental Tank) Added VeteranMassMult ( VeteranMassMult = 0.5, )
+Unit wrb2302 (Heavy Artillery Installation) Changed General.SelectionPriority from "1" to 5
+Unit wrb4207 (Shield Generator) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Secret"
+Unit wrb4207 (Shield Generator) Changed General.SelectionPriority from "1" to 5
+Unit wel0309 (Heavy Anti-Air Tank) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Secret"
+Unit wea0305 (Strategic Missile Bomber) Changed damage value in weapon (DeathImpact) from 500 to 467
+Unit wra0202 (Combat Interceptor) Changed General.TechLevel from "RULEUTL_Basic" to "RULEUTL_Advanced"
+Unit wra0202 (Combat Interceptor) Changed damage value in weapon (DeathImpact) from 35 to 44
+Unit wra0202 (Combat Interceptor) Changed damageradius in weapon (DeathImpact) from 1.000 to 0.875
+Unit wsb4205 (Restoration Field Generator) Changed General.SelectionPriority from "1" to 5
+Unit wra0303 (Heavy Gunship) Changed damage value in weapon (DeathImpact) from 100 to 373
+Unit wra0303 (Heavy Gunship) Changed damageradius in weapon (DeathImpact) from 1.000 to 1.100
+Unit waa0305 (Attack Bomber) Changed General.TechLevel from "RULEUTL_Basic" to "RULEUTL_Secret"
+Unit waa0305 (Attack Bomber) Changed damage value in weapon (DeathImpact) from 500 to 467
+Unit waa0305 (Attack Bomber) Changed damageradius in weapon (DeathImpact) from 1.000 to 1.750
+Unit wsb1303 (Resource Manufacturing Facility) Changed General.SelectionPriority from "1" to 5
+Unit wrb1303 (Resource Manufacturing Center) Changed General.SelectionPriority from "1" to 5
+Unit wrl0209 (Combat Engineer) Changed General.TechLevel from "RULEUTL_Basic" to "RULEUTL_Advanced"
+Unit wrl0209 (Combat Engineer) Changed icon to  (General.Icon = 'amph',)
+Unit wrl0209 (Combat Engineer) Changed General.SelectionPriority from "1" to 3
+Unit wab2303 (Missile Tower) Changed General.SelectionPriority from "1" to 5
+Unit wsa0306 (Heavy Air Transport) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Secret"
+Unit wsa0306 (Heavy Air Transport) Changed General.SelectionPriority from "1" to 2
+Unit wsa0306 (Heavy Air Transport) Changed damage value in weapon (DeathImpact) from 25 to 311
+Unit wsa0306 (Heavy Air Transport) Changed damageradius in weapon (DeathImpact) from 1.000 to 4.300
+Unit wsb4404 (Experimental Anti-Air Defense) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Experimental"
+Unit wsb4404 (Experimental Anti-Air Defense) Changed General.SelectionPriority from "1" to 5
+Unit web0401 (Experimental Intelligence Center) Changed General.TechLevel from "RULEUTL_Basic" to "RULEUTL_Experimental"
+Unit web0401 (Experimental Intelligence Center) Added (General.Icon = 'land',)
+Unit web0401 (Experimental Intelligence Center) Changed General.SelectionPriority from "1" to 5
+Unit wsb1401 (Experimental Shield Generator) Changed General.TechLevel from "RULEUTL_Secret" to "RULEUTL_Experimental"
+Unit wsb1401 (Experimental Shield Generator) Changed General.SelectionPriority from "1" to 5
+Unit wsl0202 (Heavy Tank) Changed General.TechLevel from "RULEUTL_Secret" to "RULEUTL_Advanced"
+Unit wsl0404 (Experimental Tank) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Experimental"
+Unit wsl0404 (Experimental Tank) Added VeteranMassMult ( VeteranMassMult = 0.5, )
+Unit wab1302 (Advanced Hydrocarbon Power Plant) Changed General.TechLevel from "RULEUTL_Basic" to "RULEUTL_Secret"
+Unit wab1302 (Advanced Hydrocarbon Power Plant) Changed General.SelectionPriority from "1" to 5
+Unit wrl0207 (Mobile Shield Generator) Added StandUpright = true,
+Unit web1302 (Advanced Hydrocarbon Power Plant) Changed General.TechLevel from "RULEUTL_Basic" to "RULEUTL_Secret"
+Unit web1302 (Advanced Hydrocarbon Power Plant) Changed icon to  (General.Icon = 'amph',)
+Unit wrs0303 (Battleship) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Secret"
+Unit wrb0304 (Engineering Station) Changed General.TechLevel from "RULEUTL_Basic" to "RULEUTL_Secret"
+Unit wal4404 (Experimental Siege Bot) Changed General.TechLevel from "RULEUTL_Secret" to "RULEUTL_Experimental"
+Unit wal4404 (Experimental Siege Bot) Added VeteranMassMult ( VeteranMassMult = 0.5, )
+Unit wal4404 (Experimental Siege Bot) Added StandUpright = true,
+Unit wsl0309 (Mobile Anti-Air Tank) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Secret"
+Unit web0204 (Engineering Station) Changed General.SelectionPriority from "1" to 5
+Unit wel4404 (Experimental Heavy Mech) Changed General.TechLevel from "RULEUTL_Secret" to "RULEUTL_Experimental"
+Unit wel4404 (Experimental Heavy Mech) Added VeteranMassMult ( VeteranMassMult = 0.5, )
+Unit wel4404 (Experimental Heavy Mech) Added StandUpright = true,
+Unit wrb1302 (Advanced Hydrocarbon Power Plant) Changed General.TechLevel from "RULEUTL_Basic" to "RULEUTL_Secret"
+Unit wrb1302 (Advanced Hydrocarbon Power Plant) Changed General.SelectionPriority from "1" to 5
+Unit wrl0309 (Mobile Anti-Air Tank) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Secret"
+Unit wrl0303 (Prototype Medium Attack Bot) Changed General.TechLevel from "RULEUTL_Basic" to "RULEUTL_Secret"
+Unit wsb2308 (Advanced Torpedo Station) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Secret"
+Unit was0332 (Battleship) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Secret"
+Unit wrs0401 (Experimental Battleship) Changed General.TechLevel from "RULEUTL_Secret" to "RULEUTL_Experimental"
+Unit wrs0401 (Experimental Battleship) Added VeteranMassMult ( VeteranMassMult = 0.5, )
+Unit wel0305 (Prototype Armored Siege Bot) Added (Weapon.DisplayName = "Death Weapon",) to weapon (DeathWeapon)
+Unit wal0305 (Heavy Assault Tank) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Secret"
+Unit wel0304 (Heavy Assault Tank) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Secret"
+Unit wal0309 (Mobile AA Tank) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Secret"
+Unit wal0309 (Mobile AA Tank) Changed icon to  (General.Icon = 'amph',)
+Unit wsb1444 (Experimental Resource Generator) Changed General.TechLevel from "RULEUTL_Basic" to "RULEUTL_Experimental"
+Unit wsb1444 (Experimental Resource Generator) Changed icon to  (General.Icon = 'amph',)
+Unit wsb1444 (Experimental Resource Generator) Changed DamageType for weapon (Death Weapon) from Normal to 'Nuke'.
+Unit wra0305 (Advanced Multipurpose Fighter) Changed build Category 
+Unit wra0305 (Advanced Multipurpose Fighter) Changed damage value in weapon (DeathImpact) from 300 to 367
+Unit wra0305 (Advanced Multipurpose Fighter) Changed damageradius in weapon (DeathImpact) from 2.000 to 1.375
+Unit wsl0205 (Defender Bot) Changed General.TechLevel from "RULEUTL_Basic" to "RULEUTL_Advanced"
+Unit wes0401 (Experimental Battlecruiser) Changed General.TechLevel from "RULEUTL_Secret" to "RULEUTL_Experimental"
+Unit wes0401 (Experimental Battlecruiser) Added VeteranMassMult ( VeteranMassMult = 0.5, )
+Unit wab1303 (Resource Manufacturing Facility) Changed General.SelectionPriority from "1" to 5
+Unit web1303 (Resource Manufacturing Facility) Changed General.SelectionPriority from "1" to 5
+Unit wrl0301 (Heavy Stealth Tank) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Secret"
+Unit wrl2466 (Experimental Fortress Megabot) Changed General.TechLevel from "RULEUTL_Secret" to "RULEUTL_Experimental"
+Unit wrl2466 (Experimental Fortress Megabot) Added VeteranMassMult ( VeteranMassMult = 0.5, )
+Unit wrl2466 (Experimental Fortress Megabot) Added StandUpright = true,
+Unit wra0401 (Experimental Gunship) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Experimental"
+Unit wra0401 (Experimental Gunship) Changed damage value in weapon (DeathImpact) from 5000 to 8889
+Unit wra0401 (Experimental Gunship) Changed damageradius in weapon (DeathImpact) from 4.000 to 5.250
+Unit wra0401 (Experimental Gunship) Added VeteranMassMult ( VeteranMassMult = 0.5, )
+Unit wrl0404 (Experimental Prototype Spiderbot) Changed General.TechLevel from "RULEUTL_Secret" to "RULEUTL_Experimental"
+Unit wrl0404 (Experimental Prototype Spiderbot) Added VeteranMassMult ( VeteranMassMult = 0.5, )
+Unit wrl0404 (Experimental Prototype Spiderbot) Added StandUpright = true,
+Unit wrl1466 (Experimental Fortress Megabot) Changed General.TechLevel from "RULEUTL_Secret" to "RULEUTL_Experimental"
+Unit wrl1466 (Experimental Fortress Megabot) Added VeteranMassMult ( VeteranMassMult = 0.5, )
+Unit wrl1466 (Experimental Fortress Megabot) Added StandUpright = true,
+Unit wsb1302 (Advanced Hydrocarbon Power Plant) Changed General.TechLevel from "RULEUTL_Basic" to "RULEUTL_Secret"
+Unit wsb1302 (Advanced Hydrocarbon Power Plant) Changed General.SelectionPriority from "1" to 5
+Unit wrb4302 (Heavy Point Defense) Changed General.TechLevel from "RULEUTL_Advanced" to "RULEUTL_Secret"
+Unit wrb4302 (Heavy Point Defense) Changed General.SelectionPriority from "1" to 5
+Unit wel0416 (Ultimate Assault Bot) Fixed Display.Abilities.
+Unit wsa0201 (Combat Fighter) Fixed Display.Abilities.
+Unit web0404 (Anti Navy MKII Installation) Fixed Display.Abilities.
+Unit wel0309 (Heavy Anti-Air Tank) Fixed Display.Abilities.
+Unit wea0305 (Strategic Missile Bomber) Fixed Display.Abilities.
+Unit wsb4205 (Restoration Field Generator) Fixed Display.Abilities.
+Unit wsb1303 (Resource Manufacturing Facility) Fixed Display.Abilities.
+Unit wrb1303 (Resource Manufacturing Center) Fixed Display.Abilities.
+Unit wrl0209 (Combat Engineer) Fixed Display.Abilities.
+Unit wrl0402 (Experimental Assault Vehicle) Fixed Display.Abilities.
+Unit wel0401 (Experimental Assault Tank) Fixed Display.Abilities.
+Unit wsl0202 (Heavy Tank) Fixed Display.Abilities.
+Unit wes0303 (Advanced Battleship) Fixed Display.Abilities.
+Unit wsl0404 (Experimental Tank) Fixed Display.Abilities.
+Unit web1302 (Advanced Hydrocarbon Power Plant) Fixed Display.Abilities.
+Unit wrs0303 (Battleship) Fixed Display.Abilities.
+Unit wal4404 (Experimental Siege Bot) Fixed Display.Abilities.
+Unit wel4404 (Experimental Heavy Mech) Fixed Display.Abilities.
+Unit wrl0303 (Prototype Medium Attack Bot) Fixed Display.Abilities.
+Unit wrl0305 (Sniper Bot) Fixed Display.Abilities.
+Unit wsb2308 (Advanced Torpedo Station) Fixed Display.Abilities.
+Unit was0332 (Battleship) Fixed Display.Abilities.
+Unit wel0305 (Prototype Armored Siege Bot) Fixed Display.Abilities.
+Unit wss0401 (Heavy Battlecruiser) Fixed Display.Abilities.
+Unit wrl0306 (Heavy Siege Assault Bot) Fixed Display.Abilities.
+Unit wsb1444 (Experimental Resource Generator) Fixed Display.Abilities.
+Unit wra0305 (Advanced Multipurpose Fighter) Fixed Display.Abilities.
+Unit wsl0205 (Defender Bot) Fixed Display.Abilities.
+Unit wab1303 (Resource Manufacturing Facility) Fixed Display.Abilities.
+Unit web1303 (Resource Manufacturing Facility) Fixed Display.Abilities.
+Unit wrl0301 (Heavy Stealth Tank) Fixed Display.Abilities.
+Unit wrl2466 (Experimental Fortress Megabot) Fixed Display.Abilities.
+Unit wrl1466 (Experimental Fortress Megabot) Fixed Display.Abilities.
+Unit wrb1303 (Resource Manufacturing Facility) Fixed filepath for ProductionEffects inside script file
+Unit wsb1303 (Resource Manufacturing Facility) Fixed filepath for ProductionEffects inside script file
+Unit wab1303 (Resource Manufacturing Facility) Fixed filepath for ProductionEffects inside script file
+Unit web1303 (Resource Manufacturing Facility) Fixed filepath for ProductionEffects inside script file
+Unit wrb1303 (Resource Manufacturing Facility) Fixed Blueprint Categories, BuildIconSortPriority
+Unit wsb1303 (Resource Manufacturing Facility) Fixed Blueprint Categories, BuildIconSortPriority
+Unit wab1303 (Resource Manufacturing Facility) Fixed Blueprint Categories, BuildIconSortPriority
+Unit web1303 (Resource Manufacturing Facility) Fixed Blueprint Categories, BuildIconSortPriority
+Unit wsb1444 (Experimental Resource Generator) Fixed Deathweapon, BuildIconSortPriority
+Unit wal4404 (Experimental Siege Bot) Fixed DeathWeapon
+Unit web0404 (Anti Navy MKII Installation)  Fixed DeathWeapon
+Unit wrl2466 (Experimental Fortress Megabot) removed not existing LOD[0] entry
+Unit wrl1466 (Experimental Fortress Megabot) removed not existing LOD[0] entry
+Unit wab2303 (Missile Tower) removed not existing LOD[0] entry
+Unit wel4404 (Experimental Heavy Mech) fixed filepath for StarAdderFootPrint_albedo.dds
+Unit wrl0404 (Experimental Prototype Spiderbot) Fixed missing ramp_red_02.dds
+Unit wrl1409 (Experimental Assault Vehicle) Fixed invalid bone name "WEL01409".
+Unit wsb1444 (Experimental Resource Generator) Fixed Deathweapon DamageType

@@ -1,0 +1,68 @@
+ProjectileBlueprint {
+    Audio = {
+        ExistLoop = Sound {
+            Bank = 'UELWeapon',
+            Cue = 'UEF_Nuke_Flight',
+            LodCutoff = 'DefaultLodCutoff',
+        },
+        ImpactTerrain = Sound {
+            Bank = 'MarlosSoundsUEF',
+            Cue = 'big_fuel',
+            LodCutoff = 'Weapon_LodCutoff',
+        },
+        ImpactWater = Sound {
+            Bank = 'MarlosSoundsUEF',
+            Cue = 'big_fuel',
+            LodCutoff = 'Weapon_LodCutoff',
+        },
+        NukeExplosion = Sound {
+            Bank = 'MarlosSoundsUEF',
+            Cue = 'big_fuel',
+            LodCutoff = 'Weapon_LodCutoff',
+        },
+    },
+    Categories = {
+        'UEF',
+        'PROJECTILE',
+        'INDIRECTFIRE',
+        'STRATEGIC',
+    },
+    Defense = {
+        Health = 1000000,
+        MaxHealth = 1000000,
+    },
+    Display = {
+        CameraFollowTimeout = 2,
+        CameraFollowsProjectile = true,
+        Mesh = {
+            LODs = {
+                {
+                    ShaderName = 'TMeshGlow',
+                },
+            },
+        },
+        StrategicIconSize = 3,
+        UniformScale = 0.015,
+    },
+    General = {
+        Category = 'Bomb',
+        EntityCategory = {
+            'UEF',
+            'PROJECTILE',
+            'INDIRECTFIRE',
+            'STRATEGIC',
+        },
+        Faction = 'UEF',
+        Weapon = 'Small Yield Nuclear Bomb',
+    },
+    Interface = {
+        HelpText = 0,
+    },
+    Physics = {
+        DestroyOnWater = true,
+        RealisticOrdinance = true,
+        TrackTarget = false,
+        TurnRate = 360,
+        VelocityAlign = true,
+    },
+}

@@ -1,0 +1,74 @@
+ProjectileBlueprint {
+    Audio = {
+        ImpactTerrain = Sound {
+            Bank = 'MarlosSoundsUEF',
+            Cue = 'exp_mega',
+            LodCutoff = 'Weapon_LodCutoff',
+        },
+        ImpactWater = Sound {
+            Bank = 'MarlosSoundsUEF',
+            Cue = 'exp_mega',
+            LodCutoff = 'Weapon_LodCutoff',
+        },
+        NukeExplosion = Sound {
+            Bank = 'MarlosSoundsUEF',
+            Cue = 'exp_mega',
+            LodCutoff = 'Weapon_LodCutoff',
+        },
+    },
+    Categories = {
+        'UEF',
+        'PROJECTILE',
+        'INDIRECTFIRE',
+        'TACTICAL',
+        'MISSILE',
+        'NOSPLASHDAMAGE',
+    },
+    Defense = {
+        Health = 4,
+        MaxHealth = 4,
+    },
+    Display = {
+        CameraFollowTimeout = 2,
+        CameraFollowsProjectile = true,
+        Mesh = {
+            LODs = {
+                {
+                    AlbedoName = '/Mods/#Marlos mods compilation/projectiles/TIFMissileNukeMK/TIFMissileNukeMK_albedo.dds',
+                    MeshName = '/Mods/#Marlos mods compilation/projectiles/TIFMissileNukeMK/TIFMissileNukeMK_lod0.scm',
+                    ShaderName = 'TMeshAlpha',
+                },
+            },
+        },
+        StrategicIconSize = 3,
+        UniformScale = 0.10,
+    },
+    Economy = {
+        BuildCostEnergy = 12800,
+        BuildCostMass = 2780,
+        BuildTime = 10000,
+    },
+    General = {
+        Category = 'Missile',
+        Faction = 'UEF',
+    },
+    Interface = {
+        HelpText = 0,
+    },
+    Physics = {
+        Acceleration = 3,
+        CollideEntity = false,
+        CollideSurface = true,
+        DestroyOnWater = false,
+        InitialSpeed = 3,
+        LifeTime = 40,
+        MaxSpeed = 12,
+        RotationalVelocity = 0,
+        RotationalVelocityRange = 0,
+        TrackTarget = true,
+        TrackTargetGround = true,
+        TurnRate = 0,
+        UseGravity = false,
+        VelocityAlign = true,
+    },
+}

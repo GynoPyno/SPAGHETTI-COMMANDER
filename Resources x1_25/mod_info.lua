@@ -1,0 +1,15 @@
+name = "Resources x1.25"
+uid = "d5555575-6944-450b-f649-47deeefffdc8"
+version = 1
+copyright = ""
+description = "Increases Mass & Energy production (x1.25)"
+author = "Franck83"
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+requires = {}
+requiresNames = {}
+conflicts = {}
+before = {}
+after = {}

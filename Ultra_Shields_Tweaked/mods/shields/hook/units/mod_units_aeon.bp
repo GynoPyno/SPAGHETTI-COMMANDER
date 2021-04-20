@@ -1,0 +1,57 @@
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "uab4202", # Shield Generator
+    Categories = {
+        'SHOWQUEUE',
+    },
+    Display = {
+        Abilities = {
+            '<LOC ability_shielddome>Shield Dome',
+	          '<LOC ability_upgradable>Upgradeable',
+        },
+    },
+    Economy = {
+        BuildRate = 10,
+ 	      BuildableCategory = {
+          'uab4301',
+        },
+    },
+    General = {
+      CommandCaps = {
+          RULEUCC_Pause = true,
+          RULEUCC_Stop = true,
+      },
+      UpgradesTo = 'uab4301',
+    },
+
+}
+
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "uab4301", # Heavy Shield Generator
+    Categories = {
+        'SHOWQUEUE',
+    },
+    Display = {
+        Abilities = {
+            '<LOC ability_shielddome>Shield Dome',
+	          '<LOC ability_upgradable>Upgradeable',
+        },
+    },
+    Economy = {
+        BuildRate = 12,
+ 	      BuildableCategory = {
+          'FAB4401',
+        },
+    },
+    General = {
+      CommandCaps = {
+          RULEUCC_Pause = true,
+          RULEUCC_Stop = true,
+      },
+      UpgradesFrom = 'uab4202',
+      UpgradesFromBase = 'uab4202',
+      UpgradesTo = 'FAB4401',
+    },
+
+}
