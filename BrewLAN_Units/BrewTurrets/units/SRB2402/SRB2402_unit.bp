@@ -34,7 +34,8 @@ UnitBlueprint {
         'SIZE16',
         'VISIBLETORECON',
         'RECLAIMABLE',
-        'SHOWATTACKRETICLE',
+        'SHOWATTACKRETICLE',
+
         'SORTDEFENSE',
         'RESEARCHLOCKED',
     },
@@ -45,6 +46,7 @@ UnitBlueprint {
         EconomyThreatLevel = 269,
         Health = 23000,
         MaxHealth = 23000,
+        Regen = 5,
         SurfaceThreatLevel = 88,
     },
     Description = '<LOC seb2401_desc>Experimental Point Defence',
@@ -109,19 +111,24 @@ UnitBlueprint {
     LifeBarHeight = 0.075,
     LifeBarOffset = 0.95,
     LifeBarSize = 2.75,
-    Physics = {
+    Physics = {
+
         BuildOnLayerCaps = {
             LAYER_Land = true,
-        },
-        FlattenSkirt = true,
+        },
+
+        FlattenSkirt = true,
+
         MeshExtentsX = 3.5,
         MeshExtentsY = 4,
-        MeshExtentsZ = 3.5,
+        MeshExtentsZ = 3.5,
+
         MotionType = 'RULEUMT_None',
         SkirtOffsetX = -1.5,
         SkirtOffsetZ = -1.5,
         SkirtSizeX = 6,
-        SkirtSizeZ = 6,
+        SkirtSizeZ = 6,
+
     },
     SelectionCenterOffsetZ = -.2,
     SelectionSizeX = 1.55,
@@ -163,8 +170,8 @@ UnitBlueprint {
             AutoInitiateAttackCommand = false,
             BallisticArc = 'RULEUBA_None',
             CollideFriendly = false,
-            Damage = 750,
-            DamageRadius = 2,
+            Damage = 760,
+            DamageRadius = 2.5,
             DamageType = 'Normal',
             DisplayName = 'Proton Cannon',
             FireTargetLayerCapsTable = {
@@ -198,7 +205,7 @@ UnitBlueprint {
             RackSalvoSize = 1,
             RackSlavedToTurret = false,
             RangeCategory = 'UWRC_DirectFire',
-            RateOfFire = 0.8,
+            RateOfFire = 0.91,
             SlavedToBody = false,
             TargetCheckInterval = 0.625,
             TargetPriorities = {

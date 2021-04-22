@@ -70,8 +70,8 @@ UnitBlueprint {
     CollisionOffsetY = 0.0,
     Defense = {
         ArmorType = 'Normal',
-        Health = 60000,
-        MaxHealth = 60000,
+        Health = 70000,
+        MaxHealth = 70000,
         RegenRate = 10,
         Shield = {
             ImpactEffects = 'AeonShieldHit01',

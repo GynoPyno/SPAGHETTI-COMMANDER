@@ -185,10 +185,10 @@ UnitBlueprint {
         UniformScale = 0.1,
     },
     Economy = {
-        BuildCostEnergy = 336000,
-        BuildCostMass = 27000,
+        BuildCostEnergy = 456000,
+        BuildCostMass = 52000,
 		MaintenanceConsumptionPerSecondEnergy = 0,
-        BuildTime = 16875,
+        BuildTime = 30125,
     },
     General = {
         Category = 'Direct Fire',
