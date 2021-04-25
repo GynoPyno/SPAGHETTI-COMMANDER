@@ -154,7 +154,7 @@ UnitBlueprint {
         },
         HalfPriceUpgradeFromID = 'ueb1302',
         NaturalProducer = true, --This fixes the issue of it stopping producing if it consumes more than it produces
-        MaintenanceConsumptionPerSecondEnergy = 61,
+        MaintenanceConsumptionPerSecondEnergy = 81,
         ProductionPerSecondMass = 22,
         RebuildBonusIds = {
             'ueb1302',
