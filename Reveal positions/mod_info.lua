@@ -1,0 +1,11 @@
+name = "Reveal Positions"
+version = 2
+copyright = "Myxir"
+description = "Reveals starting locations of players. Invicible button, faction icon with army color."
+author = "Myxir, Eternal-"
+url = ""
+uid = "b0d9ac94-c5e6-11e5-9912-ba0be0483c19"
+exclusive = false
+ui_only = true
+conflicts = {}
+icon = "/mods/Reveal Positions/logo.png"
