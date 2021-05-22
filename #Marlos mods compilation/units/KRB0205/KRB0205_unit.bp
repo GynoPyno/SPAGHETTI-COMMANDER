@@ -102,9 +102,9 @@ UnitBlueprint {
     Economy = {
         BuildCostEnergy = 2000,
         BuildCostMass = 750,
-        BuildRate = 40,
+        BuildRate = 20,
         BuildTime = 750,
-        MaxBuildDistance = 50,
+        MaxBuildDistance = 85,
         BuildableCategory = {
             'krb0205',
         },
