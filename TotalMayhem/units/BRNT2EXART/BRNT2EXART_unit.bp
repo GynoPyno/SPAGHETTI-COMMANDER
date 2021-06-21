@@ -94,9 +94,9 @@ UnitBlueprint {
         UniformScale = 0.02,
     },
     Economy = {
-        BuildCostEnergy = 195000,
-        BuildCostMass = 15000,
-        BuildTime = 9000,
+        BuildCostEnergy = 95000,
+        BuildCostMass = 6000,
+        BuildTime = 8500,
         RebuildBonusIds = {
             'BRNT2EXART',
         },
