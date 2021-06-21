@@ -1,11 +1,3 @@
-#****************************************************************************
-#**
-#**  File     :  /lua/AI/CustomAIs_v2/UvesoAI.lua
-#**  Author(s): Uveso
-#**
-#**  Summary  : Utility File to insert custom AI into the game.
-#**
-#****************************************************************************
 
 AI = {
     AIList = {
@@ -48,6 +40,10 @@ AI = {
             key = 'uvesooverwhelmcheat',
             name = "<LOC Uveso_0017>AIx: Uveso Overwhelm",
         },
+--        {
+--            key = 'uvesoduellcheat',
+--            name = "AIx: Uveso Duell",
+--        },
 --        {
 --            key = 'uvesonullcheat',
 --            name = "AIx: Uveso Null",

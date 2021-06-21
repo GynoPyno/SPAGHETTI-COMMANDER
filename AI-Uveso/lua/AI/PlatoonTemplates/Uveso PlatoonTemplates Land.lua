@@ -14,10 +14,9 @@
 
 PlatoonTemplate {
     Name = 'CDR Attack',
-    Plan = 'ACUAttackAIUveso',
+    Plan = 'ACUChampionPlatoon',
     GlobalSquads = {
         { categories.COMMAND, 1, 1, 'Attack', 'none' },
-        { categories.MOBILE * (categories.SHIELD + categories.STEALTHFIELD) - categories.ANTIAIR - categories.EXPERIMENTAL - categories.ENGINEER - categories.SCOUT - categories.COMMAND - categories.SUBCOMMANDER, 0, 4, 'support', 'none' }
     }
 }
 PlatoonTemplate {
@@ -252,6 +251,13 @@ PlatoonTemplate {
     Plan = 'LandAttackAIUveso',
     GlobalSquads = {
         { categories.MOBILE * categories.LAND - categories.EXPERIMENTAL - categories.ENGINEER - categories.SCOUT - categories.COMMAND - categories.SUBCOMMANDER, 1, 50, 'Attack', 'none' }
+    },
+}
+PlatoonTemplate {
+    Name = 'U1234-Trash Land 50 200',
+    Plan = 'LandAttackAIUveso',
+    GlobalSquads = {
+        { categories.MOBILE * categories.LAND - categories.EXPERIMENTAL - categories.ENGINEER - categories.SCOUT - categories.COMMAND - categories.SUBCOMMANDER, 50, 200, 'Attack', 'none' }
     },
 }
 
