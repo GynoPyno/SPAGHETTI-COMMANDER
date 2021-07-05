@@ -190,8 +190,8 @@ UnitBlueprint {
     },
     Economy = {
         BuildCostEnergy = 35000,
-        BuildCostMass = 1680,
-        BuildTime = 8400,
+        BuildCostMass = 1980,
+        BuildTime = 8450,
     },
     Footprint = {
         MaxSlope = 0.25,
@@ -290,7 +290,7 @@ UnitBlueprint {
             BallisticArc = 'RULEUBA_LowArc',
             ChargeDelay = 0.5,
             CollideFriendly = false,
-            Damage = 100,
+            Damage = 70,
             DamageType = 'Normal',
             DisplayName = 'Disintegrator Pulse Laser',
             FireTargetLayerCapsTable = {
