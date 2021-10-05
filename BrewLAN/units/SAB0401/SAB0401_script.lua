@@ -1,29 +1,20 @@
 --------------------------------------------------------------------------------
---  Summary:  The Independence Engine script
---   Author:  Sean 'Balthazar' Wheeldon
+--  Summary  :  Aeon Independence Engine script
+--  Author   :  Sean 'Balthazar' Wheeldon
 --------------------------------------------------------------------------------
-local AAirFactoryUnit = import('/lua/aeonunits.lua').AAirFactoryUnit
+local BrewLANExperimentalFactoryUnit = import('/lua/defaultunits.lua').BrewLANExperimentalFactoryUnit
 --------------------------------------------------------------------------------
-local CreateAeonCommanderBuildingEffects = import('/lua/EffectUtilities.lua').CreateAeonCommanderBuildingEffects
 local EffectTemplate = import('/lua/EffectTemplates.lua')
 local RandomFloat = import('/lua/utilities.lua').GetRandomFloat
 --------------------------------------------------------------------------------
-local BrewLANPath = import( '/lua/game.lua' ).BrewLANPath
-local Buff = import(BrewLANPath .. '/lua/legacy/VersionCheck.lua').Buff
-local GantryUtils = import(BrewLANPath .. '/lua/GantryUtils.lua')
-local BuildModeChange = GantryUtils.BuildModeChange
-local AIStartOrders = GantryUtils.AIStartOrders
-local AIControl = GantryUtils.AIControl
-local AIStartCheats = GantryUtils.AIStartCheats
-local AICheats = GantryUtils.AICheats
---------------------------------------------------------------------------------
-SAB0401 = Class(AAirFactoryUnit) {
+SAB0401 = Class(BrewLANExperimentalFactoryUnit) {
 --------------------------------------------------------------------------------
 -- Function triggers
 --------------------------------------------------------------------------------
     OnCreate = function(self)
-        AAirFactoryUnit.OnCreate(self)
-        local bp = self:GetBlueprint()
+        self.BLFactoryAirMode = true
+        BrewLANExperimentalFactoryUnit.OnCreate(self)
+        local bp = __blueprints.sab0401
         self:SetCollisionShape(
             'Sphere',
             bp.CollisionSphereOffsetX or 0,
@@ -31,55 +22,13 @@ SAB0401 = Class(AAirFactoryUnit) {
             bp.CollisionSphereOffsetZ or 0,
             bp.SizeSphere
         )
-        self.airmode = true
-        BuildModeChange(self)
     end,
 
     OnStopBeingBuilt = function(self, builder, layer)
-        AIStartCheats(self, Buff)
-        AAirFactoryUnit.OnStopBeingBuilt(self, builder, layer)
+        BrewLANExperimentalFactoryUnit.OnStopBeingBuilt(self, builder, layer)
         self:ForkThread(self.PlatformRaisingThread)
-        AIStartOrders(self)
     end,
 
-    OnLayerChange = function(self, new, old)
-        AAirFactoryUnit.OnLayerChange(self, new, old)
-        BuildModeChange(self)
-    end,
-
-    OnStartBuild = function(self, unitBeingBuilt, order)
-        AICheats(self, Buff)
-        AAirFactoryUnit.OnStartBuild(self, unitBeingBuilt, order)
-        BuildModeChange(self)
-    end,
-
-    OnStopBuild = function(self, unitBeingBuilt)
-        AAirFactoryUnit.OnStopBuild(self, unitBeingBuilt)
-        AIControl(self, unitBeingBuilt)
-        BuildModeChange(self)
-    end,
---------------------------------------------------------------------------------
--- Button controls
---------------------------------------------------------------------------------
-    OnScriptBitSet = function(self, bit)
-        AAirFactoryUnit.OnScriptBitSet(self, bit)
-    end,
-
-    OnScriptBitClear = function(self, bit)
-        AAirFactoryUnit.OnScriptBitClear(self, bit)
-    end,
-
-    OnPaused = function(self)
-        AAirFactoryUnit.OnPaused(self)
-        self:StopBuildFx(self:GetFocusUnit())
-    end,
-
-    OnUnpaused = function(self)
-        AAirFactoryUnit.OnUnpaused(self)
-        if self:IsUnitState('Building') then
-            self:StartBuildFx(self:GetFocusUnit())
-        end
-    end,
 --------------------------------------------------------------------------------
 -- Animations
 --------------------------------------------------------------------------------
@@ -87,41 +36,55 @@ SAB0401 = Class(AAirFactoryUnit) {
         if not unitBeingBuilt then
             unitBeingBuilt = self:GetFocusUnit()
         end
-        local thread = self:ForkThread( self.CreateAeonFactoryBuildingEffects, unitBeingBuilt, self:GetBlueprint().General.BuildBones.BuildEffectBones, 'Attachpoint', self.BuildEffectsBag )
+        local thread = self:ForkThread( self.CreateAeonFactoryBuildingEffects, unitBeingBuilt, __blueprints.sab0401.General.BuildBones.BuildEffectBones, 'Attachpoint', self.BuildEffectsBag )
         unitBeingBuilt.Trash:Add( thread )
     end,
-
-    --StopBuildFx = function(self)
-    --end,
 
     PlatformRaisingThread = function(self)
         --CreateSlider(unit, bone, [goal_x, goal_y, goal_z, [speed, [worldspace]
         --CreateRotator(unit, bone, axis, [goal], [speed], [accel], [goalspeed])
-        local pSlider = CreateSlider(self, 'Platform', 0, 0, 0, 2.94, true)
         --local bRotator = CreateRotator(self, 'Builder_Node', 'y', 0, 1000, 100, 1000)
+
+        -- Create the animation sliders
+        local pSlider = CreateSlider(self, 'Platform', 0, 0, 0, 2.94, true)
         local nSliders = {}
         for i = 1, 8 do
             nSliders[i] = CreateSlider(self, 'Builder_00' .. i, 0, 0, 0, 14.7, true)
         end
 
-        local GetPMaxHeight = function(unitBeingBuilt)
-            local platformPos = 1.47 -- 5 * __blueprints.sab0401.Display.UniformScale
-            local pMaxHeight = 9.408 -- 32 * __blueprints.sab0401.Display.UniformScale
-            return math.min(pMaxHeight, math.max((unitBeingBuilt:GetBlueprint().Physics.Elevation or 0), 0) - platformPos)
+        -- Define some mesh constants; the sliders are world-space so this is to measure clipping/floating
+        -- Define outside of the only function that uses them so they only get calculated once, since it's ran a lot.
+        local platformPos = 5 * __blueprints.sab0401.Display.UniformScale -- 1.47
+        local pMaxHeight = 32 * __blueprints.sab0401.Display.UniformScale -- 9.408
+
+        -- Quick function to avoid calling get blueprint if we can
+        local GetBP = function(unitBeingBuilt)
+            return (__blueprints[unitBeingBuilt.BpId] or unitBeingBuilt:GetBlueprint())
         end
 
+        -- Quick calculation for the max height the platform could be at.
+        local GetPMaxHeight = function(unitBeingBuilt)
+            --Avoid global lookup
+            local mmin = math.min
+            local mmax = math.max
+            return mmin(pMaxHeight, mmax(( GetBP(unitBeingBuilt).Physics.Elevation or 0), 0) - platformPos)
+        end
+
+        -- Variable storage
         local unitBeingBuilt
         local buildState = 'start'
         local uBBF
         local pSliderPos
         local bSliderPos
+
+        -- Give me the lööps bröther
         while self do
             unitBeingBuilt = self:GetFocusUnit()
             if unitBeingBuilt then
-                if buildState == 'start' or buildState == 'active' and EntityCategoryContains(categories.AIR,unitBeingBuilt) then
+                if buildState == 'start' or buildState == 'active' and GetBP(unitBeingBuilt).Physics.MotionType == 'RULEUMT_Air' then
                     uBBF = math.max(unitBeingBuilt:GetFractionComplete() - 0.8, 0) * 5
                     buildState = 'active'
-                elseif EntityCategoryContains(categories.AIR,unitBeingBuilt) then
+                elseif GetBP(unitBeingBuilt).Physics.MotionType == 'RULEUMT_Air' then
                     uBBF = 1
                 else
                     uBBF = 0
@@ -137,7 +100,7 @@ SAB0401 = Class(AAirFactoryUnit) {
                     end
                 end
             else
-                WaitTicks(3) -- If there is something building after 3 ticks, then assume inf build and stay up.
+                coroutine.yield(3) -- If there is something building after 3 ticks, then assume inf build and stay up.
                 if (buildState == 'active' or buildState == 'repeat') and self:GetFocusUnit() then
                     buildState = 'repeat'
                 else
@@ -146,7 +109,7 @@ SAB0401 = Class(AAirFactoryUnit) {
                 end
             end
             pSlider:SetGoal(0,pSliderPos,0)
-            WaitTicks(1)
+            coroutine.yield(1)
         end
     end,
 
@@ -167,10 +130,10 @@ SAB0401 = Class(AAirFactoryUnit) {
             self:SetBlockCommandQueue(true)
 
             self.PermOpenAnimManipulator:SetRate(-1)
-            WaitTicks(1)
+            coroutine.yield(1)
             WaitFor(self.PermOpenAnimManipulator)
 
-            if unitBeingBuilt and not unitBeingBuilt:IsDead() then
+            if unitBeingBuilt and not unitBeingBuilt.Dead then
                 unitBeingBuilt:DetachFrom(true)
             end
             self:DetachAll(__blueprints.sab0401.Display.BuildAttachBone or 'Attachpoint')
@@ -178,7 +141,7 @@ SAB0401 = Class(AAirFactoryUnit) {
 
             ChangeState(self, self.RollingOffState)
         else
-            AAirFactoryUnit.FinishBuildThread(self, unitBeingBuilt, order)
+            BrewLANExperimentalFactoryUnit.FinishBuildThread(self, unitBeingBuilt, order)
         end
     end,
 

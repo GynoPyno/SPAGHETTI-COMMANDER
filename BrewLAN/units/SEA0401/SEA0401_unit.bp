@@ -240,9 +240,6 @@ UnitBlueprint {
         RadarRadius = 72,
         VisionRadius = 46,
     },
-    Interface = {
-        HelpText = '<LOC sea0401_desc>Experimental AA Gunship',
-    },
     LifeBarHeight = 0.075,
     LifeBarOffset = 5.25,
     LifeBarSize = 7.5,
@@ -683,8 +680,6 @@ UnitBlueprint {
             Damage = 150,
             DamageType = 'Normal',
             DisplayName = 'Gatling Plasma Cannon',
-            EnergyDrainPerSecond = 0,
-            EnergyRequired = 0,
             FireTargetLayerCapsTable = {
                 Air = 'Land|Water|Seabed',
                 Land = 'Land|Water|Seabed',

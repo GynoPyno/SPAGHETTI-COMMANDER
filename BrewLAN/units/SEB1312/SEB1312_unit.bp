@@ -154,8 +154,8 @@ UnitBlueprint {
         },
         HalfPriceUpgradeFromID = 'ueb1302',
         NaturalProducer = true, --This fixes the issue of it stopping producing if it consumes more than it produces
-        MaintenanceConsumptionPerSecondEnergy = 81,
-        ProductionPerSecondMass = 22,
+        MaintenanceConsumptionPerSecondEnergy = 91,
+        ProductionPerSecondMass = 23,
         RebuildBonusIds = {
             'ueb1302',
             'seb1312',
@@ -190,9 +190,6 @@ UnitBlueprint {
     },
     Intel = {
         VisionRadius = 20,
-    },
-    Interface = {
-        HelpText = '<LOC seb1312_help>Engineering Mass Extractor',
     },
     LifeBarHeight = 0.075,
     LifeBarOffset = 0.35,

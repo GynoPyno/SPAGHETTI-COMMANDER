@@ -17,12 +17,13 @@ Description['saa0314'] = "<LOC Unit_Description_BrewPen_004>Top-end long-range s
 
 --Tech 3 penetration fighters
 Description['sea0313'] = "<LOC Unit_Description_BrewPen_005>Top-end long range stealth fighter. Equipped with twin burst helical railguns, air-to-air missiles, and anti-missile flares."
-Description['saa0313'] = "<LOC Unit_Description_BrewPen_006>"
+Description['saa0313'] = "<LOC Unit_Description_BrewPen_006>Top-end long range stealth fighter. Equipped with twin focused phason laser weapons, and anti-missile flares."
 Description['sra0313'] = "<LOC Unit_Description_BrewPen_007>Top-end long-range stealth fighter. Equipped with heavy particle cannons, and anti-missile flares. Capable of hunting spy planes."
 Description['ssa0313'] = "<LOC Unit_Description_BrewPen_008>Top-end long-range stealth fighter. Equipped with a Losaare autocannon, a phason weapon, and anti-missile flares."
 
 --Tech 3 interdiction gunships
 Description['sra0315'] = "<LOC Unit_Description_BrewPen_009>Heavy interdiction and close-air-support attack craft. Armed with multiple air-to-ground laser weapons, and anti-missile flares."
 
+--Experimental
 Description['sra0401'] = "<LOC Unit_Description_BrewPen_010>Massive airborne aircraft carrier. Can create, transport, and deploy large numbers of fighter/bomber craft."
 Description['sra0402'] = "<LOC Unit_Description_BrewPen_011>Combination fighter/bomber aircraft designed to engage both air and surface units."

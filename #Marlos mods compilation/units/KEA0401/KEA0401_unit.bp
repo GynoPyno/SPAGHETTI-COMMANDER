@@ -9,14 +9,13 @@ UnitBlueprint {
     },
     Air = {
         AutoLandTime = 1,
-        BankFactor = 0.3,
-        BankForward = true,
+        BankFactor = 0.2,
+        BankForward = false,
         CanFly = true,
         CirclingDirChangeFrequencySec = 1,
         CirclingElevationChangeRatio = 0.25,
         CirclingRadiusChangeMaxRatio = 0.9,
         CirclingRadiusChangeMinRatio = 0.6,
-        CirclingRadiusVsAirMult = 0.66,
         CirclingTurnMult = 3,
         KLift = 1,
         KLiftDamping = 0.8,
@@ -28,7 +27,6 @@ UnitBlueprint {
         MaxAirspeed = 8,
         MinAirspeed = 3,
         StartTurnDistance = 5,
-        Winged = false,
     },
     Audio = {
         AirUnitWaterImpact = Sound {
@@ -260,7 +258,7 @@ UnitBlueprint {
             LAYER_Water = false,
         },
         Elevation = 12,
-        MaxSpeed = 0.5,
+        MaxSpeed = 8,
         MotionType = 'RULEUMT_Air',
         SkirtOffsetX = -1.0,
         SkirtOffsetZ = -1.5,

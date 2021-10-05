@@ -71,6 +71,10 @@ tooltipbrewlan0032="Toggle between anti-air target priority and tactical missile
 --Panopticon enhancement tab
 tooltipbrewlan0033="Customise [Array]"
 
+--Zmara tall mode toggle
+tooltipbrewlan0035="Overextend Toggle"
+tooltipbrewlan0036="Increases direct fire weapon ranges but sacrifices movement speed and costs energy while active."
+
 --------------------------------------------------------------------------------
 -- Support commander enhancements
 --------------------------------------------------------------------------------
@@ -201,6 +205,10 @@ srs0219_name="Barwick Class"
 Unit_Description_BrewLAN_T2S001="Tech 2 naval construction, repair, capture and reclamation unit. Equipped with a single AA weapon."
 Unit_Description_BrewLAN_T2S002="Tech 2 naval construction, repair, capture, reclaimation, and mine layer unit."
 
+ses0204_desc="Attack Submarine"
+ses0204_name="Cochrane"
+Unit_Description_BrewLAN_T2S003="Submerged anti-naval unit. Armed with a torpedo tube, anti-torpedo charges, and a flak artillery."
+
 sea0201_desc="Recon Plane"
 sea0201_name="UX Dragonlady"
 ssa0201_name="Selia"
@@ -289,13 +297,18 @@ ability_satellite_cap_4="Satellite Capacity: +4"
 ability_satellite_cap_5="Satellite Capacity: +5"
 ability_satellite_cap_inf="Satellite Capacity Unrestricted"
 
-sea0002_desc="Observation Satellite"
-sea0002_name="Burning Star"
+sea3301_desc="Observation Satellite"
+sea3301_name="Burning Star"
 Unit_Description_BrewLAN_T3A012="Satellite-based observation system. Provides visual satellite imagery from orbit. Requires a dedicated satellite uplink to receive data from it."
 
-sea0003_desc="Counterintelligence Satellite"
-sea0003_name="Vaxis"
-Unit_Description_BrewLAN_T3A013="Satellite-based counterintelligence system. Causes large numbers of fake radar signals with flight characteristics of air superiority fighters to appear underneath it. Has no capacity for intelligence gathering."
+sea4301_desc="Counterintelligence Satellite"
+sea4301_name="Vaxis"
+Unit_Description_BrewLAN_T3A013="Satellite-based counterintelligence system. Causes large numbers of fake radar signals with flight characteristics of air superiority fighters in a guard formation to appear underneath it. Has no capacity for intelligence gathering."
+--These are only seen on the cheat menu and wiki
+sea4302_desc="False Radar Signal"
+sea4302_name="ASFaux"
+--This is only seen on the wiki
+Unit_Description_BrewLAN_T3A014="False radar signals with flight characteristics of air superiority fighters. Appears as six blips to radar and one blip to omni sensors."
 
 --Sniper alternatives
 sel0320_desc="Mobile Satellite Uplink"
@@ -429,8 +442,13 @@ srl0316_name="Operative"
 Unit_Description_BrewLAN_T3L010="Mobile cloaking stealth generator. Hides nearby units from radar and sonar. Visible only to omni."
 
 srl0311_desc="Mobile Rocket Platform"
-srl03ll_name="Hexatron"
+--srl03ll_name="Hexatron"
+srl0311_name="Triseptitron"
 Unit_Description_BrewLAN_T3L011="Mobile multiple rocket launcher. Long reload time. Designed to overwhelm enemy shields and tactical missile defenses with large salvos."
+
+srl0312_desc="Missile Tank"
+srl0312_name="Toxotai"
+Unit_Description_BrewLAN_T3L024="Stealth tank. Armed with twin proton cannons, a dual purpose missile launcher, and torpedo defenses."
 
 ss0319_desc="Field Engineering Ship"
 ses0319_name="Patch Class"
@@ -532,24 +550,24 @@ Panopticon_array_slot="Array"
 Unit_Description_BrewLAN_T4B008_sre="Increases radar radius."
 Unit_Description_BrewLAN_T4B008_sresre="Increases radar and omni radius."
 Unit_Description_BrewLAN_T4B008_xbndl="Reveals radar blips."
-brewlan_panopticon_small_001="Activate radar dish"
-brewlan_panopticon_small_002="Activate the \"Marcin\" dish"
-brewlan_panopticon_small_003="Activate the \"Gebauer\" dish"
-brewlan_panopticon_small_004="Activate radar dish"
-brewlan_panopticon_med_001="Activate the \"Chapeau\" dish"
-brewlan_panopticon_med_002="Activate the \"Pankow\" dish"
-brewlan_panopticon_med_003="Activate the \"Mogwai\" dish"
-brewlan_panopticon_med_004="Activate the \"Neutral\" dish"
-brewlan_panopticon_xbl_001="Activate the \"Saxxon\" dish"
-brewlan_panopticon_small_001r="Deactivate the \"Guillaume\" dish"
-brewlan_panopticon_small_002r="Deactivate the \"Marcin\" dish"
-brewlan_panopticon_small_003r="Deactivate the \"Gebauer\" dish"
+brewlan_panopticon_small_001="Activate the radar dish \"Guillaume\""
+brewlan_panopticon_small_002="Activate the radar dish \"Marcin\""
+brewlan_panopticon_small_003="Activate the radar dish \"Gebauer\""
+brewlan_panopticon_small_004="Activate the radar dish \"Spectre\""
+brewlan_panopticon_med_001="Activate the omni dish \"Chapeau\""
+brewlan_panopticon_med_002="Activate the omni dish \"Pankow\""
+brewlan_panopticon_med_003="Activate the omni dish \"Mogwai\""
+brewlan_panopticon_med_004="Activate the omni dish \"Neutral\""
+brewlan_panopticon_xbl_001="Activate the X band dish \"Saxxon\""
+brewlan_panopticon_small_001r="Deactivate radar dish"
+brewlan_panopticon_small_002r="Deactivate radar dish"
+brewlan_panopticon_small_003r="Deactivate radar dish"
 brewlan_panopticon_small_004r="Deactivate radar dish"
-brewlan_panopticon_med_001r="Deactivate the \"Chapeau\" dish"
-brewlan_panopticon_med_002r="Deactivate the \"Pankow\" dish"
-brewlan_panopticon_med_003r="Deactivate the \"Mogwai\" dish"
-brewlan_panopticon_med_004r="Deactivate the \"Neutral\" dish"
-brewlan_panopticon_xbl_001r="Deactivate the \"Saxxon\" dish"
+brewlan_panopticon_med_001r="Deactivate omni dish"
+brewlan_panopticon_med_002r="Deactivate omni dish"
+brewlan_panopticon_med_003r="Deactivate omni dish"
+brewlan_panopticon_med_004r="Deactivate omni dish"
+brewlan_panopticon_xbl_001r="Deactivate the X band dish"
 
 sab0401="Experimental Air Factory"
 sab0401_name="Independence Engine"
@@ -570,3 +588,7 @@ Unit_Description_BrewLAN_T4B012="Experimental defensive building. Consumes large
 ssl0404_desc="Experimental Sniper Bot"
 ssl0404_name="Sisha-Ah"
 Unit_Description_BrewLAN_T4L004="Experimental mobile sniper bot. Only visible to omni while static and not firing."
+
+ssl0405_desc="Experimental Heavy Arthrobot"
+ssl0405_name="Suedath-Zmara"
+Unit_Description_BrewLAN_T4L005="Massive experimental bot. Equipped with anterior cephalic Thau cannons, superior dorsal Sinn Unthe cannons, ventral Uall Cavitation torpedo weapons, and carapace mounted Olaris anti-air cannons. Features the ability to extend vertically for increased weapon range, and to swim to engage surface naval craft, with the power to terminate almost any target."

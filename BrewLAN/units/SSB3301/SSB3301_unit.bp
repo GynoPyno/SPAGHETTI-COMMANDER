@@ -149,9 +149,16 @@ UnitBlueprint {
     General = {
         Category = 'Intelligence',
         Classification = 'RULEUC_Sensor',
+        CommandCaps = { -- This is just for the wiki
+            RULEUCC_Script = true,
+        },
         FactionName = 'Seraphim',
         Icon = 'land',
         OrderOverrides = {
+            RULEUCC_Script = {
+                bitmapId = 'skry-target',
+                helpText = 'scry_spy_target',
+            },
             RULEUTC_IntelToggle = {
                 bitmapId = 'skry-toggle',
                 helpText = 'toggle_scrying',
@@ -169,9 +176,6 @@ UnitBlueprint {
         ReactivateTime = 10,
         RemoteViewingRadius = 25,
         VisionRadius = 15,
-    },
-    Interface = {
-        HelpText = '<LOC ssb3301_desc>Optics Tracking Facility',
     },
     LifeBarHeight = 0.075,
     LifeBarOffset = 0.9,

@@ -54,7 +54,6 @@ UnitBlueprint {
         'HOVER',
         'VISIBLETORECON',
         'RECLAIMABLE',
-        'OVERLAYDEFENSE',
     },
     Defense = {
         AirThreatLevel = 15,
@@ -185,9 +184,6 @@ UnitBlueprint {
     Intel = {
         VisionRadius = 20,
     },
-    Interface = {
-        HelpText = '<LOC xsl0205_help>Mobile Anti-Air Cannon',
-    },
     LifeBarHeight = 0.075,
     LifeBarOffset = 0.696,
     LifeBarSize = 0.96,
@@ -217,7 +213,7 @@ UnitBlueprint {
     StrategicIconName = 'icon_land3_antiair',
     StrategicIconSortPriority = 125,
     Transport = {
-        TransportClass = 2,
+        TransportClass = 3,
     },
     Veteran = {
         Level1 = 4,

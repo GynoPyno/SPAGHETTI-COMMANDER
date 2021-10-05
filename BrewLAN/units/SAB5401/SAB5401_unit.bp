@@ -1,6 +1,5 @@
 UnitBlueprint {
     AI = {
-        GuardScanRadius = 20,
         InitialAutoMode = true,
         ShowAssistRangeOnSelect = true,
         StagingPlatformScanRadius = 20,
@@ -24,8 +23,6 @@ UnitBlueprint {
     },
     BuildIconSortPriority = 240,
     Categories = {
-        --'BUILTBYTIER3ENGINEER',
-        --'BUILTBYTIER3COMMANDER',
         'AEON',
         'EXPERIMENTAL',
         'STRUCTURE',
@@ -97,9 +94,6 @@ UnitBlueprint {
     },
     Intel = {
         VisionRadius = 20,
-    },
-    Interface = {
-        HelpText = '<LOC xac2201_help>Aeon Temple',
     },
     LifeBarHeight = 0.075,
     LifeBarOffset = 3.4,

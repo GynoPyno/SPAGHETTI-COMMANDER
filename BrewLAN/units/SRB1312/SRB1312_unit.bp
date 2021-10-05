@@ -81,8 +81,8 @@ UnitBlueprint {
         BuildCostMass = 5750,
         BuildTime = 3595,
         HalfPriceUpgradeFromID = 'urb1302',
-        MaintenanceConsumptionPerSecondEnergy = 81,
-        ProductionPerSecondMass = 22,
+        MaintenanceConsumptionPerSecondEnergy = 91,
+        ProductionPerSecondMass = 23,
         RebuildBonusIds = {
             'urb1302',
             'srb1312',
@@ -106,9 +106,6 @@ UnitBlueprint {
         RadarStealth = true,
         SonarStealth = true,
         VisionRadius = 20,
-    },
-    Interface = {
-        HelpText = '<LOC srb1312_desc>Mass Extractor',
     },
     LifeBarHeight = 0.075,
     LifeBarOffset = 0.55,

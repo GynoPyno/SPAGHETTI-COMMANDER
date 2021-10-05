@@ -43,7 +43,6 @@ UnitBlueprint {
         'SIZE12',
         'VISIBLETORECON',
         'RECLAIMABLE',
-        'OVERLAYDEFENSE',
         'SORTDEFENSE',
     },
     CollisionOffsetY = -0.25,
@@ -164,14 +163,10 @@ UnitBlueprint {
         },
         UnitName = '<LOC sab4102_name>Aspis',
         UnitWeight = 1,
-        #UpgradesTo = 'sab4301',
         UpgradesTo = 'uab4202',
     },
     Intel = {
         VisionRadius = 20,
-    },
-    Interface = {
-        HelpText = '<LOC sbui4102>Light Shield Generator',
     },
     LifeBarHeight = 0.075,
     LifeBarOffset = 0.9,

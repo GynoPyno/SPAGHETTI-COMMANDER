@@ -1,29 +1,10 @@
 UnitBlueprint {
-    AI = {
-        GuardScanRadius = 40,
-        StagingPlatformScanRadius = 40,
-    },
+    AI = { StagingPlatformScanRadius = 40 },
     Audio = {
-        DoneBeingBuilt = Sound {
-            Bank = 'XSB',
-            Cue = 'XSB5101_Activate',
-            LodCutoff = 'UnitMove_LodCutoff',
-        },
-        Killed = Sound {
-            Bank = 'XSL_Destroy',
-            Cue = 'XSB_Destroy_Lrg_PreDestroy',
-            LodCutoff = 'UnitMove_LodCutoff',
-        },
-        UISelection = Sound {
-            Bank = 'SeraphimSelect',
-            Cue = 'Seraphim_Select_Structure',
-            LodCutoff = 'UnitMove_LodCutoff',
-        },
-        NukeExplosion = Sound {
-            Bank = 'Impacts',
-            Cue = 'XSB2305_Impact',
-            LodCutoff = 'Weapon_LodCutoff',
-        },
+        DoneBeingBuilt = Sound { Bank = 'XSB',            Cue = 'XSB5101_Activate',           LodCutoff = 'UnitMove_LodCutoff' },
+        Killed         = Sound { Bank = 'XSL_Destroy',    Cue = 'XSB_Destroy_Lrg_PreDestroy', LodCutoff = 'UnitMove_LodCutoff' },
+        UISelection    = Sound { Bank = 'SeraphimSelect', Cue = 'Seraphim_Select_Structure',  LodCutoff = 'UnitMove_LodCutoff' },
+        NukeExplosion  = Sound { Bank = 'Impacts',        Cue = 'XSB2305_Impact',             LodCutoff = 'Weapon_LodCutoff' },
     },
     BuildIconSortPriority = 150,
     Categories = {
@@ -116,11 +97,9 @@ UnitBlueprint {
         RadarStealth = true,
         SonarStealth = true,
         VisionRadius = 0,
+        WaterVisionRadius = 0,
         RadarRadius = 29,
         SonarRadius = 29,
-    },
-    Interface = {
-        HelpText = '<LOC sbui2222>Nuke Mine',
     },
     LifeBarHeight = 0.075,
     LifeBarOffset = 0.10,
@@ -142,9 +121,9 @@ UnitBlueprint {
     SelectionSizeX = 0.4,
     SelectionSizeZ = 0.4,
     SelectionThickness = 1,
-    SizeX = .5,
+    SizeX = 0.5,
     SizeY = 0.2,
-    SizeZ = .5,
+    SizeZ = 0.5,
     StrategicIconName = 'icon_structure3_bomb',
     StrategicIconSortPriority = 210,
     Weapon = {

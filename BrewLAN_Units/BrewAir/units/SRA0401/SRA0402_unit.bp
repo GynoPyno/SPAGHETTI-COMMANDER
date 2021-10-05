@@ -110,8 +110,8 @@ UnitBlueprint {
     Defense = {
         AirThreatLevel = 6,
         ArmorType = 'Light',
-        Health = 400,
-        MaxHealth = 400,
+        Health = 640,
+        MaxHealth = 640,
         SurfaceThreatLevel = 4,
     },
     Description = '<LOC dra0202_desc>Fighter/Bomber',
@@ -165,7 +165,7 @@ UnitBlueprint {
     Economy = {
         BuildCostEnergy = 4500,
         BuildCostMass = 120,
-        BuildTime = 1200,
+        BuildTime = 580,
     },
     Footprint = {
         MaxSlope = 0.25,

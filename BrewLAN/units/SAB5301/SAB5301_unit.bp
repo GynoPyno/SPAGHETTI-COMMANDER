@@ -142,7 +142,7 @@ UnitBlueprint {
         CapCost = 0.1,
         Category = 'Defense',
         Classification = 'RULEUC_MiscSupport',
-        FactionName = 'Seraphim',
+        FactionName = 'Aeon',
         Icon = 'land',
         OrderOverrides = {
             RULEUTC_ShieldToggle = {
@@ -160,9 +160,7 @@ UnitBlueprint {
     },
     Intel = {
         VisionRadius = 0,
-    },
-    Interface = {
-        HelpText = '<LOC ssb5301_desc>Shield Wall Section',
+        WaterVisionRadius = 0,
     },
     LifeBarHeight = 0.075,
     LifeBarOffset = 0.55,

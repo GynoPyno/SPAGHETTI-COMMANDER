@@ -90,10 +90,8 @@ UnitBlueprint {
         RadarStealth = true,
         SonarStealth = true,
         VisionRadius = 0,
+        WaterVisionRadius = 0,
         OmniRadius = 1,
-    },
-    Interface = {
-        HelpText = '<LOC sbui2220>Pressure Mine',
     },
     LifeBarHeight = 0.075,
     LifeBarOffset = 0.10,

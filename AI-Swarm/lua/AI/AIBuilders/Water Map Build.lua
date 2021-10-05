@@ -6,6 +6,7 @@ local BasePanicZone, BaseMilitaryZone, BaseEnemyZone = import('/mods/AI-Swarm/lu
 local MaxCapFactory = 0.5 -- 0.5% of all units can be factories (STRUCTURE * FACTORY)
 
 -- WaterMap Builders are just generally outdated, all of this needs a complete rewrite and cleaning.
+-- Add a Watermap Ratio Condition to replace CanPathTo
 
 
 BuilderGroup { BuilderGroupName = 'Swarm Transports - Water Map',                               -- BuilderGroupName, initalized from AIBaseTemplates in "\lua\AI\AIBaseTemplates\"
@@ -138,32 +139,9 @@ BuilderGroup { BuilderGroupName = 'Swarm Land Builders - Water Map',            
     },
 }
 
-BuilderGroup { BuilderGroupName = 'Swarm Factory Builder - Water Map',
+BuilderGroup { 
+    BuilderGroupName = 'Swarm Factory Builder - Water Map',
     BuildersType = 'EngineerBuilder',
-    Builder {
-        BuilderName = 'Swarm Commander Factory Builder Land - Watermap',
-        PlatoonTemplate = 'CommanderBuilder',
-        Priority = 600,
-        BuilderConditions = {
-            { EBC, 'GreaterThanEconStorageRatioSwarm', { 0.05, 0.50}},
-
-            { EBC, 'GreaterThanEconEfficiencyOverTime', { 0.75, 0.9 }},
-
-            { MIBC, 'CanPathToCurrentEnemySwarm', { false, 'LocationType' } },
-
-            { UCBC, 'HaveLessThanUnitsWithCategory', { 3, categories.STRUCTURE * categories.FACTORY * categories.LAND * (categories.TECH1 + categories.TECH2 + categories.TECH3) }},
-        },
-        BuilderType = 'Any',
-        BuilderData = {
-            Construction = {
-            	DesiresAssist = true,
-                Location = 'LocationType',
-                BuildStructures = {
-                   'T1LandFactory',
-                },
-            }
-        }
-    },
 
     Builder {
         BuilderName = 'Swarm Commander Factory Builder Air - Watermap',
@@ -210,30 +188,6 @@ BuilderGroup { BuilderGroupName = 'Swarm Factory Builder - Water Map',
                 Location = 'LocationType',
                 BuildStructures = {
                    'T1LandFactory',
-                },
-            }
-        }
-    },
-
-    Builder {
-        BuilderName = 'Swarm Factory Builder Air - First - Watermap',
-        PlatoonTemplate = 'CommanderBuilder',
-        Priority = 650,
-        BuilderConditions = {
-            { MIBC, 'CanPathToCurrentEnemySwarm', { false, 'LocationType' } },
-
-            { EBC, 'GreaterThanEconStorageRatioSwarm', { 0.05, 0.50}},
-
-            { UCBC, 'HaveLessThanUnitsInCategoryBeingBuilt', { 1, categories.STRUCTURE * categories.FACTORY * categories.AIR * categories.TECH1 }},
-
-            { UCBC, 'HaveLessThanUnitsWithCategory', { 1, categories.STRUCTURE * categories.FACTORY * categories.AIR * (categories.TECH1 + categories.TECH2 + categories.TECH3) }},
-        },
-        BuilderType = 'Any',
-        BuilderData = {
-            Construction = {
-                Location = 'LocationType',
-                BuildStructures = {
-                    'T1AirFactory',
                 },
             }
         }

@@ -68,8 +68,12 @@ tooltipbrewlan0030="Sleduje spotřebu energie. Aktivní dynamicky snižuje dosah
 tooltipbrewlan0031="Přepnout prioritu palby"
 tooltipbrewlan0032="Přepíná prioritu palby na vzdušné cíle a taktické rakety."
 
---Karta Vylepšení Panoptikum
+--Panopticon Enhancement Tab.
 tooltipbrewlan0033="Upravit [Array]"
+
+--Zmara vysoký režim přepínat
+tooltipbrewlan0035="Overextend přepínat"
+tooltipbrewlan0036="Zvyšuje rozsahy přímých požárních zbraní, ale obětuje rychlost pohybu a náklady na energii při aktivní."
 
 --------------------------------------------------------------------------------
 -- Vylepšení Podpůrného Velitele
@@ -201,6 +205,10 @@ srs0219_name="Třída Barwick"
 Unit_Description_BrewLAN_T2S001="Tech 2 námořní konstrukční, opravovací, zajímací, reklamační a mino-pokládací jednotka. Vybavena protileteckou zbraní."
 Unit_Description_BrewLAN_T2S002="Tech 2 námořní konstrukční, opravovací, zajímací, reklamační a mino-pokládací jednotka"
 
+ses0204_desc="Útoku ponorky"
+ses0204_name="Kochrán"
+Unit_Description_BrewLAN_T2S003="Ponořené anti-námořní jednotka. Ozbrojené torpédové trubice, anti-torpédové poplatky a artillery flak."
+
 sea0201_desc="Průzkumný letoun"
 sea0201_name="UX Dračí dáma"
 ssa0201_name="Selia"
@@ -227,7 +235,7 @@ Unit_Description_BrewLAN_T2D007=" Automaticky opravuje, recykluje, asistuje nebo
 Unit_Description_BrewLAN_T2D008=" Automaticky opravuje, recykluje, asistuje nebo zajímá všechny jednotky ve svém operačním dosahu. "
 
 --------------------------------------------------------------------------------
--- Tech 3
+-- Tech 3.
 --------------------------------------------------------------------------------
 
 sair0305="Těžký Bitevník"
@@ -281,21 +289,26 @@ seb3303b_desc="Komplex Vypouštění Družic""
 Unit_Description_BrewLAN_T3B002="Vyrábí a vystřeluje družice."
 
 ability_satellite_uplink="Satelitní Uplink"
-ability_satellite_cap_0="Satellite Kapacita: 0"
-ability_satellite_cap_1="Satellite Kapacita: 1"
-ability_satellite_cap_2="Satellite Kapacita: 2"
-ability_satellite_cap_3="Satellite Kapacita: 3"
-ability_satellite_cap_4="Satellite Kapacita: 4"
-ability_satellite_cap_5="Satellite Kapacita: 5"
-ability_satellite_cap_inf="Satelitní kapacita Neomezená"
+ability_satellite_cap_0="Satelitní kapacita: +0"
+ability_satellite_cap_1="Satelitní kapacita: +1"
+ability_satellite_cap_2="Satelitní kapacita: +2"
+ability_satellite_cap_3="Satelitní kapacita: +3"
+ability_satellite_cap_4="Satelitní kapacita: +4"
+ability_satellite_cap_5="Satelitní kapacita: +5"
+ability_satellite_cap_inf="Satelitní kapacita neomezená"
 
-sea0002_desc="Pozorvací Družice"
-sea0002_name="Hořící Hvězda"
+sea3301_desc="Pozorvací Družice"
+sea3301_name="Hořící Hvězda"
 Unit_Description_BrewLAN_T3A012="Družicový pozorovací systém. Poskytuje vizuální satelitních snímkky z oběžné dráhy. Vyžaduje satelitní uplink pro příjem dat z něj."
 
-sea0003_desc="kontrarozvědky Satellite"
-sea0003_name="Vaxis"
-Unit_Description_BrewLAN_T3A013="Družicový systém kontrarozvědka. Způsobuje velké množství falešných radarových signálů s letovými vlastnostmi vzdušné převahy bojovníků se objeví pod ním. Nemá prostor pro shromažďování informací."
+sea4301_desc="Kontrainteligence satelit"
+sea4301_name="Vaxis"
+Unit_Description_BrewLAN_T3A013="Satelitní kontrainální systém. Způsobuje velké množství falešných radarových signálů s letovými vlastnostmi bojovníků letecké nadřazenosti v tvorbě stráže, aby se objevily pod ním. Nemá schopnost shromažďování inteligence."
+--Ty jsou viděny pouze na cheat menu a wiki
+sea4302_desc="Falešný radarový signál"
+sea4302_name="Asfaux."
+--To je vidět pouze na wiki
+Unit_Description_BrewLAN_T3A014="Falešné radarové signály s letovými vlastnostmi bojovníků letecké nadřazenosti. Zdá se, že šest blipů do radaru a jeden blip do senzorů OMNI."
 
 --alternativy Sniperů
 sel0320_desc="Mobilní Satelitní Uplink"
@@ -417,7 +430,7 @@ srl0320_name="Tulák"
 Unit_Description_BrewLAN_T3L009="Maskovaný mobilní protiletecký raketomet. Musí se demaskovat při útoku."
 
 ssl0320_desc="Mobilní Protiletecká Obrana"
-ssl0320_name="Atha-Ythia"
+ssl0320_name="Atha-Ythia."
 Unit_Description_BrewLAN_T3L020="Mobilní vznášedlo protiletecké a taktické raketové obrany"
 
 seb4303_desc="Protidělostřelecký štít"
@@ -429,8 +442,13 @@ srl0316_name="Agent"
 Unit_Description_BrewLAN_T3L010="Maskovaný mobilní systém utajení. Ukrývá okolní jednotky před radarem a sonarem. Viditelný pouze pro Omni."
 
 srl0311_desc="Mobilní Raketová Platforma"
-srl03ll_name="Hexatron"
+--srl03ll_name="Hexatron"
+srl0311_name="Triseptitron."
 Unit_Description_BrewLAN_T3L011="Mobilní raketomet. Dlouhý čas nabíjení. Navržen na ochromení nepřátelských štítů a taktických protiraketových obran mohutnými salvami."
+
+srl0312_desc="Raketová nádrž"
+srl0312_name="Toxotai."
+Unit_Description_BrewLAN_T3L024="Stealth Tank. Ozbrojený s dvojitým protonovým kanónem, duálním účelem raketového odpalovače a torpédové obrany."
 
 ss0319_desc="Loď Polní Techniky"
 ses0319_name="Třída Patch"
@@ -440,13 +458,13 @@ Unit_Description_BrewLAN_T3S003="Tech 3 námořní konstrukční, opravovací, z
 
 sl0323_desc="Mobilní Taktická Raketová Obrana"
 sal0323_name="Trhač"
-sel0323_name="Trickshot"
+sel0323_name="Trickshot."
 Unit_Description_BrewLAN_T3L014="Mobilní taktická raketová obrana. Ochrana je omezena na operační plochu jednotky."
 
 srl0324_desc="Mobilní Senzorové Pole"
 srl0324_name="Adramelech"
 sal0324_name="Metatron"
-ssl0324_name="Yenesel"
+ssl0324_name="Yenesel."
 Unit_Description_BrewLAN_T3L016="Špičkový zpravodajský systém. Nehybný je viditelný pouze pro omni a poskytuje rozsáhlé radarové a omni pokrytí."
 Unit_Description_BrewLAN_T3L019="Vznášedlo se senzorovým polem. Spotřebovává vysoké množství energie aby fungovalo."
 
@@ -461,9 +479,9 @@ ssb4317_name="Yathesel"
 Unit_Description_BrewLAN_T3B0029="Zařízení radarové rušičky. Vytváří velký počet falešných radarových signálů v rámci své působnosti, což způsobuje rozptýlení a narušuje zaměřění nepřítelem."
 ssa00002_desc="Hologram"
 
-sl0326_desc="Mobilní Air Staging Platform"
+sl0326_desc="Mobilní stagingová platforma"
 sel0326_name="Ptačí hnízdo"
-Unit_Description_BrewLAN_T3L023="Mobilní platforma pro tankování a opravy letadel. Vzduchové hlídky budou automaticky používat platformu."
+Unit_Description_BrewLAN_T3L023="Mobilní platforma pro doplňování a opravy letadel. Air hlídky automaticky používají platformu."
 
 
 --------------------------------------------------------------------------------
@@ -528,28 +546,28 @@ seb3404_desc="Experimentální Senzorová Síť"
 seb3404_name="Panoptikum"
 Unit_Description_BrewLAN_T4B008="Experimentální senzorová síť. Poskytuje viditelnost nepřátelských jednotek ve svém operačním dosahu. Údržba vyžaduje více energie pro každou další sledovanou jednotku. Mobilní a velké jednotky vyžadují více energie ke sledování."
 
-Panopticon_array_slot="řada"
+Panopticon_array_slot="Array."
 Unit_Description_BrewLAN_T4B008_sre="Zvyšuje poloměr radaru."
-Unit_Description_BrewLAN_T4B008_sresre="Zvyšuje radar a omni poloměr."
-Unit_Description_BrewLAN_T4B008_xbndl="Odhalí radar tečky."
-brewlan_panopticon_small_001="Aktivovat radar misky"
-brewlan_panopticon_small_002="Aktivace Marcin misku"
-brewlan_panopticon_small_003="Aktivace Gebauer misku"
-brewlan_panopticon_small_004="Aktivovat radar misky"
-brewlan_panopticon_med_001="Aktivace Chapeau misku"
-brewlan_panopticon_med_002="Aktivace Pankow misku"
-brewlan_panopticon_med_003="Aktivace Mogwai misku"
-brewlan_panopticon_med_004="Aktivace Neutrální misku"
-brewlan_panopticon_xbl_001="Aktivovat Saxon misku"
-brewlan_panopticon_small_001r="Deaktivace Guillaume misku"
-brewlan_panopticon_small_002r="Deaktivace Marcin misku"
-brewlan_panopticon_small_003r="Deaktivace Gebauer misku"
-brewlan_panopticon_small_004r="Deaktivovat radar misky"
-brewlan_panopticon_med_001r="Deaktivace Chapeau misku"
-brewlan_panopticon_med_002r="Deaktivace Pankow misku"
-brewlan_panopticon_med_003r="Deaktivace Mogwai misku"
-brewlan_panopticon_med_004r="Deaktivace Neutrální misku"
-brewlan_panopticon_xbl_001r="Deaktivovat Saxon misku"
+Unit_Description_BrewLAN_T4B008_sresre="Zvyšuje radar a OMNI poloměr."
+Unit_Description_BrewLAN_T4B008_xbndl="Odhaluje radarové blíby."
+brewlan_panopticon_small_001="Aktivujte radarovou misku"
+brewlan_panopticon_small_002="Aktivujte misku Marcin"
+brewlan_panopticon_small_003="Aktivujte misku Gebauer"
+brewlan_panopticon_small_004="Aktivujte radarovou misku"
+brewlan_panopticon_med_001="Aktivovat Chapeau Dish"
+brewlan_panopticon_med_002="Aktivujte misku Pankow"
+brewlan_panopticon_med_003="Aktivujte mogwai jídlo"
+brewlan_panopticon_med_004="Aktivujte neutrální misku"
+brewlan_panopticon_xbl_001="Aktivujte saxonovou misku"
+brewlan_panopticon_small_001r="Deaktivujte misku Guillaume"
+brewlan_panopticon_small_002r="Deaktivujte misku Marcin"
+brewlan_panopticon_small_003r="Deaktivujte misku Gebauer"
+brewlan_panopticon_small_004r="Deaktivovat radarovou misku"
+brewlan_panopticon_med_001r="Deaktivujte chapeau"
+brewlan_panopticon_med_002r="Deaktivujte misku Pankow"
+brewlan_panopticon_med_003r="Deaktivujte mogwai jídlo"
+brewlan_panopticon_med_004r="Deaktivujte neutrální jídlo"
+brewlan_panopticon_xbl_001r="Deaktivujte saské jídlo"
 
 sab0401="Experimentální Letecká Továrna"
 sab0401_name="Stroj Nezávislosti"
@@ -567,6 +585,10 @@ seb2401_desc="Experimentální obrana"
 seb2401_name="Excalibur"
 Unit_Description_BrewLAN_T4B012="Experimentální obranná budova. Vyžaduje vysoké dávky energie při každém výstřelu."
 
-ssl0404_desc="Experimentální Sniper Bot"
-ssl0404_name="Sisha-Ah"
-Unit_Description_BrewLAN_T4L004="Experimentální mobilní sniper bot. Viditelné pouze pro omni zatímco statické a nespouští."
+ssl0404_desc="Experimentální Sniper Bot."
+ssl0404_name="Sisha-Ah."
+Unit_Description_BrewLAN_T4L004="Experimentální mobilní sniper bot. Viditelné pouze pro omni, zatímco statické a ne palby."
+
+ssl0405_desc="Experimentální těžký robot Artropod"
+ssl0405_name="Suedath-Zmara."
+Unit_Description_BrewLAN_T4L005="Masivní experimentální bot. Vybaven předními cefalickými thau děla, nadřízenými hřbetními Sinn Unthe Cannons, ventrální Uall Cavitační torpédo zbraně a carapace namontované olaris Anti-Air Cannons. Uvádí možnost rozšířit vertikálně pro zvýšení rozsahu zbraně a plavat, aby se zapojila povrchové námořní plavidlo, s výkonem ukončit téměř jakýkoliv cíl."

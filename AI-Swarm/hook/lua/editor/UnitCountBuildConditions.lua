@@ -4,29 +4,6 @@ WARN('['..string.gsub(debug.getinfo(1).source, ".*\\(.*.lua)", "%1")..', line:'.
 
 local BASEPOSTITIONSSWARM = {}
 local mapSizeX, mapSizeZ = GetMapSize()
-local PlatoonExists = moho.aibrain_methods.PlatoonExists
-local GetPlatoonUnits = moho.platoon_methods.GetPlatoonUnits
-local IsUnitState = moho.unit_methods.IsUnitState
-local AssignUnitsToPlatoon = moho.aibrain_methods.AssignUnitsToPlatoon
-local GetPlatoonPosition = moho.platoon_methods.GetPlatoonPosition
-local GetBrain = moho.platoon_methods.GetBrain
-local PlatoonCategoryCount = moho.platoon_methods.PlatoonCategoryCount
-
-local SWARMCOPY = table.copy
-local SWARMSORT = table.sort
-local SWARMTIME = GetGameTimeSeconds
-local SWARMFLOOR = math.floor
-local SWARMENTITY = EntityCategoryContains
-local SWARMINSERT = table.insert
-local SWARMCAT = table.cat
-
-local VDist2Sq = VDist2Sq
-local VDist3 = VDist3
-
-local ForkThread = ForkThread
-local ForkTo = ForkThread
-
-local KillThread = KillThread
 
 --{ UCBC, 'ReturnTrue', {} },
 function ReturnTrue(aiBrain)
@@ -38,6 +15,65 @@ end
 function ReturnFalse(aiBrain)
     LOG('** false')
     return false
+end
+
+--            { UCBC, 'UnitsLessInPlatoon', {} },
+function UnitsLessInPlatoonSwarm(aiBrain,PlatoonPlan, num, cat)
+    local SearchCat = cat or categories.ALLUNITS
+    local PlatoonList = aiBrain:GetPlatoonsList()
+    local NumPlatoonUnits = 0
+    local PlatoonFound
+    for Li,Platoon in PlatoonList do
+        --LOG('* UnitsLessInPlatoon: Found Platoon: '..repr(Platoon:GetPlan()))
+        if Platoon:GetPlan() == PlatoonPlan then
+            PlatoonFound = true
+            for Ui,Unit in Platoon:GetPlatoonUnits() or {} do
+                if EntityCategoryContains(cat, Unit) then
+                    NumPlatoonUnits = NumPlatoonUnits + 1
+                end
+            end
+            break
+        end
+    end
+    if not PlatoonFound then
+        --LOG('* UnitsLessInPlatoon: Platoon ('..PlatoonPlan..') not found.')
+        -- in case the platoon is not formed yet, just return false.
+        -- so the platoonformer does not try to add the unit to an non existing platoon
+        return false
+    end
+    if NumPlatoonUnits < num then
+        --LOG('* UnitsLessInPlatoon: TRUE Units in platoon ('..PlatoonPlan..'): '..NumPlatoonUnits..'/'..num)
+        return true
+    end
+    --LOG('* UnitsLessInPlatoon: FALSE Units in platoon('..PlatoonPlan..'): '..NumPlatoonUnits..'/'..num)
+    return false
+end
+
+
+function CDRHealthLessThanSwarm(aiBrain, health)
+    local cdr = aiBrain:GetListOfUnits(categories.COMMAND, false)[1]
+    if cdr.Dead or not cdr.BeenDestroyed or cdr:BeenDestroyed() then
+        return false
+    end
+    local armorPercent = 100 / cdr:GetMaxHealth() * cdr:GetHealth()
+    local shieldPercent = armorPercent
+    if cdr.MyShield then
+        shieldPercent = 100 / cdr.MyShield:GetMaxHealth() * cdr.MyShield:GetHealth()
+    end
+    return math.floor(( armorPercent + shieldPercent ) / 2) < health
+end
+
+function CDRHealthLessThan(aiBrain, health)
+    local cdr = aiBrain:GetListOfUnits(categories.COMMAND, false)[1]
+    if cdr.Dead or not cdr.BeenDestroyed or cdr:BeenDestroyed() then
+        return false
+    end
+    local armorPercent = 100 / cdr:GetMaxHealth() * cdr:GetHealth()
+    local shieldPercent = armorPercent
+    if cdr.MyShield then
+        shieldPercent = 100 / cdr.MyShield:GetMaxHealth() * cdr.MyShield:GetHealth()
+    end
+    return math.floor(( armorPercent + shieldPercent ) / 2) < health
 end
 
 --{ UCBC, 'CanBuildCategorySwarm', { categories.RADAR * categories.TECH1 } },
@@ -241,9 +277,9 @@ end
 function HaveGreaterThanUnitsInCategoryBeingBuiltAtLocationSwarm(aiBrain, locationType, numReq, category, constructionCat)
     local numUnits
     if constructionCat then
-        numUnits = table.getn( GetUnitsBeingBuiltLocation(aiBrain, locationType, category, category + (categories.ENGINEER * categories.MOBILE - categories.STATIONASSISTPOD) + constructionCat) or {} )
+        numUnits = table.getn( GetUnitsBeingBuiltLocationSwarm(aiBrain, locationType, category, category + (categories.ENGINEER * categories.MOBILE - categories.STATIONASSISTPOD) + constructionCat) or {} )
     else
-        numUnits = table.getn( GetUnitsBeingBuiltLocation(aiBrain,locationType, category, category + (categories.ENGINEER * categories.MOBILE - categories.STATIONASSISTPOD) ) or {} )
+        numUnits = table.getn( GetUnitsBeingBuiltLocationSwarm(aiBrain,locationType, category, category + (categories.ENGINEER * categories.MOBILE - categories.STATIONASSISTPOD) ) or {} )
     end
     if numUnits > numReq then
         return true
@@ -511,6 +547,11 @@ function AirStrengthRatioGreaterThan( aiBrain, value )
 end
 
 function AirStrengthRatioLessThan ( aiBrain, value )
+
+    if aiBrain.MyAirRatio <= .01 then
+        return false
+    end
+
 	return aiBrain.MyAirRatio < value
 end
 

@@ -19,6 +19,12 @@ XSL0303 = Class(SLandUnit) {
         Turret_01 = Class(SDFAireauBolter) {},
         RocketBackpack = Class(import('/lua/cybranweapons.lua').CDFRocketIridiumWeapon02) {},
     },
+	
+    StartBeingBuiltEffects = function(self, builder, layer)
+		SLandUnit.StartBeingBuiltEffects(self, builder, layer)
+		self:ForkThread( EffectUtil.CreateSeraphimExperimentalBuildBaseThread, builder, self.OnBeingBuiltEffectsBag )
+    end, 
+	
 }
 
 TypeClass = XSL0303
