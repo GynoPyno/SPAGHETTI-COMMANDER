@@ -258,13 +258,11 @@ function BrewLANNavalEngineerCatFixes(id, bp)
         {'BUILTBYTIER1FACTORY SERAPHIM MOBILE CONSTRUCTION', 'BUILTBYTIER1FACTORY SERAPHIM MOBILE LAND CONSTRUCTION'},
     }
     -- If table doesn't exist, it's 'Land'. If a key doesnt exist, but the table does, that key is false.
-    if bp.General.Classification == 'RULEUC_Factory' and (bp.Physics.BuildOnLayerCaps and not bp.Physics.BuildOnLayerCaps.LAYER_Water or not bp.Physics.BuildOnLayerCaps) then
-        if bp.Economy.BuildableCategory then
-            for i, cat in bp.Economy.BuildableCategory do
-                for index, cattable in cats_table do
-                    if cat == cattable[1] then
-                        bp.Economy.BuildableCategory[i] = cattable[2]
-                    end
+    if bp.Physics and bp.Economy and (bp.Physics.BuildOnLayerCaps and not bp.Physics.BuildOnLayerCaps.LAYER_Water or not bp.Physics.BuildOnLayerCaps) and bp.Economy.BuildableCategory then
+        for i, cat in bp.Economy.BuildableCategory do
+            for index, cattable in cats_table do
+                if cat == cattable[1] then
+                    bp.Economy.BuildableCategory[i] = cattable[2]
                 end
             end
         end
@@ -318,7 +316,7 @@ function BrewLANCategoryChanges(id, bp)
         'BUILTBYTIER3COMMANDER',
         'BUILTBYTIER3FIELD',
         'BUILTBYGANTRY',
-        'BUILTBYHEAVYWALL',
+        'BUILTBYTIER3WALL',
     }
 
     --Make sure the unit exists, and has its table
@@ -508,11 +506,10 @@ end
 function BrewLANHeavyWallBuildList(id, bp)
     if bp.Categories then
         --Check its not hard coded to be buildable.
-        if not table.find(bp.Categories, 'BUILTBYHEAVYWALL')
+        if not table.find(bp.Categories, 'BUILTBYTIER3WALL')
         --and check it's not something we don't want on a wall.
         and not table.find(bp.Categories, 'WALL')
-        and not table.find(bp.Categories, 'HEAVYWALL')
-        and not table.find(bp.Categories, 'MEDIUMWALL')
+        and not table.find(bp.Categories, 'SHIELDWALL')
         and not table.find(bp.Categories, 'MINE')
         --Also make sure it's not going to want to move.
         and table.find(bp.Categories, 'STRUCTURE')
@@ -545,7 +542,7 @@ function BrewLANHeavyWallBuildList(id, bp)
                     end
 
                     if fits.X and fits.Z then
-                        table.insert(bp.Categories, 'BUILTBYHEAVYWALL')
+                        table.insert(bp.Categories, 'BUILTBYTIER3WALL')
                         --This is to prevent it from having the same footprint as the wall
                         --and from it removing all the path blocking of the wall if it dies or gets removed.
                         --It will still remove the blocking from the center of the wall, but that's acceptable.

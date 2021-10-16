@@ -1037,3 +1037,60 @@ All changes by Sean Wheeldon (Balthazar) unless otherwise stated.
   ### 2021-09-29
 
   * Blueprint cleanup; removing redundant `bp.Interface` tables and `OVERLAYDEFENSE` categories.
+
+  ### 2021-10-05
+
+  * Blueprint cleanup:
+    * Removed the remaining redundant `bp.Interface` tables.
+    * Removed instances of `bp.UseOOBTestZoom` values.
+  * Removed other redundant blueprint values from:
+    * `sel3401`
+    * `srl0403`
+    * `seb4401`
+    * `ssb4401`
+    * `ssb4401_small`
+    * `ssb4401_large`
+    * `sas0401`
+  * Minor optimisation to the drone script for the Iyadesu.
+
+  ### 2021-10-06
+
+  * `BrewLANNavalEngineerCatFixes` no longer references a redundant value.
+
+  ### 2021-10-13
+
+  * Purged the `MEDIUMWALL`, `MEDIUMWALLGATE`, `HEAVYWALL`, and `HEAVYWALLGATE` categories.
+  * `SHIELDWALL` is now treated the same way as `WALL` in more situations.
+  * Most cardinal walls will now connect to any other `WALL` category unit.
+  * Renamed `BUILTBYHEAVYWALL` category to `BUILTBYTIER3WALL`.
+  * Cleaned up cardinal wall blueprint data.
+  * CamelCased some cardinal wall blueprint data keys and booled values to allow a simpler script.
+  * Simplified and optimised the cardinal wall script.
+  * The force factory build effect is now tied to the new `FACTORYBUILDERONLY` category instead of `GANTRY` and several wall categories.
+
+  ### 2021-10-14
+
+  * Fixed or added attach points on:
+    * Aeon defence engineers
+    * Triseptitron
+    * Hedgehog
+    * Seraphim T3 torpedo launcher
+  * Slight refactor and optimisation of the Gantry share tech check.
+
+  ### 2021-10-15
+
+  * New mod collection: *BrewLAN: Cursed mods*.
+  * Two new mods: *Igpay Atinlay* and *A Aaa*, which both change game text.
+  * Moved the following to cursed mods:
+    * *Invisible War*
+    * *Knife Fight*
+    * *Scathing Beetles*
+    * *Stonks*
+    * *Sudden Death*
+  * New mod *Z̖a͓̻̯̠͚͠l̘̜̥̟̼g͚̜̗̙̠o̢̳̜͕͙*.
+  * New mod *Spongemock*.
+
+  ### 2021-10-16
+
+  * Refactored LOC mods so that regardless of order, they always have access to the original text.
+  * Pig Latin script no-double-translate check now works with any capitalisation.
