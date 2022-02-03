@@ -1,0 +1,11 @@
+name = "Acu highlight"
+uid = "b2c1ff32-4ab0-4889-8ffa-144bdb31facu"
+version = 3
+copyright = ""
+icon = "/mods/ACUhighlight/icon.png"
+description = "Adds highlighted acu icon"
+author = "4z0t"
+selectable = true
+enabled = true
+exclusive = false
+ui_only = true
