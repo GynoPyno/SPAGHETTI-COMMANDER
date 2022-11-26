@@ -1,0 +1,38 @@
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = 'uaa0310',
+    Audio = {
+        TerrainImpact = Sound {
+            Bank = 'UALDestroy',
+            Cue = 'UAB_Destroy_Lrg_PreDestroy',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+        Destroyed = Sound {
+            Bank = 'UALDestroy',
+            Cue = 'UAL0401_Destroy',
+            Bank = 'UAADestroy',
+            Cue = 'UAA_Destroy_Air',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+        Killed = Sound {
+            Bank = 'UALDestroy',
+            Cue = 'UAB_Destroy_Huge',
+            Bank = 'UAADestroy',
+            Cue = 'UAA_Destroy_Air_Killed',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+    },
+    Display = {
+        Mesh = {
+            IconFadeInZoom = 130,
+            LODs = {
+                {
+                    LODCutoff = 1500,
+                },
+                {
+                    LODCutoff = 4000,
+                },
+            },
+        },
+    },
+}

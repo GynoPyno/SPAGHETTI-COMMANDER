@@ -1,0 +1,11 @@
+UnitBlueprint {
+Merge = true,
+BlueprintId = "xsl0401",    -- ythotha
+    Audio = {
+        Killed = Sound {
+          Bank = 'Memes',
+          Cue = 'Chicken',
+          LodCutoff = 'UnitMove_LodCutoff',
+    },
+	},
+}

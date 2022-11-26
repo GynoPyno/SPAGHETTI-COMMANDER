@@ -33,11 +33,9 @@ AIBrain = Class(UvesoAIBrainClass) {
         self.NumBases = self.NumBases + 1
     end,
 
-    -- For AI Patch V9. remove AI tables and functions on defeat; destroying first Buildmanager then condition manager
+    -- For AI Patch V9. remove AI tables, functions and platoons on defeat
     OnDefeat = function(self)
-        self:SetResult("defeat")
-
-        SetArmyOutOfGame(self:GetArmyIndex())
+        self.Status = 'Defeat'
 
         import('/lua/SimUtils.lua').UpdateUnitCap(self:GetArmyIndex())
         import('/lua/SimPing.lua').OnArmyDefeat(self:GetArmyIndex())
@@ -45,21 +43,19 @@ AIBrain = Class(UvesoAIBrainClass) {
         local function KillArmy()
             local shareOption = ScenarioInfo.Options.Share
 
-            if shareOption == 'ShareUntilDeath' then
+            local function KillWalls()
                 -- Kill all walls while the ACU is blowing up
                 local tokill = self:GetListOfUnits(categories.WALL, false)
-                if tokill and table.getn(tokill) > 0 then
+                if tokill and not table.empty(tokill) then
                     for index, unit in tokill do
                         unit:Kill()
                     end
                 end
             end
 
-            WaitSeconds(10) -- Wait for commander explosion, then transfer units.
-            local selfIndex = self:GetArmyIndex()
-            local shareOption = ScenarioInfo.Options.Share
-            local victoryOption = ScenarioInfo.Options.Victory
-            local BrainCategories = {Enemies = {}, Civilians = {}, Allies = {}}
+            if shareOption == 'ShareUntilDeath' then
+                ForkThread(KillWalls)
+            end
 
             -- AI Start
 
@@ -68,6 +64,11 @@ AIBrain = Class(UvesoAIBrainClass) {
                 SUtils.AISendChat('enemies', ArmyBrains[self:GetArmyIndex()].Nickname, 'ilost')
                 -- Stop the AI from executing AI plans
                 self.RepeatExecution = false
+                -- kill AI BrainConditionMonitorThread
+                if self.ConditionsMonitor.ConditionMonitor then
+                    KillThread(self.ConditionsMonitor.ConditionMonitor)
+                end
+                coroutine.yield(3)
                 -- remove PlatoonHandle from all AI units before we kill / transfer the army
                 local units = self:GetListOfUnits(categories.ALLUNITS - categories.WALL, false)
                 if units and table.getn(units) > 0 then
@@ -78,22 +79,22 @@ AIBrain = Class(UvesoAIBrainClass) {
                                 unit.PlatoonHandle:PlatoonDisbandNoAssign()
                             end
                             IssueStop({unit})
-                            IssueClearCommands({unit})
                         end
                     end
-                end
-                coroutine.yield(3)
-                -- removing AI BrainConditionMonitorThread
-                if self.ConditionsMonitor.ConditionMonitor then
-                    KillThread(self.ConditionsMonitor.ConditionMonitor)
                 end
                 coroutine.yield(3)
                 -- stop AI BuilderManagers
                 if self.BuilderManagers then
                     for k, v in self.BuilderManagers do
-                        v.EngineerManager:SetEnabled(false)
-                        v.FactoryManager:SetEnabled(false)
-                        v.PlatoonFormManager:SetEnabled(false)
+                        if v.EngineerManager then
+                            v.EngineerManager:SetEnabled(false)
+                        end
+                        if v.FactoryManager then
+                            v.FactoryManager:SetEnabled(false)
+                        end
+                        if v.PlatoonFormManager then
+                            v.PlatoonFormManager:SetEnabled(false)
+                        end
                         if v.StrategyManager then
                             v.StrategyManager:SetEnabled(false)
                         end
@@ -105,6 +106,12 @@ AIBrain = Class(UvesoAIBrainClass) {
             end
 
             -- AI End
+
+            WaitSeconds(10) -- Wait for commander explosion, then transfer units.
+            local selfIndex = self:GetArmyIndex()
+            local shareOption = ScenarioInfo.Options.Share
+            local victoryOption = ScenarioInfo.Options.Victory
+            local BrainCategories = {Enemies = {}, Civilians = {}, Allies = {}}
 
             -- Used to have units which were transferred to allies noted permanently as belonging to the new player
             local function TransferOwnershipOfBorrowedUnits(brains)
@@ -135,17 +142,33 @@ AIBrain = Class(UvesoAIBrainClass) {
                     for k, brain in brains do
                         local units = self:GetListOfUnits(categories.ALLUNITS - categories.WALL - categories.COMMAND, false)
                         if units and not table.empty(units) then
-                            TransferUnitsOwnership(units, brain.index)
+                            local givenUnitCount = table.getn(TransferUnitsOwnership(units, brain.index))
+
+                            -- only show message when we actually gift that player some units
+                            if givenUnitCount > 0 then 
+                                Sync.ArmyTransfer = { { from = selfIndex, to = brain.index, reason = "fullshare" } }
+                            end
+
                             WaitSeconds(1)
                         end
                     end
                 end
             end
 
-            -- Sort the destiniation armies by score
+            -- Sort the destiniation brains (armies/players) by rating (and if rating does not exist (such as with regular AI's), by score, after players with positive rating)
             local function TransferUnitsToHighestBrain(brains)
                 if not table.empty(brains) then
-                    table.sort(brains, function(a, b) return a.score > b.score end)
+                    local ratings = ScenarioInfo.Options.Ratings
+                    for i, brain in brains do 
+                        if ratings[brain.Nickname] then
+                            brain.rating = ratings[brain.Nickname]
+                        else 
+                            -- if there is no rating, create a fake negative rating based on score
+                            brain.rating = - (1 / brain.score)
+                        end
+                    end
+                    -- sort brains by rating
+                    table.sort(brains, function(a, b) return a.rating > b.rating end)
                     TransferUnitsToBrain(brains)
                 end
             end
@@ -260,9 +283,15 @@ AIBrain = Class(UvesoAIBrainClass) {
                 -- removing AI BuilderManagers
                 if self.BuilderManagers then
                     for k, v in self.BuilderManagers do
-                        v.EngineerManager:Destroy()
-                        v.FactoryManager:Destroy()
-                        v.PlatoonFormManager:Destroy()
+                        if v.EngineerManager then
+                            v.EngineerManager:Destroy()
+                        end
+                        if v.FactoryManager then
+                            v.FactoryManager:Destroy()
+                        end
+                        if v.PlatoonFormManager then
+                            v.PlatoonFormManager:Destroy()
+                        end
                         if v.StrategyManager then
                             v.StrategyManager:Destroy()
                         end
@@ -302,13 +331,13 @@ AIBrain = Class(UvesoAIBrainClass) {
             end
 
             -- AI End
-
+            
             if self.Trash then
                 self.Trash:Destroy()
             end
         end
 
-        -- the whole KillThread is forked here, so we can continue the game while removing/transfering the dead army
+
         ForkThread(KillArmy)
 
     end,
@@ -318,7 +347,7 @@ AIBrain = Class(UvesoAIBrainClass) {
         UvesoAIBrainClass.OnCreateAI(self, planName)
         local per = ScenarioInfo.ArmySetup[self.Name].AIPersonality
         if string.find(per, 'uveso') then
-            LOG('* AI-Uveso: OnCreateAI() found AI-Uveso  Name: ('..self.Name..') - personality: ('..per..') ')
+            AILog('* AI-Uveso: OnCreateAI() found AI-Uveso  Name: ('..self.Name..') - personality: ('..per..') ')
             self.Uveso = true
         end
     end,

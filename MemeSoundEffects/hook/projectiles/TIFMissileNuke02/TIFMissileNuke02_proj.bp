@@ -1,0 +1,15 @@
+ProjectileBlueprint {  --uef strat missile
+  Merge = true,
+  Audio = {
+    ExistLoop = Sound {
+      Bank = 'Memes',
+      Cue = 'BeeBeeBoop',
+      LodCutoff = 'DefaultLodCutoff',
+    },
+    NukeExplosion = Sound {
+      Bank = 'Memes',
+      Cue = 'Fart',
+      LodCutoff = 'Weapon_LodCutoff',
+    },
+  },
+}

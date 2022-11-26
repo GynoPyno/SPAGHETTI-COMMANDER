@@ -4,7 +4,7 @@ local UCBC = '/lua/editor/UnitCountBuildConditions.lua'
 local MIBC = '/lua/editor/MiscBuildConditions.lua'
 local MABC = '/lua/editor/MarkerBuildConditions.lua'
 local NoRushRadius = ScenarioInfo.norushradius or 30
-local BasePanicZone, BaseMilitaryZone, BaseEnemyZone = import('/mods/AI-Uveso/lua/AI/uvesoutilities.lua').GetDangerZoneRadii()
+local BasePanicZone, BaseMilitaryZone, BaseEnemyZone = import('/mods/AI-Uveso/lua/AI/AITargetManager.lua').GetDangerZoneRadii()
 
 local MaxCapMass = 0.10 -- 10% of all units can be mass extractors (STRUCTURE * MASSEXTRACTION)
 local MaxCapStructure = 0.12                                                    -- 12% of all units can be structures (STRUCTURE -MASSEXTRACTION -DEFENSE -FACTORY)
@@ -182,7 +182,6 @@ BuilderGroup {
         end,
         BuilderConditions = {
             -- Have we the eco to build it ?
-            { EBC, 'GreaterThanEconTrend', { 0.0, 0.0 } }, -- relative income
             { EBC, 'GreaterThanEconStorageRatio', { -9.99, 1.00 } },             -- Ratio from 0 to 1. (1=100%)
             --{ MIBC, 'HasNotParagon', {} },
             -- When do we want to build this ?
@@ -245,7 +244,6 @@ BuilderGroup {
         end,
         BuilderConditions = {
             -- Have we the eco to build it ?
-            { EBC, 'GreaterThanEconTrend', { 0.0, 0.0 } }, -- relative income
             { EBC, 'GreaterThanEconStorageRatio', { -9.99, 1.00 } },             -- Ratio from 0 to 1. (1=100%)
             --{ MIBC, 'HasNotParagon', {} },
             -- When do we want to build this ?
@@ -278,12 +276,12 @@ BuilderGroup {
         end,
         BuilderConditions = {
             -- Have we the eco to build it ?
-            { EBC, 'GreaterThanEconTrend', { 0.0, 0.0 } }, -- relative income
             { EBC, 'GreaterThanEconStorageRatio', { -9.99, 1.00 } },             -- Ratio from 0 to 1. (1=100%)
             --{ MIBC, 'HasNotParagon', {} },
             -- When do we want to build this ?
             { MABC, 'CanBuildOnMass', { 'LocationType', 1000, -500, 1, 0, 'AntiSurface', 1 }}, -- LocationType, distance, threatMin, threatMax, threatRadius, threatType, maxNum
             -- Don't build it if...
+            { UCBC, 'PoolGreaterAtLocation', { 'LocationType', 3, categories.ENGINEER * categories.TECH1 - categories.STATIONASSISTPOD }},
             --{ UCBC, 'GreaterThanGameTimeSeconds', { 60*30 } },
         },
         BuilderType = 'Any',
@@ -388,7 +386,7 @@ BuilderGroup {
                 AdjacencyCategory = categories.STRUCTURE * categories.ENERGYPRODUCTION * categories.TECH3,
                 AdjacencyDistance = 50,
                 AvoidCategory = categories.MASSFABRICATION,
-                maxUnits = 1,
+                maxUnits = 0,
                 maxRadius = 15,
                 BuildClose = true,
                 BuildStructures = {

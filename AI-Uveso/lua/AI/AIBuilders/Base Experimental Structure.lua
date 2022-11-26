@@ -13,7 +13,7 @@ BuilderGroup {
         BuilderName = 'U4 Paragon 1st mass40',
         PlatoonTemplate = 'T3EngineerBuilderNoSUB',
         Priority = 2000,
-        DelayEqualBuildPlattons = {'Paragon', 60},
+        DelayEqualBuildPlattons = {'Paragon', 120},
         PriorityFunction = function(self, aiBrain)
             if aiBrain.PriorityManager.HasParagon then
                 return 0
@@ -28,9 +28,9 @@ BuilderGroup {
             --{ MIBC, 'HasNotParagon', {} },
             { EBC, 'GreaterThanEconStorageRatio', { 0.40, 0.99}}, -- Ratio from 0 to 1. (1=100%)
             -- When do we want to build this ?
+            { MIBC, 'ItsTimeForGameender', {} },
             { UCBC, 'CanBuildCategory', { categories.STRUCTURE * categories.EXPERIMENTAL * categories.ECONOMIC } },
             { UCBC, 'HaveLessThanUnitsInCategoryBeingBuilt', { 1, categories.STRUCTURE * categories.EXPERIMENTAL * categories.ECONOMIC }},
-            { UCBC, 'GreaterThanGameTimeSeconds', { 60*20 } },
             -- Respect UnitCap
         },
         BuilderType = 'Any',
@@ -39,7 +39,7 @@ BuilderGroup {
                 AdjacencyCategory = categories.STRUCTURE * categories.SHIELD,
                 AdjacencyDistance = 120,
                 AvoidCategory = categories.ENERGYPRODUCTION * categories.EXPERIMENTAL,
-                maxUnits = 1,
+                maxUnits = 0,
                 maxRadius = 40,
                 BuildClose = false,
                 BuildStructures = {
@@ -53,7 +53,7 @@ BuilderGroup {
         BuilderName = 'U4 Paragon 1st 35min',
         PlatoonTemplate = 'T3EngineerBuilderNoSUB',
         Priority = 2000,
-        DelayEqualBuildPlattons = {'Paragon', 60},
+        DelayEqualBuildPlattons = {'Paragon', 120},
         PriorityFunction = function(self, aiBrain)
             if aiBrain.PriorityManager.HasParagon then
                 return 0
@@ -68,9 +68,9 @@ BuilderGroup {
             { EBC, 'GreaterThanEconStorageRatio', { 0.01, 0.99}}, -- Ratio from 0 to 1. (1=100%)
             --{ MIBC, 'HasNotParagon', {} },
             -- When do we want to build this ?
+            { MIBC, 'ItsTimeForGameender', {} },
             { UCBC, 'CanBuildCategory', { categories.STRUCTURE * categories.EXPERIMENTAL * categories.ECONOMIC } },
             { UCBC, 'HaveLessThanUnitsInCategoryBeingBuilt', { 1, categories.STRUCTURE * categories.EXPERIMENTAL * categories.ECONOMIC }},
-            { UCBC, 'GreaterThanGameTimeSeconds', { 60*35 } },
             -- Respect UnitCap
         },
         BuilderType = 'Any',
@@ -79,7 +79,7 @@ BuilderGroup {
                 AdjacencyCategory = categories.STRUCTURE * categories.SHIELD,
                 AdjacencyDistance = 120,
                 AvoidCategory = categories.ENERGYPRODUCTION * categories.EXPERIMENTAL,
-                maxUnits = 1,
+                maxUnits = 0,
                 maxRadius = 40,
                 BuildClose = false,
                 BuildStructures = {
@@ -93,7 +93,7 @@ BuilderGroup {
         BuilderName = 'U4 Paragon 1st HighTrend',
         PlatoonTemplate = 'T3EngineerBuilderNoSUB',
         Priority = 2000,
-        DelayEqualBuildPlattons = {'Paragon', 60},
+        DelayEqualBuildPlattons = {'Paragon', 120},
         PriorityFunction = function(self, aiBrain)
             if aiBrain.PriorityManager.HasParagon then
                 return 0
@@ -108,6 +108,7 @@ BuilderGroup {
             --{ MIBC, 'HasNotParagon', {} },
             { EBC, 'GreaterThanEconTrend', { 60.0, 900.0 } },                      -- relative income
             -- When do we want to build this ?
+            { MIBC, 'ItsTimeForGameender', {} },
             { UCBC, 'CanBuildCategory', { categories.STRUCTURE * categories.EXPERIMENTAL * categories.ECONOMIC } },
             { UCBC, 'HaveLessThanUnitsInCategoryBeingBuilt', { 1, categories.STRUCTURE * categories.EXPERIMENTAL * categories.ECONOMIC }},
             -- Respect UnitCap
@@ -118,7 +119,7 @@ BuilderGroup {
                 AdjacencyCategory = categories.STRUCTURE * categories.SHIELD,
                 AdjacencyDistance = 120,
                 AvoidCategory = categories.ENERGYPRODUCTION * categories.EXPERIMENTAL,
-                maxUnits = 1,
+                maxUnits = 0,
                 maxRadius = 40,
                 BuildClose = false,
                 BuildStructures = {
@@ -132,7 +133,7 @@ BuilderGroup {
         BuilderName = 'U4 Paragon 2nd',
         PlatoonTemplate = 'T3EngineerBuilder',
         Priority = 2000,
-        DelayEqualBuildPlattons = {'Paragon', 60},
+        DelayEqualBuildPlattons = {'Paragon', 120},
         PriorityFunction = function(self, aiBrain)
             if aiBrain.PriorityManager.HasParagon then
                 return 2000
@@ -146,6 +147,7 @@ BuilderGroup {
             -- Have we the eco to build it ?
             --{ MIBC, 'HasParagon', {} },
             -- When do we want to build this ?
+            { MIBC, 'ItsTimeForGameender', {} },
             { UCBC, 'HaveLessThanUnitsWithCategory', { 2, categories.STRUCTURE * categories.EXPERIMENTAL * categories.ECONOMIC}},
             { UCBC, 'CanBuildCategory', { categories.STRUCTURE * categories.EXPERIMENTAL * categories.ECONOMIC } },
             { UCBC, 'HaveGreaterThanUnitsWithCategory', { 0, categories.STRUCTURE * categories.EXPERIMENTAL * categories.ECONOMIC}},
@@ -158,7 +160,7 @@ BuilderGroup {
                 AdjacencyCategory = categories.STRUCTURE * categories.SHIELD,
                 AdjacencyDistance = 120,
                 AvoidCategory = categories.ENERGYPRODUCTION * categories.EXPERIMENTAL,
-                maxUnits = 1,
+                maxUnits = 0,
                 maxRadius = 40,
                 BuildClose = false,
                 BuildStructures = {
@@ -172,7 +174,7 @@ BuilderGroup {
         BuilderName = 'U4 Paragon 3nd',
         PlatoonTemplate = 'T3EngineerBuilder',
         Priority = 2000,
-        DelayEqualBuildPlattons = {'Paragon', 60},
+        DelayEqualBuildPlattons = {'Paragon', 120},
         PriorityFunction = function(self, aiBrain)
             if aiBrain.PriorityManager.HasParagon then
                 return 2000
@@ -185,6 +187,7 @@ BuilderGroup {
             -- Have we the eco to build it ?
             --{ MIBC, 'HasParagon', {} },
             -- When do we want to build this ?
+            { MIBC, 'ItsTimeForGameender', {} },
             { UCBC, 'CanBuildCategory', { categories.STRUCTURE * categories.EXPERIMENTAL * categories.ECONOMIC } },
             { UCBC, 'HaveLessThanUnitsWithCategory', { 3, categories.STRUCTURE * categories.EXPERIMENTAL * categories.ECONOMIC}},
             { UCBC, 'HaveGreaterThanUnitsWithCategory', { 1, categories.STRUCTURE * categories.EXPERIMENTAL * categories.ECONOMIC}},
@@ -197,7 +200,7 @@ BuilderGroup {
                 AdjacencyCategory = categories.STRUCTURE * categories.SHIELD,
                 AdjacencyDistance = 200,
                 AvoidCategory = categories.ENERGYPRODUCTION * categories.EXPERIMENTAL,
-                maxUnits = 1,
+                maxUnits = 0,
                 maxRadius = 40,
                 BuildClose = false,
                 BuildStructures = {

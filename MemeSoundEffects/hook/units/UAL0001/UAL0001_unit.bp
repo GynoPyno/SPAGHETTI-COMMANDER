@@ -1,0 +1,10 @@
+UnitBlueprint {
+Merge = true,
+BlueprintId = "ual0001",    -- aeon com
+    Audio = {
+        Killed = Sound {
+            Bank = 'Memes',
+            Cue = 'EMOTIONALDAMAGE',
+    },
+	},
+}

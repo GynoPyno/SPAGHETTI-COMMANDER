@@ -1,0 +1,14 @@
+name = "Silly Walks"
+uid = "e2f77024-4947-4b60-a331-73e7c361b79a--V7"
+version = 7
+description = "Units have silly walk animations. (no balance changes) WIP"
+author = "Madmax"
+icon = "/mods/Silly Walks/Icon.png"
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+requires = { }
+conflicts = { }
+before = { }
+after = { }

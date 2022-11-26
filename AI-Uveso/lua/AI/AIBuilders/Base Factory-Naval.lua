@@ -3,7 +3,7 @@ local UCBC = '/lua/editor/UnitCountBuildConditions.lua'
 local EBC = '/lua/editor/EconomyBuildConditions.lua'
 local MIBC = '/lua/editor/MiscBuildConditions.lua'
 
-local BasePanicZone, BaseMilitaryZone, BaseEnemyZone = import('/mods/AI-Uveso/lua/AI/uvesoutilities.lua').GetDangerZoneRadii()
+local BasePanicZone, BaseMilitaryZone, BaseEnemyZone = import('/mods/AI-Uveso/lua/AI/AITargetManager.lua').GetDangerZoneRadii()
 
 local MaxCapFactory = 0.024 -- 2.4% of all units can be factories (STRUCTURE * FACTORY)
 local MaxCapStructure = 0.12                                                    -- 12% of all units can be structures (STRUCTURE -MASSEXTRACTION -DEFENSE -FACTORY)
@@ -21,7 +21,7 @@ BuilderGroup {
         DelayEqualBuildPlattons = {'Factories', 3},
         BuilderConditions = {
             { UCBC, 'CheckBuildPlattonDelay', { 'Factories' }},
-            { MIBC, 'IsNavalExpansionsAllowed', {} },
+            { MIBC, 'IsNavalExpansionsAllowed', {} }, -- check for naval base count and map water ratio > 20%
             -- Have we the eco to build it ?
             { EBC, 'GreaterThanEconStorageRatio', { 0.01, 0.01}}, -- Ratio from 0 to 1. (1=100%)
             { EBC, 'GreaterThanEconIncome',  { 0.8, 0.1}}, -- Absolut Base income
@@ -34,6 +34,7 @@ BuilderGroup {
             Construction = {
                 Location = 'LocationType',
                 BuildStructures = {
+                    'T1NavalDefense',
                     'T1SeaFactory',
                 },
             }
@@ -46,7 +47,7 @@ BuilderGroup {
         DelayEqualBuildPlattons = {'Factories', 3},
         BuilderConditions = {
             { UCBC, 'CheckBuildPlattonDelay', { 'Factories' }},
-            { MIBC, 'IsNavalExpansionsAllowed', {} },
+            { MIBC, 'IsNavalExpansionsAllowed', {} }, -- check for naval base count and map water ratio > 20%
             -- Have we the eco to build it ?
             { EBC, 'GreaterThanEconStorageRatio', { 0.01, 0.01}}, -- Ratio from 0 to 1. (1=100%)
             { EBC, 'GreaterThanEconIncome',  { 0.8, 0.1}}, -- Absolut Base income
@@ -59,6 +60,7 @@ BuilderGroup {
             Construction = {
                 Location = 'LocationType',
                 BuildStructures = {
+                    'T1NavalDefense',
                     'T1SeaFactory',
                 },
             }
@@ -74,7 +76,7 @@ BuilderGroup {
         DelayEqualBuildPlattons = {'Factories', 3},
         BuilderConditions = {
             { UCBC, 'CheckBuildPlattonDelay', { 'Factories' }},
-            { MIBC, 'IsNavalExpansionsAllowed', {} },
+            { MIBC, 'IsNavalExpansionsAllowed', {} }, -- check for naval base count and map water ratio > 20%
             -- Have we the eco to build it ?
             { EBC, 'GreaterThanEconStorageRatio', { 0.05, 1.00 } },             -- Ratio from 0 to 1. (1=100%)
             { EBC, 'GreaterThanEconTrend', { 0.0, 0.0 } }, -- relative income
@@ -93,6 +95,7 @@ BuilderGroup {
                 LocationRadius = 90,
                 Location = 'LocationType',
                 BuildStructures = {
+                    'T1NavalDefense',
                     'T1SeaFactory',
                 },
             }
@@ -109,7 +112,7 @@ BuilderGroup {
         DelayEqualBuildPlattons = {'Factories', 3},
         BuilderConditions = {
             { UCBC, 'CheckBuildPlattonDelay', { 'Factories' }},
-            { MIBC, 'IsNavalExpansionsAllowed', {} },
+            { MIBC, 'IsNavalExpansionsAllowed', {} }, -- check for naval base count and map water ratio > 20%
             -- Have we the eco to build it ?
             { EBC, 'GreaterThanEconTrend', { 0.0, 0.0 } }, -- relative income
             { EBC, 'GreaterThanEconStorageRatio', { 0.30, 0.99}}, -- Ratio from 0 to 1. (1=100%)
@@ -125,6 +128,7 @@ BuilderGroup {
                 LocationRadius = 90,
                 Location = 'LocationType',
                 BuildStructures = {
+                    'T1NavalDefense',
                     'T1SeaFactory',
                 },
             }
@@ -141,7 +145,7 @@ BuilderGroup {
         DelayEqualBuildPlattons = {'Factories', 3},
         BuilderConditions = {
             { UCBC, 'CheckBuildPlattonDelay', { 'Factories' }},
-            { MIBC, 'IsNavalExpansionsAllowed', {} },
+            { MIBC, 'IsNavalExpansionsAllowed', {} }, -- check for naval base count and map water ratio > 20%
             -- Have we the eco to build it ?
             { EBC, 'GreaterThanEconStorageRatio', { 0.35, 1.00 } },             -- Ratio from 0 to 1. (1=100%)
             { EBC, 'GreaterThanEconTrend', { 0.0, 0.0 } }, -- relative income
@@ -158,6 +162,7 @@ BuilderGroup {
                 LocationRadius = 90,
                 Location = 'LocationType',
                 BuildStructures = {
+                    'T1NavalDefense',
                     'T1SeaFactory',
                 },
             }
