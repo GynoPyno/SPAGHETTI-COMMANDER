@@ -1,6 +1,6 @@
 name = "Disperse Move"
-uid = "Machd6c5-cd5c-4e34-b6cc-11503ed5e2de"
-version = 14
+uid = "Machd6c5-cd5c-4e34-b6cc-11503ed5e2dd"
+version = 13
 description = "Adds a Disperse Move command that can be bound to a hotkey. Works like Spread Move, but only gives 1 order to each unit, evenly distributing them to their closest orders individually."
 icon         = "/mods/Disperse Move/mod_icon.png"
 author = "Mach"

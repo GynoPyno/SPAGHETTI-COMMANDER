@@ -414,7 +414,6 @@ function DisperseMove()
 
 
             -- Repeat this loop and search for more mixable order series.
-        end
 		   
 
 

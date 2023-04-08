@@ -1,0 +1,10 @@
+name = "Moving on up"
+version = 5
+copyright = "Biscotti"
+author = "Biscotti"
+description = "3 year anniversary edition. Each time you upgrade ACU you will hear a classic 90s tune. UI/Audio only mod."
+url = "https://github.com/TakesTheBiscuit/faf_movingOnUP"
+uid = "de7a2946-8bcc-11ea-ac25-0242ac140009"
+icon = "/mods/faf_movingOnUP/modicon.jpg"
+exclusive = false
+ui_only = true
