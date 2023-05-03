@@ -117,7 +117,6 @@ UnitBlueprint {
             AttachBone = 'MissileDetector',
         },
         ArmorType = 'Light',
-        EconomyThreatLevel = 3,
         Health = 7215,
         MaxHealth = 7215,
         RegenRate = 5,
@@ -194,8 +193,6 @@ UnitBlueprint {
         SizeZ = 2,
     },
     General = {
-        Category = 'Bomber',
-        Classification = 'RULEUC_MilitaryAircraft',
         CommandCaps = {
             RULEUCC_Attack = true,
             RULEUCC_CallTransport = true,
@@ -214,12 +211,10 @@ UnitBlueprint {
                 helpText = 'toggle_stealth_personal',
             },
         },
-        TechLevel = 'RULEUTL_Secret',
         ToggleCaps = {
             RULEUTC_StealthToggle = true,
         },
         UnitName = '<LOC sra0314_name>Sanguine Tyrant',
-        UnitWeight = 1,
     },
     Intel = {
         RadarRadius = 65,

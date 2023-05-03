@@ -21,22 +21,14 @@ SSL0403 = Class(SConstructionUnit) {
         self:CreateIdleEffects()
         self:AddBuildRestriction(categories.SELECTABLE)
         self.Pods = { }
-        local pod = {
-            PodAttachpoint = 'AttachSpecial0',
-            PodName = 'Pod',
-            PodUnitID = 'SSA0001',
-            Entity = {},
-            Active = false,
-        }
         for i = 1, 8 do
-            self.Pods[i] = {}
-            for k, v in pod do
-                if k == "PodAttachpoint" or k == "PodName" then
-                    self.Pods[i][k] = v .. tostring(i)
-                else
-                    self.Pods[i][k] = v
-                end
-            end
+            self.Pods[i] = {
+                PodUnitID = 'ssa0001',
+                Entity = {},
+                Active = false,
+            }
+            self.Pods[i].PodAttachpoint = 'AttachSpecial0'..i
+            self.Pods[i].PodName = 'Pod'..i
         end
     end,
 
@@ -104,8 +96,8 @@ SSL0403 = Class(SConstructionUnit) {
     end,
 
     CheckBuildRestrictionsAllow = function(self, WorkID)
-        local Restrictions = ScenarioInfo.Options.RestrictedCategories
-        if table.getn(Restrictions or {}) == 0 then
+        local Restrictions = ScenarioInfo.Options.RestrictedCategories or {}
+        if not next(Restrictions) then
             return true
         elseif VersionIsFAF then
             return not import('/lua/game.lua').IsRestricted(WorkID)

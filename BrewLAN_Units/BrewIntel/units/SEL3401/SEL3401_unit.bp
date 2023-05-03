@@ -5,7 +5,7 @@ UnitBlueprint {
     Abilities = {
         TargetLocation = {
             bitmapId = 'skry-target',
-            helpText = 'scry_spy_target',
+            helpText = 'scanarea',
         },
     },
     SpecialAbilities = { --For FAF Nomads compatibility
@@ -43,7 +43,6 @@ UnitBlueprint {
     },
     CollisionOffsetY = -0.2,
     Defense = {
-        EconomyThreatLevel = 50,
         ArmorType = 'Experimental',
         Health = 5250,
         MaxHealth = 5250,
@@ -143,8 +142,6 @@ UnitBlueprint {
         SizeZ = 6,
     },
     General = {
-        Category = 'Experimental',
-        Classification = 'RULEUC_Sensor',
         CommandCaps = {
             RULEUCC_Guard = true,
             RULEUCC_Move = true,
@@ -161,12 +158,10 @@ UnitBlueprint {
             },
         },
         SelectionPriority = 4,
-        TechLevel = 'RULEUTL_Experimental',
         ToggleCaps = {
             RULEUTC_IntelToggle = true,
         },
         UnitName = '<LOC sel3401_name>Teatut',
-        UnitWeight = 1,
     },
     Intel = {
         BlipRadarRadius = 625,
@@ -187,9 +182,9 @@ UnitBlueprint {
         MaxSpeed = 2.25,
         MaxSpeedReverse = 1.75,
         MaxSteerForce = 2.5,
-        MeshExtentsX = 1,
-        MeshExtentsY = 1.5,
-        MeshExtentsZ = 1.25,
+        MeshExtentsX = 2.4,
+        MeshExtentsY = 3,
+        MeshExtentsZ = 4.2,
         MotionType = 'RULEUMT_AmphibiousFloating',
         TurnRate = 60,
         DishTurnSpeed = 10,

@@ -89,7 +89,7 @@ UnitBlueprint {
             Level5 = 10,
         },
     },
-    BuildIconSortPriority = 14,
+    BuildIconSortPriority = 13,
     Categories = {
         'SELECTABLE',
         'BUILTBYTIER2FACTORY',
@@ -105,7 +105,7 @@ UnitBlueprint {
         'RESEARCHLOCKED',
     },
     Defense = {
-        AirThreatLevel = 33,
+        AirThreatLevel = 15,
         ArmorType = 'Light',
         Health = 750,
         MaxHealth = 750,
@@ -153,6 +153,7 @@ UnitBlueprint {
         BuildCostEnergy = 6000,
         BuildCostMass = 200,
         BuildTime = 1600,
+        ResearchMultEnergy = 0.5,
     },
     Footprint = {
         MaxSlope = 0.25,
@@ -160,8 +161,6 @@ UnitBlueprint {
         SizeZ = 1,
     },
     General = {
-        Category = 'Fighter',
-        Classification = 'RULEUC_MilitaryAircraft',
         CommandCaps = {
             RULEUCC_Attack = true,
             RULEUCC_CallTransport = true,
@@ -174,9 +173,7 @@ UnitBlueprint {
         },
         FactionName = 'Cybran',
         Icon = 'air',
-        TechLevel = 'RULEUTL_Advanced',
         UnitName = '<LOC sra0212_name>Dioscuri',
-        UnitWeight = 1,
     },
     Intel = {
         VisionRadius = 28,

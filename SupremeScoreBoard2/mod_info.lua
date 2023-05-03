@@ -1,6 +1,6 @@
 name         = "Supreme Score Board2"
-version      = 14
-uid          = "RIGOMATE-a1e2-c4t4-scfa-ssbmod-v0140"
+version      = 16
+uid          = "RIGOMATE-a1e2-c4t4-scfa-ssbmod-v0160"
 author       = "HUSSAR"
 copyright    = "HUSSAR, free to re-use code as long as you credit me in your mod"
 contributors = "Anihilnine, Crotalus, Speed2, MaCielPL, Nojoke, Petricpwnz, Nexus_of_Reality, Col_Walter_Kurtz, PsychoBoB, BlackYps, Strogo, BenDover, Rigomate"
@@ -69,6 +69,13 @@ after = {
 -]] 
 
 history = [[
+
+### Version 16 - April 30, 2023
+- Adjust time settings options for auto toggle
+
+### Version 15 - April 24, 2023
+- Fix: Automatic toggling now works for every column
+- Feature: After clicking a column to show that, e.g mass income. The automatic toggling will start again after the time specified in the options  
 
 ### Version 14 - April 07, 2023
 - Feature: Show Mass Sorage instead of showing Total Mass twice

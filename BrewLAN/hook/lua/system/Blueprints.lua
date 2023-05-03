@@ -8,7 +8,7 @@ do  -- In a do block so no one else can mess with the locals
 local OldModBlueprints = ModBlueprints
 local BrewLANPath
 
-do  -- In do block because we don't need the Get function after this
+if _VERSION == "Lua 5.0.1" then
     local GetBrewLANPath = function()
         for i, mod in __active_mods do
             if mod.name == "BrewLAN" then
@@ -19,59 +19,101 @@ do  -- In do block because we don't need the Get function after this
     BrewLANPath = GetBrewLANPath()
 end
 
+local function HasRXCat(bp, exp)
+    if not bp.Categories then return end
+    for i, cat in ipairs(bp.Categories) do
+        if cat:find(exp) then return i end
+    end
+end
+
+local function HasCat(bp, cat) return bp.Categories and table.find(bp.Categories, cat) end
+local function HasBuildCat(bp)         return HasRXCat(bp, 'BUILTBY') end
+local function HasEngineerBuildCat(bp) return HasRXCat(bp, 'BUILTBY.*ENGINEER') end
+local function HasFieldBuildCat(bp)    return HasRXCat(bp, 'BUILTBY.*FIELD') end
+local function HasFactoryBuildCat(bp)  return HasRXCat(bp, 'BUILTBY.*FACTORY') end
+local function HasACUBuildCat(bp)      return HasRXCat(bp, 'BUILTBY.*COMMANDER') end
+local function GetTechLevel(bp) return
+    HasCat(bp, 'TECH1') and 1 or
+    HasCat(bp, 'TECH2') and 2 or
+    HasCat(bp, 'TECH3') and 3 or
+    HasCat(bp, 'EXPERIMENTAL') and 4
+end
+
 function ModBlueprints(all_blueprints)
     OldModBlueprints(all_blueprints)
 
-    do
-        local real_categories = {}
-        local Gantries = {}
+    local real_categories = {}
+    local Gantries = {}
 
-        for id, bp in all_blueprints.Unit do
-            BrewLANSanityChecks(id, bp)
-            --Category processing
-            BrewLANCategoryChanges(id, bp)
-            BrewLANGlobalCategoryAdditions(id, bp)
-            --Data for future
-            BrewLANGetRealCategories(id, bp, real_categories)
-            BrewLANGetListOfGantries(id, bp, Gantries)
-        end
+    for id, bp in all_blueprints.Unit do
+        BrewLANSanityChecks(id, bp)
+        --Category processing
+        BrewLANCategoryChanges(id, bp)
+        BrewLANGlobalCategoryAdditions(id, bp)
+        --Data for future
+        BrewLANGetRealCategories(id, bp, real_categories)
+        BrewLANAddToGantryList(id, bp, Gantries)
+    end
 
-        -- One off scripts with no internal loop
-        BrewLANRoundGalacticCollosusHealth(all_blueprints.Unit.ual0401)
+    -- One off scripts with no internal loop
+    BrewLANRoundGalacticCollosusHealth(all_blueprints.Unit.ual0401)
 
-        BrewLANBuildCatChanges(all_blueprints.Unit, real_categories)
-        UpgradeableToBrewLAN(all_blueprints.Unit)
-        BrewLANMatchBalancing(all_blueprints.Unit)
+    BrewLANBuildCatChanges(all_blueprints.Unit, real_categories)
+    BrewLANBuildCatChangesAI(all_blueprints.Unit, real_categories)
+    UpgradeableToBrewLAN(all_blueprints.Unit)
+    BrewLANMatchBalancing(all_blueprints.Unit)
 
-        BrewLANFAFExclusiveChanges(all_blueprints)
+    BrewLANFAFExclusiveChanges(all_blueprints)
 
-        --BrewLANChangesForDominoModSupport(all_blueprints.Unit)
+    --BrewLANChangesForDominoModSupport(all_blueprints.Unit)
 
-        --Eventually refactor it this way to speed up loading
-        for id, bp in all_blueprints.Unit do
+    for id, bp in all_blueprints.Unit do
 
-            --Build Category processing
-            BrewLANNavalEngineerCatFixes(id, bp)
+        BrewLANNavalEngineerCatFixes(id, bp)
 
-            BrewLANGantryBuildList(id, bp, Gantries)
-            BrewLANGantryTechShareCheck(id, bp)
-            BrewLANHeavyWallBuildList(id, bp)
+        -- Specific unit changes
+        BrewLANTorpedoBomberWaterLanding(id, bp)
+        BrewLANNavalShields(id, bp)
+        BrewLANSatelliteUplinkForVanillaUnits(id, bp)
 
-            -- Specific unit changes
-            BrewLANTorpedoBomberWaterLanding(id, bp)
-            BrewLANNavalShields(id, bp)
-            BrewLANSatelliteUplinkForVanillaUnits(id, bp)
+        --Build Category processing
+        BrewLANGantryBuildList(id, bp, Gantries)
+        BrewLANGantryTechShareCheck(id, bp)
+        BrewLANHeavyWallBuildList(id, bp)
+        BrewLANNavalEngineersBuildList(id, bp)
 
-            -- Specific characteristic changes
-            BrewLANBomberDamageType(id, bp)
-            BrewLANMegalithEggs(id, bp, all_blueprints.Unit, all_blueprints.Unit.xrl0403, all_blueprints.Unit.srl0000)
+        -- Specific characteristic changes
+        BrewLANBomberDamageType(id, bp)
+        BrewLANMegalithEggs(id, bp, all_blueprints.Unit, all_blueprints.Unit.xrl0403, all_blueprints.Unit.srl0000)
 
-            --BrewLANExtractFrozenMeshBlueprint(id, bp)
+        --BrewLANExtractFrozenMeshBlueprint(id, bp)
+    end
 
-            BrewLANGenerateFootprintDummy(id, bp, all_blueprints.Unit)
-        end
+    BrewLANGenerateFootprintDummyUnits(all_blueprints.Unit)
+    BrewLANRelativisticLinksUpdate(all_blueprints)
+end
 
-        BrewLANRelativisticLinksUpdate(all_blueprints)
+function WikiBlueprints(all_blueprints)
+    local Gantries = {}
+    for id, bp in pairs(all_blueprints.Unit) do
+        BrewLANAddToGantryList(id, bp, Gantries)
+    end
+
+    all_blueprints.Unit.sab0401.Economy.BuildableCategory = {'BUILTBYEXPERIMENTALFACTORY AEON AIR', 'BUILTBYIENGINE AIR'}
+    all_blueprints.Unit.srb0401.Economy.BuildableCategory = {'BUILTBYEXPERIMENTALFACTORY CYBRAN LAND', 'BUILTBYARTHROLAB LAND'}
+    all_blueprints.Unit.ssb0401.Economy.BuildableCategory = {'BUILTBYEXPERIMENTALFACTORY SERAPHIM NAVAL', 'BUILTBYSOUIYA NAVAL'}
+
+    BrewLANBuildCatChanges(all_blueprints.Unit)
+    UpgradeableToBrewLAN(all_blueprints.Unit)
+    BrewLANMatchBalancing(all_blueprints.Unit)
+
+    for id, bp in pairs(all_blueprints.Unit) do
+        BrewLANNavalShields(id, bp)
+        --BrewLANMegalithEggs(id, bp, all_blueprints.Unit, all_blueprints.Unit.xrl0403, all_blueprints.Unit.srl0000)  -- Wont do anything for the wiki since it checks Megalith exist first.
+        BrewLANSatelliteUplinkForVanillaUnits(id, bp)
+        BrewLANGantryBuildList(id, bp, Gantries)
+        BrewLANHeavyWallBuildList(id, bp)
+        BrewLANNavalEngineersBuildList(id, bp)
     end
 end
 
@@ -115,7 +157,6 @@ function BrewLANSanityChecks(id, bp)
             bp.Physics.MotionType = 'RULEUMT_None'
         end
     end
-
 end
 
 --------------------------------------------------------------------------------
@@ -123,31 +164,16 @@ end
 --------------------------------------------------------------------------------
 
 function BrewLANGetRealCategories(id, bp, real_categories)
-
-    --local real_categories = {}
-    --for id, bp in all_bps do
-        if bp.Categories then
-            for i, cat in bp.Categories do
-                real_categories[cat] = true
-            end
+    if bp.Categories then
+        for i, cat in bp.Categories do
+            real_categories[cat] = true
         end
-    --end
+    end
 end
 
 --------------------------------------------------------------------------------
 
 function BrewLANBuildCatChanges(all_bps, real_categories)
-    --[[local bb = function(data)
-        return 'BUILTBY' .. (data[1] or '') .. 'TIER' .. (data[t] or '')
-    end
-    local T1LF = 'BUILTBYLANDTIER1FACTORY '
-    local T2LF = 'BUILTBYLANDTIER2FACTORY '
-    local T3LF = 'BUILTBYLANDTIER3FACTORY '
-    ]]--
-
-    ----------------------------------------------------------------------------
-    -- What build cats do we want to add
-    ----------------------------------------------------------------------------
     local units_buildcats = {
         urb0101 = {'BUILTBYLANDTIER1FACTORY CYBRAN MOBILE CONSTRUCTION',},
         urb0201 = {'BUILTBYLANDTIER2FACTORY CYBRAN MOBILE CONSTRUCTION',},
@@ -190,6 +216,29 @@ function BrewLANBuildCatChanges(all_bps, real_categories)
         srl0319 = {'BUILTBYTIER3ENGINEER CYBRAN COUNTERINTELLIGENCE','BUILTBYTIER3ENGINEER CYBRAN AIRSTAGINGPLATFORM',},
         ssl0319 = {'BUILTBYTIER3ENGINEER SERAPHIM COUNTERINTELLIGENCE','BUILTBYTIER3ENGINEER SERAPHIM AIRSTAGINGPLATFORM',},
         sal0319 = {'BUILTBYTIER3ENGINEER AEON COUNTERINTELLIGENCE','BUILTBYTIER3ENGINEER AEON AIRSTAGINGPLATFORM',},
+        --Support Commanders
+        ual0301 = {'BUILTBYTIER3FIELD AEON',},
+        uel0301 = {'BUILTBYTIER3FIELD UEF',},
+        url0301 = {'BUILTBYTIER3FIELD CYBRAN',},
+        xsl0301 = {'BUILTBYTIER3FIELD SERAPHIM',},
+    }
+    for unitid, buildcat in pairs(units_buildcats) do
+        if all_bps[unitid] and all_bps[unitid].Economy.BuildableCategory then   --Xtreme Wars crash fix here. They removed the Fatboys ability to build.
+            for i in ipairs(buildcat) do
+                --Check we can
+                if not real_categories then
+                    table.insert(all_bps[unitid].Economy.BuildableCategory, buildcat[i])
+                    table.sort(all_bps[unitid].Economy.BuildableCategory)
+                elseif CheckBuildCatConsistsOfRealCats(real_categories, buildcat[i]) then
+                    table.insert(all_bps[unitid].Economy.BuildableCategory, buildcat[i])
+                end
+            end
+        end
+    end
+end
+
+function BrewLANBuildCatChangesAI(all_bps, real_categories)
+    local units_buildcats = {
         --These categories are restricted if controlled by a human in the hooked unit scripts
         ual0105 = {'BUILTBYTIER1FIELD AEON',},
         ual0208 = {'BUILTBYTIER2FIELD AEON',},
@@ -203,16 +252,10 @@ function BrewLANBuildCatChanges(all_bps, real_categories)
         xsl0105 = {'BUILTBYTIER1FIELD SERAPHIM',},
         xsl0208 = {'BUILTBYTIER2FIELD SERAPHIM',},
         xsl0309 = {'BUILTBYTIER3FIELD SERAPHIM',},
-        --Support Commanders
-        ual0301 = {'BUILTBYTIER3FIELD AEON',},
-        uel0301 = {'BUILTBYTIER3FIELD UEF',},
-        url0301 = {'BUILTBYTIER3FIELD CYBRAN',},
-        xsl0301 = {'BUILTBYTIER3FIELD SERAPHIM',},
     }
     for unitid, buildcat in units_buildcats do
-        if all_bps[unitid] and all_bps[unitid].Economy.BuildableCategory then   --Xtreme Wars crash fix here. They removed the Fatboys ability to build.
+        if all_bps[unitid] and all_bps[unitid].Economy.BuildableCategory then
             for i in buildcat do
-                --Check we can
                 if CheckBuildCatConsistsOfRealCats(real_categories, buildcat[i]) then
                     table.insert(all_bps[unitid].Economy.BuildableCategory, buildcat[i])
                 end
@@ -302,25 +345,7 @@ function BrewLANCategoryChanges(id, bp)
 
     local data = Units[id]
 
-    if not data then return end
-
-    --This could be made more generic
-    local buildcats = {
-        'BUILTBYTIER1ENGINEER',
-        'BUILTBYCOMMANDER',
-        'BUILTBYTIER1FIELD',
-        'BUILTBYTIER2ENGINEER',
-        'BUILTBYTIER2COMMANDER',
-        'BUILTBYTIER2FIELD',
-        'BUILTBYTIER3ENGINEER',
-        'BUILTBYTIER3COMMANDER',
-        'BUILTBYTIER3FIELD',
-        'BUILTBYGANTRY',
-        'BUILTBYTIER3WALL',
-    }
-
-    --Make sure the unit exists, and has its table
-    if bp and bp.Categories then
+    if data and bp and bp.Categories then
         if not data.NoBuild then
             for i in data do
                 if i == 'r' then
@@ -337,8 +362,10 @@ function BrewLANCategoryChanges(id, bp)
                 end
             end
         else
-            for i in buildcats do
-                table.removeByValue(bp.Categories, buildcats[i])
+            local buildcat = HasBuildCat(bp)
+            while buildcat do
+                table.remove(bp.Categories, buildcat)
+                buildcat = HasBuildCat(bp)
             end
         end
     end
@@ -354,7 +381,7 @@ function BrewLANGlobalCategoryAdditions(id, bp)
     }
     if bp.Categories then
         for i, cat in Cats do
-            if not table.find(bp.Categories, cat) then
+            if not HasCat(bp, cat) then
                 table.insert(bp.Categories, cat)
             end
         end
@@ -390,86 +417,45 @@ function BrewLANSatelliteUplinkForVanillaUnits(id, bp)
         table.insert(bp.Display.Abilities, '<LOC ability_satellite_cap_'.. units[id] ..'>Satellite Capacity: +' .. units[id])
         bp.General.SatelliteCapacity = units[id]
     end
-
 end
-
-
-function BrewLANGetListOfGantries(id, bp, Gantries)
-    --Gantry experimental build list
-    --local Gantries = {}
-    --for id, bp in all_bps do
-        if bp.AI.Experimentals then
-            Gantries[id] = {
-                bp = bp,
-                Reqs = bp.AI.Experimentals.Requirements,
-                Cat = bp.AI.Experimentals.BuildableCategory
-            }
-        end
-    --end
-end
-
 
 --------------------------------------------------------------------------------
 -- Allowing other experimentals that look like they fit to be gantry buildable
 --------------------------------------------------------------------------------
 
-function BrewLANGantryBuildList(id, bp, Gantries)
-    for gantryId, info in Gantries do
-        --Check it has a category table first
-        if bp.Categories then
-            --Check the Gantry can't already build it, and that its a mobile experimental
-            if table.find(bp.Categories, info.Cat) and table.find(bp.Categories, 'EXPERIMENTAL') then
-                --Populate the Gantry AI table
-                if table.find(bp.Categories, 'AIR') then
-                    table.insert(info.bp.AI.Experimentals.Air, {id})
-                else
-                    table.insert(info.bp.AI.Experimentals.Other, {id})
-                end
-            elseif --table.find(bp.Categories, 'MOBILE')
-            --and table.find(bp.Categories, 'EXPERIMENTAL') or
-            table.find(bp.Categories, 'NEEDMOBILEBUILD')
-            --WHAT THE FUCK BLACKOPS
-            and table.find(bp.Categories, 'MOBILE')
-            then
-                --Check it should actually be buildable
-                if table.find(bp.Categories, 'BUILTBYCOMMANDER')
-                or table.find(bp.Categories, 'BUILTBYTIER1ENGINEER')
-                or table.find(bp.Categories, 'BUILTBYTIER2COMMANDER')
-                or table.find(bp.Categories, 'BUILTBYTIER2ENGINEER')
-                or table.find(bp.Categories, 'BUILTBYTIER3COMMANDER')
-                or table.find(bp.Categories, 'BUILTBYTIER3ENGINEER')
-                --For BlOps, they have this as a thing.
-                or table.find(bp.Categories, 'BUILTBYTIER4COMMANDER')
-                or table.find(bp.Categories, 'BUILTBYTIER4ENGINEER')
-                then
-                    --Check it wouldn't be bigger than the Gantry hole
-                    if bp.Physics.SkirtSizeX < info.Reqs.SkirtSizeX
-                    or not bp.Physics.SkirtSizeX
-                    --or bp.Footprint.SizeX < 9
-                    then
-                        table.insert(bp.Categories, info.Cat)
-                        --Populate the Gantry AI table with the newly selected experimentals, so AI use them.
-                        if table.find(bp.Categories, 'AIR') and table.find(bp.Categories, 'EXPERIMENTAL') then
-                            table.insert(info.bp.AI.Experimentals.Air, {id})
-                        elseif table.find(bp.Categories, 'EXPERIMENTAL') then
-                            table.insert(info.bp.AI.Experimentals.Other, {id})
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    --This section is entirely because, as usual for a FAF function being over zealous, FAF support factories get fucking everywhere.
-    if bp.Categories and BrewLANCheckGantryShouldBuild(bp.Categories) and bp.Physics.MotionType ~= 'RULEUMT_None' then
-        table.insert(bp.Categories, 'BUILTBYEXPERIMENTALFACTORY')
+function BrewLANAddToGantryList(id, bp, Gantries)
+    if bp.AI and bp.AI.Experimentals then
+        Gantries[id] = {
+            bp = bp,
+            Reqs = bp.AI.Experimentals.Requirements,
+            BuildCat = bp.AI.Experimentals.BuildableCategory
+        }
     end
 end
 
-function BrewLANCheckGantryShouldBuild(catArray)
-    for i, cat in catArray do
-        if string.find(cat, 'BUILTBY') and string.find(cat, 'FACTORY') then
-            return true
+function BrewLANGantryBuildList(id, bp, Gantries)
+    --This section is entirely because, as usual for a FAF function being over zealous, FAF support factories get fucking everywhere.
+    if (not bp.Categories) or (bp.Physics.MotionType or 'RULEUMT_None') == 'RULEUMT_None' then return end
+    if HasFactoryBuildCat(bp) then
+        table.insert(bp.Categories, 'BUILTBYEXPERIMENTALFACTORY')
+    end
+
+    for gantryId, info in pairs(Gantries) do
+        local GivenCat
+
+        if ((bp.Physics.SkirtSizeX or 0) < info.Reqs.SkirtSizeX)
+        and HasCat(bp, 'NEEDMOBILEBUILD')
+        and (HasEngineerBuildCat(bp) or HasACUBuildCat(bp)) then
+            if not HasCat(bp, info.BuildCat) then
+                table.insert(bp.Categories, info.BuildCat)
+            end
+            GivenCat = true
+        end
+
+        --Populate the Gantry AI table, so my dumb AI scripts will use them.
+        if (GivenCat or HasCat(bp, info.BuildCat)) and HasCat(bp, 'EXPERIMENTAL') then
+            local GantryBuildGroup = bp.Physics.MotionType == 'RULEUMT_Air' and 'Air' or 'Other'
+            table.insert(info.bp.AI.Experimentals[GantryBuildGroup], {id})
         end
     end
 end
@@ -479,24 +465,40 @@ end
 --------------------------------------------------------------------------------
 
 function BrewLANGantryTechShareCheck(id, bp)
-    --for id, bp in all_bps do
-        if bp.Categories then
-            if not table.find(bp.Categories,'GANTRYSHARETECH')
-            and (table.find(bp.Categories,'FACTORY') or table.find(bp.Categories,'ENGINEER'))
-            and (table.find(bp.Categories,'TECH3') or table.find(bp.Categories,'EXPERIMENTAL') or table.find(bp.Categories,'COMMAND'))
-            then
-                if bp.Economy.BuildableCategory then
-                    for i, buildcat in bp.Economy.BuildableCategory do
-                        --This is to match things like BUILTBYTIER3FACTORY.
-                        if string.find(buildcat, 'FACTORY') or string.find(buildcat, 'ENGINEER') or string.find(buildcat, 'COMMANDER') then
-                            table.insert(bp.Categories, 'GANTRYSHARETECH')
-                            break
-                        end
-                    end
-                end
+    if bp.Economy and bp.Economy.BuildableCategory
+    and not HasCat(bp,'GANTRYSHARETECH')
+    and (HasCat(bp,'FACTORY') or HasCat(bp,'ENGINEER'))
+    and (HasCat(bp,'TECH3') or HasCat(bp,'EXPERIMENTAL') or HasCat(bp,'COMMAND')) then
+        for i, buildcat in ipairs(bp.Economy.BuildableCategory) do
+            if buildcat:find'FACTORY' or buildcat:find'ENGINEER' or buildcat:find'COMMANDER' then
+                table.insert(bp.Categories, 'GANTRYSHARETECH')
+                break
             end
         end
-    --end
+    end
+end
+
+--------------------------------------------------------------------------------
+-- Propperly choosing what should be buildable by naval engineers
+--------------------------------------------------------------------------------
+
+function BrewLANNavalEngineersBuildList(id, bp)
+    local caps = bp.Physics and bp.Physics.BuildOnLayerCaps
+    local mt = bp.Physics and bp.Physics.MotionType or 'RULEUMT_None'
+    local tech = GetTechLevel(bp)
+
+    if bp.Categories and tech and HasBuildCat(bp)
+    and (
+        (mt == 'RULEUMT_None' and caps and (caps.LAYER_Seabed or caps.LAYER_Sub or caps.LAYER_Water))
+        or
+        (HasCat(bp,'NEEDMOBILEBUILD') and (mt ~= 'RULEUMT_None' and mt ~= 'RULEUMT_Biped' and mt ~= 'RULEUMT_Land'))
+    )
+    then
+        tech = math.min(tech, 3)
+        for i=tech, 3 do
+            table.insert(bp.Categories, 'BUILTBYTIER'..i..'NAVALENGINEER')
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -506,60 +508,58 @@ end
 function BrewLANHeavyWallBuildList(id, bp)
     if bp.Categories then
         --Check its not hard coded to be buildable.
-        if not table.find(bp.Categories, 'BUILTBYTIER3WALL')
-        --and check it's not something we don't want on a wall.
-        and not table.find(bp.Categories, 'WALL')
-        and not table.find(bp.Categories, 'SHIELDWALL')
-        and not table.find(bp.Categories, 'MINE')
-        --Also make sure it's not going to want to move.
-        and table.find(bp.Categories, 'STRUCTURE')
-        then
-            --then check it meets the standard requirements
-            if table.find(bp.Categories, 'BUILTBYTIER1ENGINEER')
-            or table.find(bp.Categories, 'BUILTBYTIER2ENGINEER')
-            or table.find(bp.Categories, 'BUILTBYTIER3ENGINEER')
-            or table.find(bp.Categories, 'BUILTBYTIER1FIELD')
-            or table.find(bp.Categories, 'BUILTBYTIER2FIELD')
-            or table.find(bp.Categories, 'BUILTBYTIER3FIELD')
-            then
-                if table.find(bp.Categories, 'DEFENSE') or table.find(bp.Categories, 'INDIRECTFIRE') then
-                    --Check it wouldn't overlap badly with the wall
-                    local fits = { X = false, Z = false,}
-                    local correct = { X = false, Z = false,}
+        if not HasCat(bp, 'BUILTBYTIER3WALL')
+        and (bp.Physics.MotionType or 'RULEUMT_None') == 'RULEUMT_None'
+        and (
+            not bp.Physics.BuildRestriction -- default usually isn't written in
+            or bp.Physics.BuildRestriction == 'RULEUBR_None'
+        )
+        and (
+            not bp.Physics.BuildOnLayerCaps -- if undefined it's just Land.
+            or bp.Physics.BuildOnLayerCaps.LAYER_Land
+        )
+        and not HasCat(bp, 'WALL')
+        and not HasCat(bp, 'SHIELDWALL')
+        and not HasCat(bp, 'MINE')
+        and (
+            HasEngineerBuildCat(bp) or
+            HasFieldBuildCat(bp)
+        )
+        and (
+            HasCat(bp, 'DEFENSE') or
+            HasCat(bp, 'DIRECTFIRE') or
+            HasCat(bp, 'INDIRECTFIRE') or
+            HasCat(bp, 'ANTIAIR')
+        ) then
 
-                    if bp.Footprint.SizeX == 3 and bp.Physics.SkirtSizeX == 3 or bp.Footprint.SizeX == 3 and bp.Physics.SkirtSizeX == 0 then
-                        correct.X = true
-                        fits.X = true
-                    elseif bp.Physics.SkirtSizeX < 3 and bp.Footprint.SizeX < 3 then
-                        fits.X = true
-                    end
+            --Check it wouldn't overlap badly with the wall
+            local fits, correct = {}, {}
+            for _, A in ipairs{'X','Z'} do
+                local size = bp.Footprint and bp.Footprint['Size'..A] or (bp['Size'..A] and math.ceil(bp['Size'..A]) or 1)
+                local skirt = bp.Physics['SkirtSize'..A] or size
 
-                    if bp.Footprint.SizeZ == 3 and bp.Physics.SkirtSizeZ == 3 or bp.Footprint.SizeZ == 3 and bp.Physics.SkirtSizeZ == 0 then
-                        correct.Z = true
-                        fits.Z = true
-                    elseif bp.Physics.SkirtSizeZ < 3 and bp.Footprint.SizeZ < 3 then
-                        fits.Z = true
-                    end
+                fits[A] = size ~= 2 and size <= 3 and skirt <= 3
+                correct[A] = fits[A] and size == 3
+            end
 
-                    if fits.X and fits.Z then
-                        table.insert(bp.Categories, 'BUILTBYTIER3WALL')
-                        --This is to prevent it from having the same footprint as the wall
-                        --and from it removing all the path blocking of the wall if it dies or gets removed.
-                        --It will still remove the blocking from the center of the wall, but that's acceptable.
+            if fits.X and fits.Z then
+                table.insert(bp.Categories, 'BUILTBYTIER3WALL')
 
-                        --This will also make it so those turrets will no longer block pathing whilst adjacent
-                        --But that is probably fine.
-                        if correct.X then
-                            bp.Footprint.SizeX = 1
-                            bp.Physics.SkirtOffsetX = -1
-                            bp.Physics.SkirtSizeX = 3
-                        end
-                        if correct.Z then
-                            bp.Footprint.SizeZ = 1
-                            bp.Physics.SkirtOffsetZ = -1
-                            bp.Physics.SkirtSizeZ = 3
-                        end
-                    end
+                if bp.Physics.FlattenSkirt then
+                    bp.Physics.ConditionalFlattenSkirt = true
+                end
+                if correct.X or correct.Z and not bp.Footprint then
+                    bp.Footprint = {}
+                end
+                if correct.X then
+                    bp.Footprint.SizeX = 1
+                    bp.Physics.SkirtOffsetX = -1
+                    bp.Physics.SkirtSizeX = 3
+                end
+                if correct.Z then
+                    bp.Footprint.SizeZ = 1
+                    bp.Physics.SkirtOffsetZ = -1
+                    bp.Physics.SkirtSizeZ = 3
                 end
             end
         end
@@ -593,7 +593,7 @@ function UpgradeableToBrewLAN(all_bps)
         xsb1303 = 'ssb1313',--To Armored Fabricator
         --srb5310 = 'srb5311',--Cybran wall into cybran gate. Caused issues.
     }
-    for unitid, upgradeid in VanillasToUpgrade do
+    for unitid, upgradeid in pairs(VanillasToUpgrade) do
         if all_bps[unitid] and all_bps[upgradeid] then
 
             if not all_bps[unitid].Categories then all_bps[unitid].Categories = {} end
@@ -605,10 +605,11 @@ function UpgradeableToBrewLAN(all_bps)
             table.insert(all_bps[unitid].Display.Abilities, '<LOC ability_upgradable>Upgradeable')
 
             if not all_bps[unitid].Economy then all_bps[unitid].Economy = {} end
-            if not all_bps[unitid].Economy.RebuildBonusIds then all_bps[unitid].Economy.RebuildBonusIds = {} end
-            table.insert(all_bps[unitid].Economy.RebuildBonusIds, upgradeid)
+            --if not all_bps[unitid].Economy.RebuildBonusIds then all_bps[unitid].Economy.RebuildBonusIds = {} end
+            --table.insert(all_bps[unitid].Economy.RebuildBonusIds, upgradeid)
 
             if not all_bps[unitid].Economy.BuildableCategory then all_bps[unitid].Economy.BuildableCategory = {} end
+            table.removeByValue(all_bps[unitid].Economy.BuildableCategory, upgradeid) -- Preventing doubles
             table.insert(all_bps[unitid].Economy.BuildableCategory, upgradeid)
 
             if not all_bps[unitid].General then all_bps[unitid].General = {} end
@@ -621,25 +622,28 @@ function UpgradeableToBrewLAN(all_bps)
             all_bps[unitid].General.CommandCaps.RULEUCC_Pause = true
         end
     end
-    local UpgradesFromBase = {
-        -- Base        Max
-        urb1103 = 'srb1312',--To Cloakable Extractor
-        ueb1103 = 'seb1312',--To engineering Extractor
-        uab1103 = 'sab1312',--To shielded Extractor
-        xsb1103 = 'ssb1312',--To Armored Extractor
-    }
-    --This could potentially loop forever if someone broke the upgrade chain elsewhere
-    for unitid, upgradeid in UpgradesFromBase do
-        if all_bps[upgradeid] then
-            local nextID = upgradeid
-            while true do
-                if nextID == unitid then break end
-                all_bps[nextID].General.UpgradesFromBase = unitid
-                --LOG(all_bps[nextID].Description, unitid )
-                if all_bps[nextID].General.UpgradesFrom then
-                    nextID = all_bps[nextID].General.UpgradesFrom
-                else
-                    break
+
+    if _VERSION == "Lua 5.0.1" then
+        local UpgradesFromBase = {
+            -- Base        Max
+            urb1103 = 'srb1312',--To Cloakable Extractor
+            ueb1103 = 'seb1312',--To engineering Extractor
+            uab1103 = 'sab1312',--To shielded Extractor
+            xsb1103 = 'ssb1312',--To Armored Extractor
+        }
+        --This could potentially loop forever if someone broke the upgrade chain elsewhere
+        for unitid, upgradeid in pairs(UpgradesFromBase) do
+            if all_bps[upgradeid] then
+                local nextID = upgradeid
+                while true do
+                    if nextID == unitid then break end
+                    all_bps[nextID].General.UpgradesFromBase = unitid
+                    --LOG(all_bps[nextID].Description, unitid )
+                    if all_bps[nextID].General.UpgradesFrom then
+                        nextID = all_bps[nextID].General.UpgradesFrom
+                    else
+                        break
+                    end
                 end
             end
         end
@@ -651,7 +655,6 @@ end
 --------------------------------------------------------------------------------
 
 function BrewLANTorpedoBomberWaterLanding(id, bp)
-
     local TorpedoBombers = {
         sra0307 = true, --T3 Cybran
         sea0307 = true, --T3 UEF
@@ -674,7 +677,7 @@ function BrewLANTorpedoBomberWaterLanding(id, bp)
     --Check they exist, and have all their things.
     if bp and bp.Categories and bp.Weapon then
         table.insert(bp.Categories, 'TRANSPORTATION') --transportation category allows aircraft to land on water.
-        if not table.find(bp.Categories, 'TORPEDOBOMBER') then
+        if not HasCat(bp, 'TORPEDOBOMBER') then
             table.insert(bp.Categories, 'TORPEDOBOMBER')
         end
         --table.insert(bp.Categories, 'HOVER') --hover category stops torpedos from being fired upon them while landed.
@@ -684,7 +687,6 @@ function BrewLANTorpedoBomberWaterLanding(id, bp)
             end
         end
     end
-
 end
 
 --------------------------------------------------------------------------------
@@ -729,6 +731,117 @@ function BrewLANMatchBalancing(all_bps)
         sra0307 = {TargetID = 'xaa0306', Affects = {'Transport', 'Economy'}},
         sea0307 = {TargetID = 'xaa0306', Affects = {'Transport', 'Economy'}},
         ssa0307 = {TargetID = 'xaa0306', Affects = {'Transport', 'Economy'}},
+        ------- Field engineers
+        sel0119 = {
+            TargetID = 'xel0209',
+            BaseMult = 0.265,
+            Affects = {'Economy', 'Intel'},
+            Mults = {
+                Intel = 1,
+                Economy = {
+                    MaintenanceConsumptionPerSecondEnergy = 1/3,
+                    BuildRate = 0.5,
+                    StorageEnergy = 0.5,
+                    StorageMass = 1/3,
+                },
+            },
+        },
+        --sel0209 = {TargetID = 'xel0209', Affects = {'Economy'}}
+        sel0319 = {
+            TargetID = 'xel0209',
+            Affects = {'Economy', 'Intel'},
+            Mults = {
+                Intel = 1,
+                Economy = {
+                    BuildCostEnergy = 3.625,
+                    BuildCostMass = 3,
+                    BuildRate = 1.5,
+                    BuildTime = 2.4,
+                    StorageEnergy = 2.5,
+                    StorageMass = 5/3,
+                },
+            },
+        },
+
+        sal0119 = {
+            TargetID = 'xel0209',
+            BaseMult = 0.265,
+            Mults = {
+                Economy = {
+                    MaintenanceConsumptionPerSecondEnergy = 1/3,
+                    BuildRate = 0.5,
+                    StorageEnergy = 0.5,
+                    StorageMass = 1/3,
+                },
+            },
+        },
+        sal0209 = 'xel0209',
+        sal0319 = {
+            TargetID = 'xel0209',
+            Mults = {
+                Economy = {
+                    BuildCostEnergy = 3.625,
+                    BuildCostMass = 3,
+                    BuildRate = 1.5,
+                    BuildTime = 2.4,
+                    StorageEnergy = 2.5,
+                    StorageMass = 5/3,
+                },
+            },
+        },
+
+        srl0119 = {
+            TargetID = 'xel0209',
+            BaseMult = 0.265,
+            Mults = {
+                Economy = {
+                    MaintenanceConsumptionPerSecondEnergy = 1/3,
+                    BuildRate = 0.5,
+                    StorageEnergy = 0.5,
+                    StorageMass = 1/3,
+                },
+            },
+        },
+        srl0209 = 'xel0209',
+        srl0319 = {
+            TargetID = 'xel0209',
+            Mults = {
+                Economy = {
+                    BuildCostEnergy = 3.625,
+                    BuildCostMass = 3,
+                    BuildRate = 1.5,
+                    BuildTime = 2.4,
+                    StorageEnergy = 2.5,
+                    StorageMass = 5/3,
+                },
+            },
+        },
+
+        ssl0119 = {
+            TargetID = 'xel0209',
+            BaseMult = 0.265,
+            Mults = {
+                Economy = {
+                    BuildRate = 0.5,
+                    StorageEnergy = 0.5,
+                    StorageMass = 1/3,
+                },
+            },
+        },
+        ssl0219 = 'xel0209',
+        ssl0319 = {
+            TargetID = 'xel0209',
+            Mults = {
+                Economy = {
+                    BuildCostEnergy = 3.625,
+                    BuildCostMass = 3,
+                    BuildRate = 1.5,
+                    BuildTime = 2.4,
+                    StorageEnergy = 2.5,
+                    StorageMass = 5/3,
+                },
+            },
+        },
         ------- Sera T3 gunship to match Broadsword
         ssa0305 = 'uea0305',
         ------- Air transports to be based
@@ -738,19 +851,23 @@ function BrewLANMatchBalancing(all_bps)
                 'Economy',
                 'Veteran',
             },
+            Mults = {
+                Economy = 7/6,
+            },
         },
         sra0306 = {
             TargetID = 'xea0306',
-            BaseMult = 0.95,
             Affects = {
                 'Economy',
                 'Veteran',
             },
             Mults = {
                 Economy = {
+                    BuildCostEnergy = 4/6,
+                    BuildCostMass = 4/6,
+                    BuildTime = 4/6,
                     MaintenanceConsumptionPerSecondEnergy = 0.4,
                 },
-                Veteran = 1,
             },
         },
         saa0306 = {
@@ -867,7 +984,7 @@ function BrewLANMatchBalancing(all_bps)
                     BuildCostEnergy = 1.35,
                     BuildCostMass = 1.35,
                     BuildTime = 1.35,
-                    MaintenanceConsumptionPerSecondEnergy = 1.25,
+                    MaintenanceConsumptionPerSecondEnergy = 19/14,
                     ProductionPerSecondMass = 1.25,
                 },
             }
@@ -884,7 +1001,7 @@ function BrewLANMatchBalancing(all_bps)
                     BuildCostEnergy = 1.35,
                     BuildCostMass = 1.35,
                     BuildTime = 1.35,
-                    MaintenanceConsumptionPerSecondEnergy = 1.25,
+                    MaintenanceConsumptionPerSecondEnergy = 1.5,
                     ProductionPerSecondMass = 1.25,
                 },
             }
@@ -925,12 +1042,22 @@ function BrewLANMatchBalancing(all_bps)
         },
     }
 
-    for unitid, data in UnitsList do
+    for unitid, data in pairs(UnitsList) do
+        if _VERSION ~= "Lua 5.0.1" and all_bps[unitid] then
+            getmetatable(all_bps[unitid]).WikiInfoboxNote = '<LOC wiki_infobox_stats_note>Note: This unit has its stats redefined<br />at the start of the game.'
+            getmetatable(all_bps[unitid]).WikiBalance = {
+                ReferenceIDs = {
+                    data.TargetID and data.TargetID[1] or data.TargetID or data,
+                    data.TargetID and data.TargetID[2] or nil
+                },
+                Affects = data.Affects or {'Economy'},
+            }
+        end
         if type(data) == 'string' then
             if all_bps[unitid] and all_bps[data] then
-                for key, val in  all_bps[unitid].Economy do
-                    if type(val) == 'number' then
-                        all_bps[unitid].Economy[key] = all_bps[data].Economy[key]
+                for key, val in pairs(all_bps[unitid].Economy) do
+                    if type(val) == 'number' and val ~= 0 then
+                        all_bps[unitid].Economy[key] = val
                     end
                 end
             end
@@ -939,49 +1066,44 @@ function BrewLANMatchBalancing(all_bps)
             local Affects = data.Affects or {'Economy'}
             if all_bps[unitid] and (all_bps[tid[1]] and all_bps[tid[2]] or all_bps[tid]) then
                 SPEW("Syncronising balance for " .. unitid)
-                for i, tablename in Affects do
-                    if tablename ~= 'Shield' then
-                        for key, val in  all_bps[unitid][tablename] do
-                            if type(val) == 'number' and (type(all_bps[tid[1]][tablename][key]) == 'number' and type(all_bps[tid[2]][tablename][key]) == 'number' or type(all_bps[tid][tablename][key]) == 'number') then
-                                local mult, rawnumber
-                                if type(data.Mults[tablename]) == 'number' then
-                                    --If the mults table is actually a number, use that
-                                    mult = data.Mults[tablename]
-                                else
-                                    --else run through in order, key, base, or 1
-                                    --key only exists if its a table, else we go elsewhere
-                                    mult = data.Mults[tablename][key] or data.BaseMult
-                                end
-                                if type(all_bps[tid][tablename][key]) == 'number' then
-                                    rawnumber = all_bps[tid][tablename][key]
-                                else
-                                    rawnumber = (all_bps[tid[1]][tablename][key] + all_bps[tid[2]][tablename][key]) * 0.5
-                                end
-                                if mult and rawnumber then
-                                    all_bps[unitid][tablename][key] = MathRoundAppropriately(rawnumber * mult)
-                                end
-                            end
-                        end
-                    else
-                        for key, val in  all_bps[unitid].Defense[tablename] do
-                            if type(val) == 'number' and (type(all_bps[tid[1]].Defense[tablename][key]) == 'number' and type(all_bps[tid[2]].Defense[tablename][key]) == 'number' or type(all_bps[tid].Defense[tablename][key]) == 'number') then
-                                local mult, rawnumber
-                                if type(data.Mults[tablename]) == 'number' then
-                                    --If the mults table is actually a number, use that
-                                    mult = data.Mults[tablename]
-                                else
-                                    --else run through in order, key, base, or 1
-                                    --key only exists if its a table, else we go elsewhere
-                                    mult = data.Mults[tablename][key] or data.BaseMult
-                                end
-                                if type(all_bps[tid].Defense[tablename][key]) == 'number' then
-                                    rawnumber = all_bps[tid].Defense[tablename][key]
-                                else
-                                    rawnumber = (all_bps[tid[1]].Defense[tablename][key] + all_bps[tid[2]].Defense[tablename][key]) * 0.5
-                                end
-                                if mult and rawnumber then
-                                    all_bps[unitid].Defense[tablename][key] = MathRoundAppropriately(rawnumber * mult)
-                                end
+                for i, tablename in ipairs(Affects) do
+
+                    local function GetRef(id, key)
+                        return all_bps[id] and
+                        (
+                            tablename == 'Shield'
+                              and all_bps[id].Defense[tablename]
+                              and all_bps[id].Defense[tablename][key]
+                            or all_bps[id][tablename]
+                              and all_bps[id][tablename][key]
+                        )
+                    end
+
+                    local function GetValidRef(id, key)
+                        local ref = GetRef(id, key)
+                        return type(ref) == 'number' and ref
+                    end
+
+                    local function GetMult(key)
+                        return data.Mults and type(data.Mults[tablename]) == 'number' and data.Mults[tablename]
+                        or (data.Mults and data.Mults[tablename] and data.Mults[tablename][key])
+                        or data.BaseMult
+                        or 1
+                    end
+
+                    for key, val in pairs(tablename == 'Shield' and all_bps[unitid].Defense.Shield or all_bps[unitid][tablename]) do
+
+                        local ref = GetValidRef(tid, key)
+                        local refA = GetValidRef(tid[1], key)
+                        local refB = GetValidRef(tid[2], key)
+
+                        if type(val) == 'number' and ((ref and ref~=0) or (refA and refA~=0) and (refB and refB~=0)) then
+
+                            local mult = GetMult(key)
+                            local rawnumber = ref or (refA + refB) * 0.5
+
+                            if mult and rawnumber then
+                                (tablename == 'Shield' and all_bps[unitid].Defense.Shield or all_bps[unitid][tablename])[key] = MathRoundAppropriately(rawnumber * mult)
                             end
                         end
                     end
@@ -1001,7 +1123,7 @@ function BrewLANFAFExclusiveChanges(all_bps)
                     bp.Wreckage.WreckageLayers.Sub = true
                     bp.Wreckage.WreckageLayers.Water = true
                 end
-                if table.find(bp.Categories, 'NEEDMOBILEBUILD') then
+                if HasCat(bp, 'NEEDMOBILEBUILD') then
                     table.insert(bp.Categories, 'CQUEMOV')
                 end
             end
@@ -1014,7 +1136,7 @@ function BrewLANFAFExclusiveChanges(all_bps)
             end
         end
         for id, bp in all_bps.Projectile do
-            if bp.Categories and table.find(bp.Categories, 'STRATEGIC') and bp.Defense and bp.Defense.Health and bp.Defense.Health < 100 then
+            if bp.Categories and HasCat(bp, 'STRATEGIC') and bp.Defense and bp.Defense.Health and bp.Defense.Health < 100 then
                 bp.Defense.Health = bp.Defense.Health * 1000
                 bp.Defense.MaxHealth = (bp.Defense.Health or bp.Defense.MaxHealth) * 1000
             end
@@ -1067,7 +1189,6 @@ function BrewLANNavalShields(id, bp)
     end
     --Waterlag visual compatability
     bp.Display.GiveMeLegs = true
-
 end
 
 --------------------------------------------------------------------------------
@@ -1075,19 +1196,13 @@ end
 --------------------------------------------------------------------------------
 
 function BrewLANBomberDamageType(id, bp)
-
-    --Check the table exists before doing a lookup.
-    --if bp.Categories and table.find(bp.Categories, 'BOMBER') then
-        if bp.Weapon then
-            for i, weap in bp.Weapon do
-                if weap.NeedToComputeBombDrop then
-                    if weap.DamageType == 'Normal' then
-                        weap.DamageType = 'NormalBomb'
-                    end
-                end
+    if bp.Weapon then
+        for i, weap in bp.Weapon do
+            if weap.NeedToComputeBombDrop and weap.DamageType == 'Normal' then
+                weap.DamageType = 'NormalBomb'
             end
         end
-    --end
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -1142,7 +1257,7 @@ end
 
 function BrewLANMegalithEggs(id, bp, all_bps, Megalith, Egg000)
     --First check the Megalith exists and can build
-    if Megalith and Megalith.Economy and Megalith.Economy.BuildableCategory and bp.Categories and table.find(bp.Categories, 'MEGALITHEGG') then
+    if Megalith and Megalith.Economy and Megalith.Economy.BuildableCategory and bp.Categories and HasCat(bp, 'MEGALITHEGG') then
         copyTableNoReplace(Egg000, bp)
         table.insert(Megalith.Economy.BuildableCategory, bp.BlueprintId)
 
@@ -1170,18 +1285,18 @@ function BrewLANMegalithEggs(id, bp, all_bps, Megalith, Egg000)
 
         if all_bps[bp.Economy.BuildUnit].Physics.MotionType == 'RULEUMT_Hover'
         or all_bps[bp.Economy.BuildUnit].Physics.MotionType == 'RULEUMT_AmphibiousFloating' then
-            BuildOnLayerCaps = {
+            bp.Physics.BuildOnLayerCaps = {
                 LAYER_Land = true,
                 LAYER_Water = true,
             }
         elseif all_bps[bp.Economy.BuildUnit].Physics.MotionType == 'RULEUMT_Amphibious' then
-            BuildOnLayerCaps = {
+            bp.Physics.BuildOnLayerCaps = {
                 LAYER_Land = true,
                 LAYER_Seabed = true,
             }
         elseif all_bps[bp.Economy.BuildUnit].Physics.MotionType == 'RULEUMT_SurfacingSub'
         or all_bps[bp.Economy.BuildUnit].Physics.MotionType == 'RULEUMT_Water' then
-            BuildOnLayerCaps = {
+            bp.Physics.BuildOnLayerCaps = {
                 LAYER_Water = true,
             }
         end
@@ -1267,97 +1382,89 @@ end
 -- Generate footprint dummies for dealing with path blocking.
 --------------------------------------------------------------------------------
 
-function BrewLANGenerateFootprintDummy(id, bp, all_bps)
+function BrewLANGenerateFootprintDummyUnits(all_units)
     --These are used by the Aeon teleporter.
     --But also by the mines and any unit that wants to clear it's path blocking.
-    if type(bp.Physics.MotionType) == 'string' and bp.Physics.MotionType == 'RULEUMT_None' then
-        local X = math.ceil(bp.Footprint.SizeX or bp.SizeX or 1)
-        local Z = math.ceil(bp.Footprint.SizeZ or bp.SizeZ or 1)
-        local SOX = bp.Physics.SkirtOffsetX or 0
-        local SOZ = bp.Physics.SkirtOffsetZ or 0
-        local SSX = bp.Physics.SkirtSizeX or 1
-        local SSZ = bp.Physics.SkirtSizeZ or 1
-        local OR = bp.Physics.OccupyRects
+    local NewDummies = {}
 
-        local dummyID = 'ZZZFD'..X..Z..SOX..SOZ..SSX..SSZ
+    for id, bp in all_units do
+        if (bp.Physics.MotionType or 'RULEUMT_None') == 'RULEUMT_None' then
+            local X = math.ceil(bp.Footprint.SizeX or bp.SizeX or 1)
+            local Z = math.ceil(bp.Footprint.SizeZ or bp.SizeZ or 1)
+            local SOX = bp.Physics.SkirtOffsetX or 0
+            local SOZ = bp.Physics.SkirtOffsetZ or 0
+            local SSX = math.max(bp.Physics.SkirtSizeX or 1, X)
+            local SSZ = math.max(bp.Physics.SkirtSizeZ or 1, Z)
+            local OR = bp.Physics.OccupyRects
 
-        --This doesn't appear to affect the yellow pathing box of factories.
-        --[[if table.find(bp.Categories, 'FACTORY') then
-            dummyID = 'Z' .. dummyID
-        end]]
+            local dummyID = 'zzzfd'..X..Z..SOX..SOZ..SSX..SSZ
 
-        if OR then
-            for i, v in OR do
-                dummyID = dummyID..v
+            if OR then
+                for i, v in OR do
+                    dummyID = dummyID..v
+                end
             end
-        end
 
-        if not all_bps[dummyID] then
-            all_bps[dummyID] = {
-                BlueprintId = dummyID,
-                BuildIconSortPriority = 5,
-                Categories = {
-                    'INVULNERABLE',
-                    'STRUCTURE',
-                    'BENIGN',
-                    'UNSELECTABLE',
-                    'UNTARGETABLE',
-                    'UNSPAWNABLE',
-                },
-                Defense = {Health = 0, MaxHealth = 0},
-                Description = 'Footprint Dummy Unit',
-                Display = {
-                    BuildMeshBlueprint = BrewLANPath .. '/meshes/nil_mesh',
-                    MeshBlueprint = BrewLANPath .. '/meshes/nil_mesh',
-                    UniformScale = 0,
-                    HideLifebars = true,
-                },
-                Footprint = {SizeX = X, SizeZ = Z},
-                Economy = {
-                    BuildCostEnergy = 1,
-                    BuildCostMass = 1,
-                    BuildTime = 1,
-                },
-                General = {
-                    CapCost = 0,
-                    --FactionName = 'nil',
-                    --Icon = 'land',
-                    TechLevel = 'RULEUTL_Advanced',
-                    UnitWeight = 1,
-                },
-                Intel = {
-                    VisionRadius = 0,
-                },
-                Physics = {
-                    BuildOnLayerCaps = {
-                        LAYER_Land = true,
-                        LAYER_Seabed = true,
-                        LAYER_Water = true,
+            if not NewDummies[dummyID] then
+                NewDummies[dummyID] = {
+                    BlueprintId = dummyID,
+                    BuildIconSortPriority = 5,
+                    Categories = {
+                        'INVULNERABLE',
+                        'STRUCTURE',
+                        'BENIGN',
+                        'UNSELECTABLE',
+                        'UNTARGETABLE',
+                        'UNSPAWNABLE',
                     },
-                    SkirtOffsetX = SOX,
-                    SkirtOffsetZ = SOZ,
-                    SkirtSizeX = SSX,
-                    SkirtSizeZ = SSZ,
-                    MotionType = 'RULEUMT_None',
-                    OccupyRects = OR,
-                },
-                ScriptClass = 'FootprintDummyUnit',
-                ScriptModule = '/lua/defaultunits.lua',
-                SizeX = X,
-                SizeY = 1,
-                SizeZ = Z,
-                Source = all_bps.sab5401.Source,
-            }
+                    Defense = {Health = 0, MaxHealth = 0},
+                    Description = 'Footprint Dummy Unit',
+                    Display = {
+                        BuildMeshBlueprint = BrewLANPath .. '/meshes/nil_mesh',
+                        MeshBlueprint = BrewLANPath .. '/meshes/nil_mesh',
+                        UniformScale = 0,
+                        HideLifebars = true,
+                    },
+                    Footprint = {SizeX = X, SizeZ = Z},
+                    Economy = {
+                        BuildCostEnergy = 1,
+                        BuildCostMass = 1,
+                        BuildTime = 1,
+                    },
+                    General = {CapCost = 0},
+                    Intel = {
+                        VisionRadius = 0,
+                        WaterVisionRadius = 0,
+                    },
+                    Physics = {
+                        BuildOnLayerCaps = {
+                            LAYER_Land = true,
+                            LAYER_Seabed = true,
+                            LAYER_Water = true,
+                        },
+                        SkirtOffsetX = SOX,
+                        SkirtOffsetZ = SOZ,
+                        SkirtSizeX = SSX,
+                        SkirtSizeZ = SSZ,
+                        MotionType = 'RULEUMT_None',
+                        OccupyRects = OR,
+                    },
+                    ScriptClass = 'BrewLANFootprintDummyUnit',
+                    ScriptModule = '/lua/defaultunits.lua',
+                    SizeX = X,
+                    SizeY = 1,
+                    SizeZ = Z,
+                    Source = all_units.sab5401.Source,
+                }
 
-            --[[if string.sub(dummyID,1,4) == 'ZZZZ' then
-                --table.insert(all_bps[dummyID].Categories, 'FACTORY')
-                all_bps[dummyID].Display.BuildAttachBone = 0
-                all_bps[dummyID].Economy.BuildableCategory = {dummyID}
-            end]]
-
-            SPEW("Creating footprint dummy unit: " .. dummyID)
+                SPEW("Creating footprint dummy unit: " .. dummyID)
+            end
+            bp.FootprintDummyId = dummyID
         end
-        bp.FootprintDummyId = dummyID
+    end
+    -- Separate loop to prevent iterator issues.
+    for id, bp in NewDummies do
+        all_units[id] = bp
     end
 end
 

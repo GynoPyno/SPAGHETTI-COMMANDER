@@ -158,8 +158,6 @@ UnitBlueprint {
         BuildTime = 5062.5,
         HalfPriceUpgradeFromID = 'uab1303',
         MaintenanceConsumptionPerSecondEnergy = 4375+375,
-        MaintenanceConsumptionPerSecondEnergyFab = 4375,
-        MaintenanceConsumptionPerSecondEnergyShield = 375,
         ProductionPerSecondMass = 15,
         RebuildBonusIds = {
             'uab1303',
@@ -172,8 +170,6 @@ UnitBlueprint {
         SizeZ = 3,
     },
     General = {
-        Category = 'Economy',
-        Classification = 'RULEUC_Resource',
         FactionName = 'Aeon',
         Icon = 'land',
         OrderOverrides = {
@@ -183,12 +179,10 @@ UnitBlueprint {
             },
         },
         SelectionPriority = 5,
-        TechLevel = 'RULEUTL_Secret',
         ToggleCaps = {
             RULEUTC_ShieldToggle = true,
             RULEUTC_ProductionToggle = true,
         },
-        UnitWeight = 1,
         UpgradesFrom = 'uab1104',
     },
     Intel = {

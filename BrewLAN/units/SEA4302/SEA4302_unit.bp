@@ -33,8 +33,10 @@ UnitBlueprint {
         'INSIGNIFICANTUNIT',
         'UNSELECTABLE',
         'UNTARGETABLE',
+        'OVERLAYCOUNTERINTEL',
     },
     Defense = {
+        ArmorType = 'Light',
         Health = 42,
         MaxHealth = 42,
     },
@@ -58,8 +60,6 @@ UnitBlueprint {
     },
     General = {
         CapCost = 0,
-        Category = 'Utility',
-        Classification = 'RULEUC_MilitaryAircraft',
         CommandCaps = {
             RULEUCC_Attack = true,
             RULEUCC_Guard = true,
@@ -70,9 +70,7 @@ UnitBlueprint {
         FactionName = 'UEF',
         Icon = 'air',
         SelectionPriority = 6,
-        TechLevel = 'RULEUTL_Basic',
         UnitName = '<LOC sea4302_name>ASFaux',
-        UnitWeight = 1,
     },
     Intel = {
         JamRadius = {

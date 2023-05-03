@@ -70,11 +70,9 @@ UnitBlueprint {
         'CYBRAN',
         'MOBILE',
         'AIR',
-        'CONSTRUCTION',
         'EXPERIMENTAL',
         'NEEDMOBILEBUILD',
         'PODSTAGINGPLATFORM',
-        'PATROLHELPER',
         'SHOWQUEUE',
         'VISIBLETORECON',
         'RECLAIMABLE',
@@ -85,7 +83,7 @@ UnitBlueprint {
     CollisionOffsetY = -0.5,
     Defense = {
         ArmorType = 'Light',
-        EconomyThreatLevel = 1705,
+        EconomyThreatLevel = 1740,
         Health = 50000,
         MaxHealth = 50000,
         RegenRate = 15,
@@ -188,8 +186,6 @@ UnitBlueprint {
         SizeZ = 4,
     },
     General = {
-        Category = 'Experimental',
-        Classification = 'RULEUC_MilitaryAircraft',
         CommandCaps = {
             RULEUCC_Guard = true,
             RULEUCC_Move = true,
@@ -208,9 +204,7 @@ UnitBlueprint {
                 helpText = 'deploy',
             },
         },
-        TechLevel = 'RULEUTL_Advanced',
         UnitName = '<LOC sra0401_name>Simurgh',
-        UnitWeight = 1,
     },
     Intel = {
         VisionRadius = 46,

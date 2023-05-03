@@ -114,6 +114,7 @@ TestGameresult = {}
     function TestGameresult:setUp()
         TestGameresult.AnnounceDeathCalled = false
         TestGameresult.AnnounceDrawCalled = false
+        TestGameresult.AnnounceVictoryCalled = false
         Resetdrawnotified()
         
         function AnnounceDeath(armyID, message, killerId)
@@ -173,6 +174,9 @@ TestGameresult = {}
     function TestGameresult:testVictory()
         function AnnounceVictoryMock(armyID, Resultstring)
             luaunit.assert_equals(Resultstring, MyArmyResultStrings.victory)
+
+            --also call default victory announce
+            AnnounceVictory(armyID, Resultstring)
         end
         TestGameresult.Announces.AnnounceVictory = AnnounceVictoryMock
         DoGameResultNew(1, 'victory', CurrentEvents, ResultStrings, TestGameresult.Announces)
@@ -184,6 +188,9 @@ TestGameresult = {}
     function TestGameresult:testVictoryOtherArmy()
         function AnnounceVictoryMock(armyID, Resultstring)
             luaunit.assert_equals(Resultstring, OtherArmyResultStrings.victory)
+
+            --also call default victory announce
+            AnnounceVictory(armyID, Resultstring)
         end
         TestGameresult.Announces.AnnounceVictory = AnnounceVictoryMock
         DoGameResultNew(2, 'victory', CurrentEvents, ResultStrings, TestGameresult.Announces)
@@ -192,6 +199,12 @@ TestGameresult = {}
         luaunit.assert_true(TestGameresult.AnnounceVictoryCalled)
     end
 
+    function TestGameresult:testNotDefeat()
+        DoGameResultNew(2, 'foobar', CurrentEvents, ResultStrings, TestGameresult.Announces)
+        luaunit.assert_false(TestGameresult.AnnounceDeathCalled)
+        luaunit.assert_false(TestGameresult.AnnounceDrawCalled)
+        luaunit.assert_false(TestGameresult.AnnounceVictoryCalled)
+    end
 
     function TestGameresult:tearDown()
     end

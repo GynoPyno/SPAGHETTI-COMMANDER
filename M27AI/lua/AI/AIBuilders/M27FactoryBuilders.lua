@@ -1,3 +1,4 @@
+--OBSOLETE - below isnt united by M27AI
 local UCBC = '/lua/editor/UnitCountBuildConditions.lua'
 local EBC = '/lua/editor/EconomyBuildConditions.lua'
 local IBC = '/lua/editor/InstantBuildConditions.lua'
@@ -20,16 +21,15 @@ BuilderGroup {
         Priority = 110,
         InstanceCount = 3, --dont want to build too many at once
         BuilderConditions = {
-            --{ MIBC, 'M27TestReturnFalse', {true} },
-            { TBC, 'EnemyThreatGreaterThanValueAtBase', { 'LocationType', 0, 'Air', 1 } }, -- Build AA if the enemy is threatening our base with air units.
-            { UCBC, 'HaveUnitRatio', { 0.15, categories.LAND * categories.ANTIAIR * categories.MOBILE,
-                                       '<', categories.LAND  * categories.MOBILE - categories.ENGINEER } },
-            { UCBC, 'HaveLessThanUnitsWithCategory', { 6, categories.LAND  * categories.ANTIAIR } },
+            { MIBC, 'M27TestReturnFalse', {true} },
+            --{ TBC, 'EnemyThreatGreaterThanValueAtBase', { 'LocationType', 0, 'Air', 1 } }, -- Build AA if the enemy is threatening our base with air units.
+            --{ UCBC, 'HaveUnitRatio', { 0.15, categories.LAND * categories.ANTIAIR * categories.MOBILE, '<', categories.LAND  * categories.MOBILE - categories.ENGINEER } },
+            --{ UCBC, 'HaveLessThanUnitsWithCategory', { 6, categories.LAND  * categories.ANTIAIR } },
              --for testing
         },
         BuilderType = 'All',
     },
-
+--[[
     Builder {
         BuilderName = 'M27Ai Factory Engineer',
         PlatoonTemplate = 'T1BuildEngineer',
@@ -49,7 +49,7 @@ BuilderGroup {
         Priority = 95,
         BuilderConditions = {
             { UCBC, 'HaveUnitRatio', { 0.7, categories.LAND * categories.SCOUT * categories.MOBILE,  '<=', categories.LAND * categories.MOBILE * categories.DIRECTFIRE - categories.LAND * categories.MOBILE * categories.DIRECTFIRE*categories.ENGINEER - categories.LAND * categories.MOBILE * categories.DIRECTFIRE*categories.SCOUT } }, -- Don't make scouts if we have lots of them.
-            { UCBC, 'M27LifetimeBuildCountLessThan', { true, categories.LAND * categories.SCOUT * categories.MOBILE, M27Overseer.iInitialRaiderPlatoonsWanted}},
+            { UCBC, 'M27LifetimeBuildCountLessThan', { true, categories.LAND * categories.SCOUT * categories.MOBILE, 2}},
             --{ MIBC, 'M27TestReturnFalse', {true} }, --for testing
         },
         BuilderType = 'All',
@@ -60,7 +60,7 @@ BuilderGroup {
         Priority = 94,
         BuilderConditions = {
             --ERROR - this condition doesn't work; hwoever dont need it anyway { UCBC, 'HaveUnitRatio', { 0.5, categories.LAND * categories.DIRECTFIRE * categories.MOBILE - categories.LAND * categories.DIRECTFIRE * categories.SCOUT * categories.MOBILE,  '<=', categories.LAND * categories.MOBILE - categories.ENGINEER } },
-            { UCBC, 'M27LifetimeBuildCountLessThan', { true, categories.LAND * categories.DIRECTFIRE * categories.MOBILE - categories.LAND * categories.DIRECTFIRE * categories.MOBILE * categories.SCOUT, M27Overseer.iInitialRaiderPlatoonsWanted}}, --True if < 2 direct fire tanks have been built
+            { UCBC, 'M27LifetimeBuildCountLessThan', { true, categories.LAND * categories.DIRECTFIRE * categories.MOBILE - categories.LAND * categories.DIRECTFIRE * categories.MOBILE * categories.SCOUT, 2}}, --True if < 2 direct fire tanks have been built
             --{ UCBC, 'HaveUnitRatio', { 1, categories.LAND * categories.DIRECTFIRE * categories.MOBILE - categories.COMMAND,  '<=', categories.LAND * categories.SCOUT * categories.MOBILE } },
             --{ MIBC, 'M27TestReturnFalse', {true} }, --for testing
 
@@ -255,8 +255,8 @@ BuilderGroup {
         },
         BuilderType = 'All',
     },
-}
-
+}--]]
+--[[
 BuilderGroup {
     BuilderGroupName = 'M27AIAirBuilder',
     BuildersType = 'FactoryBuilder',
@@ -266,13 +266,13 @@ BuilderGroup {
         PlatoonTemplate = 'T1AirBomber',
         Priority = 80,
         BuilderConditions = {
-            --{ MIBC, 'M27TestReturnFalse', {true} },
+            { MIBC, 'M27TestReturnFalse', {true} },
             { EBC, 'GreaterThanEconStorageRatio', { 0.0, 0.7}},
             { EBC, 'M27ExcessEnergyIncome', { true, 40 }},
         },
         BuilderType = 'Air',
-    },
-
+    },--]]
+--[[
     Builder {
         BuilderName = 'M27AI Factory Intie',
         PlatoonTemplate = 'T1AirFighter',
@@ -283,5 +283,5 @@ BuilderGroup {
             { EBC, 'M27ExcessEnergyIncome', { true, 40 }},
         },
         BuilderType = 'Air',
-    },
+    },--]]
 }

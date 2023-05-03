@@ -9,7 +9,7 @@ PlatoonTemplate {
     Name = 'M27AILandAttack',
     Plan = 'StrikeForceAI', -- The platoon function to use.
     GlobalSquads = {
-        { categories.MOBILE * categories.LAND * categories.DIRECTFIRE + categories.MOBILE * categories.LAND * categories.INDIRECTFIRE - categories.EXPERIMENTAL - categories.ENGINEER, -- Type of units.
+        { categories.MOBILE * categories.LAND * categories.DIRECTFIRE + categories.MOBILE * categories.LAND * categories.INDIRECTFIRE - categories.EXPERIMENTAL - categories.ENGINEER - categories.SCOUT, -- Type of units.
           1, -- Min number of units.
           20, -- Max number of units.
           'attack', -- platoon types: 'support', 'attack', 'scout',
@@ -94,9 +94,9 @@ PlatoonTemplate {
           50, -- Max number of units.
           'attack', -- platoon types: 'support', 'attack', 'scout',
           'AttackFormation' }, -- platoon move formations: 'None', 'AttackFormation', 'GrowthFormation',; AttackFormation - units stay together
-        {categories.MOBILE * categories.LAND * categories.SCOUT, 0, 4, 'attack', 'AttackFormation' },
+        --{categories.MOBILE * categories.LAND * categories.SCOUT, 0, 4, 'attack', 'AttackFormation' },
         {categories.MOBILE * categories.LAND * categories.INDIRECTFIRE, 0, 50, 'attack', 'AttackFormation' },
-        {categories.MOBILE * categories.LAND * categories.ANTIAIR, 0, 10, 'attack', 'AttackFormation' },
+        --{categories.MOBILE * categories.LAND * categories.ANTIAIR, 0, 10, 'attack', 'AttackFormation' },
     },
 }
 PlatoonTemplate {

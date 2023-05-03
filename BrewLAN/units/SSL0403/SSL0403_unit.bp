@@ -100,15 +100,16 @@ UnitBlueprint {
         'PATROLHELPER',
         'SHOWQUEUE',
         'REBUILDER',
-        'MOBILEBUILDERONLY'
+        'MOBILEBUILDERONLY',
+        'OVERLAYRADAR',
     },
     Defense = {
         ArmorType = 'Experimental',
-        EconomyThreatLevel = 618,
+        EconomyThreatLevel = 613,
         Health = 18450,
         MaxHealth = 18450,
         RegenRate = 10,
-        SurfaceThreatLevel = 83,
+        SurfaceThreatLevel = 125,
     },
     Description = '<LOC ssl0403_desc>Experimental Resurrection Engineer',
     Display = {
@@ -396,8 +397,6 @@ UnitBlueprint {
                 'Mandible_006',
             },
         },
-        Category = 'Experimental',
-        Classification = 'RULEUC_Engineer',
         CommandCaps = {
             RULEUCC_Attack = true,
             RULEUCC_Capture = true,
@@ -421,9 +420,7 @@ UnitBlueprint {
             },
         },
         SelectionPriority = 3,
-        TechLevel = 'RULEUTL_Experimental',
         UnitName = '<LOC ssl0403_name>Iyadesu',
-        UnitWeight = 4,
     },
     Intel = {
         RadarRadius = 45,

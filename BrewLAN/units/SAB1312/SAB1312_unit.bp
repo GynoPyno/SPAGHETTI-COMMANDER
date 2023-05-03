@@ -22,8 +22,7 @@ UnitBlueprint {
         'PERSONALSHIELD',
         'SORTECONOMY',
         'RESEARCHLOCKED',
-    },
-
+    },
     Defense = {
         ArmorType = 'Structure',
         EconomyThreatLevel = 833,
@@ -42,8 +41,7 @@ UnitBlueprint {
             ShieldRegenStartTime = 1,
             ShieldSize = 6,
             ShieldVerticalOffset = -1.65,
-        },
-
+        },
     },
     Description = '<LOC sab1312_desc>Shielded Mass Extractor',
     Display = {
@@ -90,8 +88,8 @@ UnitBlueprint {
         BuildCostMass = 5750,
         BuildTime = 3595,
         HalfPriceUpgradeFromID = 'uab1302',
-        MaintenanceConsumptionPerSecondEnergy = 91,
-        ProductionPerSecondMass = 23,
+        MaintenanceConsumptionPerSecondEnergy = 60.75,
+        ProductionPerSecondMass = 20.25,
         RebuildBonusIds = {
             'uab1302',
             'sab1312',
@@ -99,16 +97,12 @@ UnitBlueprint {
         ResearchMult = 1.25,
     },
     General = {
-        Category = 'Economy',
-        Classification = 'RULEUC_Resource',
         FactionName = 'Aeon',
         Icon = 'amph',
         SelectionPriority = 5,
-        TechLevel = 'RULEUTL_Advanced',
         ToggleCaps = {
             RULEUTC_ProductionToggle = true,
         },
-        UnitWeight = 1,
     },
     Intel = {
         VisionRadius = 20,
@@ -116,8 +110,7 @@ UnitBlueprint {
     LifeBarHeight = 0.075,
     LifeBarOffset = 0.35,
     LifeBarSize = 1.1,
-    Physics = {
-
+    Physics = {
         BuildOnLayerCaps = {
             LAYER_Land = true,
             LAYER_Seabed = true,
@@ -128,20 +121,16 @@ UnitBlueprint {
             Axis2 = 'z',
             InvertAxis = {false,true}
         },
-        BuildRestriction = 'RULEUBR_OnMassDeposit',
-
-        FlattenSkirt = true,
-
+        BuildRestriction = 'RULEUBR_OnMassDeposit',
+        FlattenSkirt = true,
         MeshExtentsX = 2,
         MeshExtentsY = 2,
-        MeshExtentsZ = 2,
-
+        MeshExtentsZ = 2,
         MotionType = 'RULEUMT_None',
         SkirtOffsetX = -0.5,
         SkirtOffsetZ = -0.5,
         SkirtSizeX = 2,
-        SkirtSizeZ = 2,
-
+        SkirtSizeZ = 2,
     },
     SelectionSizeX = 0.65,
     SelectionSizeZ = 0.65,

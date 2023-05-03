@@ -5,7 +5,10 @@ Shield = Class(OldShield) {
 
     -- Return true to process this collision, false to ignore it.
     OnCollisionCheck = function(self, other)
-    
+        if not self.GetArmy or not other.GetArmy then
+            return OldShield.OnCollisionCheck(self, other)
+        end
+
         if other:GetArmy() == -1 then
             return false
         end
@@ -16,7 +19,12 @@ Shield = Class(OldShield) {
             return IsEnemy(self:GetArmy(),other:GetArmy())
         end
         
-        -- execute the normal OnCollisionCheck fon non stretegic missiles
+        -- execute the normal OnCollisionCheck for non stretegic missiles
         return OldShield.OnCollisionCheck(self, other)
     end,
+    
+    GetOverlappingShields = function(self, tick)
+        return { }, 0
+    end,
+
 }

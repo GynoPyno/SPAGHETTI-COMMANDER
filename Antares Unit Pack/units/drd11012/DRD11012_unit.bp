@@ -139,8 +139,8 @@ UnitBlueprint {
         BuildCostEnergy = 600000,
         BuildCostMass = 8000,
         BuildTime = 24000,
-        ProductionPerSecondMass = 40,
-        ProductionPerSecondEnergy = 4000,
+        ProductionPerSecondMass = 50,
+        ProductionPerSecondEnergy = 5000,
         RebuildBonusIds = {
             'drd11012',
         },

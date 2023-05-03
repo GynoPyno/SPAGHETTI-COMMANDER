@@ -57,12 +57,10 @@ UnitBlueprint {
     CollisionOffsetY = -1,
     Defense = {
         AirThreatLevel = 75,
-        ArmorType = 'Normal',
-        --EconomyThreatLevel = 0,
+        ArmorType = 'Experimental',
         Health = 17150,
         MaxHealth = 17150,
         RegenRate = 5,
-        --SubThreatLevel = 0,
         SurfaceThreatLevel = 472,
         Shield = {
             ImpactEffects = 'AeonShieldHit01',
@@ -141,8 +139,6 @@ UnitBlueprint {
         MaintenanceConsumptionPerSecondEnergy = 1266,
     },
     General = {
-        Category = 'Experimental',
-        Classification = 'RULEUC_MilitaryShip',
         CommandCaps = {
             RULEUCC_Attack = true,
             RULEUCC_Guard = true,
@@ -159,9 +155,7 @@ UnitBlueprint {
         },
         FactionName = 'Aeon',
         Icon = 'sea',
-        TechLevel = 'RULEUTL_Secret',
         UnitName = '<LOC sas0401_name>Deluge Class',
-        UnitWeight = 1,
     },
     Intel = {
         FreeIntel = true,

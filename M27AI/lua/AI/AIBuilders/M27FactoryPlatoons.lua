@@ -1,3 +1,4 @@
+--OBSOLETE - below isnt united by M27AI
 local UCBC = '/lua/editor/UnitCountBuildConditions.lua'
 local EBC = '/lua/editor/EconomyBuildConditions.lua'
 local IBC = '/lua/editor/InstantBuildConditions.lua'
@@ -9,7 +10,7 @@ local MIBC = '/lua/editor/MiscBuildConditions.lua'
 local MABC = '/lua/editor/MarkerBuildConditions.lua'
 local M27Overseer = import('/mods/M27AI/lua/AI/M27Overseer.lua')
 
-BuilderGroup {
+--[[BuilderGroup {
     BuilderGroupName = 'M27AIPlatoonBuilder',
     BuildersType = 'PlatoonFormBuilder', -- A PlatoonFormBuilder is for builder groups of units.
     Builder {
@@ -24,14 +25,15 @@ BuilderGroup {
             UseFormation = 'AttackFormation',
         },
         BuilderConditions = {
-            --{ MIBC, 'M27TestReturnFalse', {true} }, --for testing
+            { MIBC, 'M27TestReturnFalse', {true} }, --for testing
         },
-    },
+    },--]]
+    --[[
     Builder {
         BuilderName = 'M27AI Land Attack1OffRaider',
         PlatoonTemplate = 'M27SmallRaider', -- The platoon template tells the AI what units to include, and how to use them.
         Priority = 999,
-        InstanceCount = M27Overseer.iInitialRaiderPlatoonsWanted,
+        InstanceCount = 2,
         BuilderType = 'Any',
         BuilderData = {
             NeverGuardBases = true,
@@ -39,7 +41,7 @@ BuilderGroup {
             UseFormation = 'AttackFormation',
         },
         BuilderConditions = {
-            { UCBC, 'M27LifetimeBuildCountLessThan', { true, categories.LAND * categories.SCOUT * categories.MOBILE, M27Overseer.iInitialRaiderPlatoonsWanted + 1}},
+            { UCBC, 'M27LifetimeBuildCountLessThan', { true, categories.LAND * categories.SCOUT * categories.MOBILE, 2 + 1}},
             --{ MIBC, 'M27TestReturnFalse', {true} }, --for testing
         },
     },
@@ -56,7 +58,7 @@ BuilderGroup {
             UseFormation = 'GrowthFormation',
         },
         BuilderConditions = {
-            { UCBC, 'M27LifetimePlatoonCount', { false, 'M27MexRaiderAI', M27Overseer.iInitialRaiderPlatoonsWanted, true}}, -->1
+            { UCBC, 'M27LifetimePlatoonCount', { false, 'M27MexRaiderAI', 2, true}}, -->1
         },
     },
     Builder {
@@ -73,7 +75,7 @@ BuilderGroup {
         BuilderConditions = {
             { MIBC, 'M27NeedScoutPlatoons', {true} }, --overseer will flag we need scouts
             { UCBC, 'HaveGreaterThanUnitsWithCategory', { 5, categories.LAND * categories.MOBILE * categories.DIRECTFIRE - categories.MOBILE * categories.SCOUT * categories.DIRECTFIRE}},
-            { UCBC, 'M27LifetimePlatoonCount', { false, 'M27MexRaiderAI', M27Overseer.iInitialRaiderPlatoonsWanted, true}}, -->1
+            { UCBC, 'M27LifetimePlatoonCount', { false, 'M27MexRaiderAI', 2, true}}, -->1
         },
     },
     Builder {
@@ -105,7 +107,7 @@ BuilderGroup {
         },
         BuilderConditions = {
             { UCBC, 'M27LifetimePlatoonCount', { true, 'M27MexRaiderAI', 8, true}}, --< 8
-            --{ UCBC, 'M27LifetimePlatoonCount', { false, 'M27MexRaiderAI', M27Overseer.iInitialRaiderPlatoonsWanted, true}}, -->1
+            --{ UCBC, 'M27LifetimePlatoonCount', { false, 'M27MexRaiderAI', M27Overseer.refiInitialRaiderPlatoonsWanted, true}}, -->1
             --{ MIBC, 'M27TestReturnFalse', {true} }, --for testing
         },
     },
@@ -121,7 +123,7 @@ BuilderGroup {
             UseFormation = 'AttackFormation',
         },
         BuilderConditions = {
-            --{ UCBC, 'M27LifetimePlatoonCount', { false, 'M27MexRaiderAI', M27Overseer.iInitialRaiderPlatoonsWanted, true}}, -->1
+            --{ UCBC, 'M27LifetimePlatoonCount', { false, 'M27MexRaiderAI', M27Overseer.refiInitialRaiderPlatoonsWanted, true}}, -->1
             --{ MIBC, 'M27TestReturnFalse', {true} }, --for testing
         },
     },
@@ -138,7 +140,7 @@ BuilderGroup {
         },
         BuilderConditions = {
             { UCBC, 'M27LifetimePlatoonCount', { true, 'M27MexRaiderAI', 8, true}}, --<8
-            --{ UCBC, 'M27LifetimePlatoonCount', { false, 'M27MexRaiderAI', M27Overseer.iInitialRaiderPlatoonsWanted, true}}, -->1
+            --{ UCBC, 'M27LifetimePlatoonCount', { false, 'M27MexRaiderAI', M27Overseer.refiInitialRaiderPlatoonsWanted, true}}, -->1
             --{ MIBC, 'M27TestReturnFalse', {true} }, --used for testing
         },
     },
@@ -154,7 +156,7 @@ BuilderGroup {
             UseFormation = 'AttackFormation',
         },
         BuilderConditions = {
-            --{ UCBC, 'M27LifetimePlatoonCount', { false, 'M27MexRaiderAI', M27Overseer.iInitialRaiderPlatoonsWanted, true}}, -->1
+            --{ UCBC, 'M27LifetimePlatoonCount', { false, 'M27MexRaiderAI', M27Overseer.refiInitialRaiderPlatoonsWanted, true}}, -->1
             --{ UCBC, 'M27LifetimePlatoonCount', { true, 'M27MexRaiderAI', 8, true}}, --<8
             --{ MIBC, 'M27TestReturnFalse', {true} }, --for testing
         },
@@ -190,7 +192,7 @@ BuilderGroup {
         BuilderConditions = {
             { MIBC, 'M27NeedScoutPlatoons', {true} }, --overseer will flag we need scouts
             { UCBC, 'HaveGreaterThanUnitsWithCategory', { 5, categories.LAND * categories.MOBILE * categories.DIRECTFIRE - categories.MOBILE * categories.SCOUT * categories.DIRECTFIRE}},
-            --{ UCBC, 'M27LifetimePlatoonCount', { false, 'M27MexRaiderAI', M27Overseer.iInitialRaiderPlatoonsWanted, true}}, -->1
+            --{ UCBC, 'M27LifetimePlatoonCount', { false, 'M27MexRaiderAI', M27Overseer.refiInitialRaiderPlatoonsWanted, true}}, -->1
         },
     },
 
@@ -209,7 +211,7 @@ BuilderGroup {
             { MIBC, 'M27NeedDefenders', {false} }, --overseer will flag we need defenders if it cant deal with all ID'd threats
             { UCBC, 'M27LifetimePlatoonCount', { true, 'M27LargeAttackForce', 0, false}}, -- >0
             { MIBC, 'M27ACUHasGunUpgrade', { true, true } }, --Once ACU has gun switch to attacking regardless of threats
-            --{ UCBC, 'M27LifetimePlatoonCount', { false, 'M27MexRaiderAI', M27Overseer.iInitialRaiderPlatoonsWanted, true}}, -->1
+            --{ UCBC, 'M27LifetimePlatoonCount', { false, 'M27MexRaiderAI', M27Overseer.refiInitialRaiderPlatoonsWanted, true}}, -->1
             --{ MIBC, 'M27TestReturnFalse', {true} }, --used for testing
         },
     },
@@ -229,12 +231,13 @@ BuilderGroup {
             { UCBC, 'M27LifetimePlatoonCount', { true, 'M27LargeAttackForce', 0, false}}, -- >0
             --{ MIBC, 'M27TestReturnFalse', {true} }, --used for testing
         },
-    },
+    },--]]
+    --[[
     Builder {
         BuilderName = 'M27AI Air Attack',
         PlatoonTemplate = 'BomberAttack',
         Priority = 100,
-        InstanceCount = 2,
+        InstanceCount = 5,
         BuilderType = 'Any',
         BuilderConditions = { },
     },
@@ -245,5 +248,5 @@ BuilderGroup {
         InstanceCount = 200,
         BuilderType = 'Any',
         BuilderConditions = { },
-    },
-}
+    },--]]
+--}

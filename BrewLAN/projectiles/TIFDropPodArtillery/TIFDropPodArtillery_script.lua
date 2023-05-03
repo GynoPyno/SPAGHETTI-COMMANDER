@@ -24,6 +24,7 @@ TIFDropPodArtillery = Class(TArtilleryAntiMatterProjectile) {
 
     OnCreate = function(self, inWater)
         TArtilleryAntiMatterProjectile.OnCreate(self, inWater)
+        self:SetCollisionShape('Sphere', 0, 0, 0, 1)
     end,
 
     OnImpact = function(self, TargetType, TargetEntity)
@@ -37,12 +38,17 @@ TIFDropPodArtillery = Class(TArtilleryAntiMatterProjectile) {
         if self.Data then
             self:DetachAll(1, true)
             Warp(self.Data,pos)-- This fixes a bunch of fucky stuff
-            --Can't just call OnRemoveFromStorage on the unit 'cause this isn't a carrier, and we can't rely on the artillery to be alive to pass that as the second arg.
-            self.Data:ShowBone(0,true)
-            self.Data:SetCanTakeDamage(true)
-            self.Data:SetReclaimable(true)
-            self.Data:SetCapturable(true)
-            self.Data:MarkWeaponsOnTransport(self.Data, false)
+
+            if self.Data.OnStorageChange then --FAF
+                self.Data:OnStorageChange(false)
+            else
+                self.Data:ShowBone(0,true)
+                self.Data:SetCanTakeDamage(true)
+                --self.Data:SetDoNotTarget(false)
+                self.Data:SetReclaimable(true)
+                self.Data:SetCapturable(true)
+                self.Data:MarkWeaponsOnTransport(self.Data, false)
+            end
             self.Data:EnableIntel('Vision')
 
             local DropBP = self.Data:GetBlueprint()

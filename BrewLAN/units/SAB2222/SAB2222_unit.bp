@@ -9,6 +9,7 @@ UnitBlueprint {
         'SELECTABLE',
         'BUILTBYTIER3FIELD',
         'OVERLAYRADAR',
+        'OVERLAYSONAR',
         'OVERLAYMISC',
         'AEON',
         'STRUCTURE',
@@ -54,8 +55,6 @@ UnitBlueprint {
     },
     General = {
         CapCost = 1,
-        Category = 'Defense',
-        Classification = 'RULEUC_Weapon',
         CommandCaps = {
             RULEUCC_RetaliateToggle = true,
         },
@@ -69,12 +68,10 @@ UnitBlueprint {
             },
         },
         SelectionPriority = 5,
-        TechLevel = 'RULEUTL_Basic',
         ToggleCaps = {
             RULEUTC_WeaponToggle = true,
         },
         UnitName = '<LOC sab2222_name>Mountain',
-        UnitWeight = 1,
     },
     Intel = {
         Cloak = true,

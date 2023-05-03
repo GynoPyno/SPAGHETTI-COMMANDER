@@ -77,6 +77,8 @@ UnitBlueprint {
         'SORTCONSTRUCTION',
         'GATE',
     },
+    CollisionOffsetY = -13,
+    CollisionShape = 'Sphere',
     Defense = {
         ArmorType = 'Structure',
         EconomyThreatLevel = 2091,
@@ -199,8 +201,6 @@ UnitBlueprint {
                 'BuilderM_008',
             },
         },
-        Category = 'Factory',
-        Classification = 'RULEUC_Factory',
         CommandCaps = {
             RULEUCC_Guard = true,
             RULEUCC_Move = true,
@@ -213,9 +213,7 @@ UnitBlueprint {
         FactionName = 'Aeon',
         Icon = 'air',
         SelectionPriority = 5,
-        TechLevel = 'RULEUTL_Secret',
         UnitName = '<LOC sab0401_name>Independence Engine',
-        UnitWeight = 1,
     },
     Intel = {
         VisionRadius = 37,
@@ -272,10 +270,7 @@ UnitBlueprint {
     SelectionSizeX = 15,
     SelectionSizeZ = 15,
     SelectionThickness = 0.1,
-    SizeX = 27,
-    SizeY = 10,
-    SizeZ = 27,
-    SizeSphere = 13,
+    SizeX = 26,
     StrategicIconName = 'icon_experimental_generic',
     StrategicIconSortPriority = 210,
     Wreckage = {

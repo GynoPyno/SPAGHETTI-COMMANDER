@@ -1,3 +1,4 @@
+--OBSOLETE - below isnt united by M27AI
 --[[
         The keys for these builders are included AI/AIBaseTemplates/M27AI.lua.
         --This file contains builder groups for the engineers; ACU is in M27ACUBuilder.lua; builder groups for the factories are in M27FactoryBuilders.lua
@@ -13,7 +14,7 @@ local SAI = '/lua/ScenarioPlatoonAI.lua'
 local MIBC = '/lua/editor/MiscBuildConditions.lua'
 local MABC = '/lua/editor/MarkerBuildConditions.lua'
 
-BuilderGroup {
+--[[BuilderGroup {
     BuilderGroupName = 'M27AIEngineerBuilder',
     BuildersType = 'EngineerBuilder',
     Builder {
@@ -22,9 +23,10 @@ BuilderGroup {
         Priority = 1500,
         InstanceCount = 1,
         BuilderConditions = {
-            { MIBC, 'M27NearbyHydro', { true } }, --Includes a game time condition
-            { UCBC, 'HaveLessThanUnitsWithCategory', { 2, categories.MOBILE * categories.ENGINEER - categories.COMMAND}},
-            { UCBC, 'HaveLessThanUnitsWithCategory', { 1, categories.HYDROCARBON}},
+            { MIBC, 'M27TestReturnFalse', { true } },
+            --{ MIBC, 'M27NearbyHydro', { true } }, --Includes a game time condition
+            --{ UCBC, 'HaveLessThanUnitsWithCategory', { 2, categories.MOBILE * categories.ENGINEER - categories.COMMAND}},
+            --{ UCBC, 'HaveLessThanUnitsWithCategory', { 1, categories.HYDROCARBON}},
         },
         BuilderType = 'Any',
         BuilderData = {
@@ -36,7 +38,8 @@ BuilderGroup {
                 }
             }
         }
-    },
+    },--]]
+    --[[
     Builder {
         BuilderName = 'M27AI Early reclaim engi',
         PlatoonTemplate = 'M27AIT1EngineerReclaimer',
@@ -260,5 +263,5 @@ BuilderGroup {
         BuilderConditions = {
         },
         BuilderType = 'Any',
-    },
-}
+    }, --]]
+--}

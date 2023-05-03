@@ -123,10 +123,6 @@ Mk56 = Class(TSeaUnit) {
             ChangeState(self, self.IdleState)
         end,
 		
-		
-		
-		
-		
 		--------------------------
 		-- Create Death Effects --
 		--------------------------

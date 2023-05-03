@@ -14,6 +14,11 @@ local util = import('/lua/utilities.lua')
 EmtBpPath = '/Mods/#Marlos mods compilation/effects/emitters/'
 
 
+    -- FxTrails = {'/effects/emitters/mortar_munition_01_emit.bp',},
+    -- FxTrails = EffectTemplate.TPlasmaCannonHeavyMunition,
+	
+    -- FxTrails = EffectTemplate.THiroLaserFxtrails,    Perfect for Mastodon
+    -- PolyTrail = EffectTemplate.THiroLaserPolytrail,
 
 TArtilleryAntiMatterProjectile05 = Class(SinglePolyTrailProjectile) {
     FxLandHitScale = 1,
@@ -35,6 +40,43 @@ TArtilleryAntiMatterProjectile05 = Class(SinglePolyTrailProjectile) {
             CreateDecal( self:GetPosition(), util.GetRandomFloat(0,2*math.pi), 'nuke_scorch_001_normals', '', 'Alpha Normals', self.FxSplatScale, self.FxSplatScale, 150, 30, army )
             CreateDecal( self:GetPosition(), util.GetRandomFloat(0,2*math.pi), 'nuke_scorch_002_albedo', '', 'Albedo', self.FxSplatScale * 2, self.FxSplatScale * 2, 150, 30, army )
             self:ShakeCamera(20, 1, 0, 1)
+        end
+        local pos = self:GetPosition()
+        DamageArea(self, pos, self.DamageData.DamageRadius, 1, 'Force', true)
+        DamageArea(self, pos, self.DamageData.DamageRadius, 1, 'Force', true)
+        EmitterProjectile.OnImpact(self, targetType, targetEntity)
+    end,
+}
+
+TFragmentationGrenadeMK = Class(SingleBeamProjectile) {
+    FxImpactUnit = EffectTemplate.THeavyFragmentationGrenadeUnitHit,
+    FxImpactLand = EffectTemplate.THeavyFragmentationGrenadeHit,
+    FxImpactWater = EffectTemplate.THeavyFragmentationGrenadeHit,
+    FxImpactNone = EffectTemplate.THeavyFragmentationGrenadeHit,
+    FxImpactProp = EffectTemplate.THeavyFragmentationGrenadeUnitHit,
+    FxImpactUnderWater = {},
+    FxTrails = EffectTemplate.TMissileExhaust03,
+}
+
+TArtilleryAntiMatterProjectile06 = Class(SinglePolyTrailProjectile) {
+    FxLandHitScale = 1,
+    FxUnitHitScale = 0.4,
+    FxSplatScale = 2.5,
+	PolyTrail = '/effects/emitters/default_polytrail_07_emit.bp',
+	
+    # Hit Effects
+    FxImpactUnit = EffectTemplate.TShipGaussCannonHitUnit01,
+    FxImpactProp = EffectTemplate.TShipGaussCannonHit01,
+    FxImpactLand = EffectTemplate.TShipGaussCannonHit01,
+    FxImpactWater = EffectTemplate2.DefaultProjectileWaterImpact,
+    FxSplatScale = 2.5,
+	
+    OnImpact = function(self, targetType, targetEntity)
+        local army = self:GetArmy()
+        #CreateLightParticle( self, -1, army, 16, 6, 'glow_03', 'ramp_antimatter_02' )
+        if targetType == 'Terrain' then
+            CreateDecal( self:GetPosition(), util.GetRandomFloat(0,2*math.pi), 'nuke_scorch_001_normals', '', 'Alpha Normals', self.FxSplatScale, self.FxSplatScale, 150, 30, army )
+            CreateDecal( self:GetPosition(), util.GetRandomFloat(0,2*math.pi), 'nuke_scorch_002_albedo', '', 'Albedo', self.FxSplatScale * 2, self.FxSplatScale * 2, 150, 30, army )
         end
         local pos = self:GetPosition()
         DamageArea(self, pos, self.DamageData.DamageRadius, 1, 'Force', true)
@@ -145,9 +187,8 @@ MKIridiumRocketProjectile = Class(SingleCompositeEmitterProjectile) {
 }
 
 TMastodonMKProjectile = Class(SingleCompositeEmitterProjectile) {
-    FxTrails = {},
-	PolyTrail = '/Mods/#Marlos mods compilation/effects/emitters/MK_iridium_missile_polytrail_02_emit.bp',    
-    BeamName = '/Mods/#Marlos mods compilation/effects/emitters/MK_iridium_exhaust_beam_01_emit.bp',
+    FxTrails = EffectTemplate.THiroLaserFxtrails,
+    PolyTrail = EffectTemplate.THiroLaserPolytrail,
     FxImpactUnit = EffectTemplate2.MKMissileHit02b,
     FxImpactProp = EffectTemplate2.MKMissileHit02b,
     FxImpactLand = EffectTemplate2.MKMissileHit02b,

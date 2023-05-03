@@ -18,9 +18,9 @@ UnitList = {
           T3LandArtillery = {
               UEF = {'kel0304', 50}, -- Scorcher (MLRS) 
           },
-          T3AADefense = {
-              UEF = {'keb2304', 50}, -- Thor (Heavy Anti-Air SAM Launcher) 
-          },
+          -- T3AADefense = {
+              -- UEF = {'keb2304', 50}, -- Thor (Heavy Anti-Air SAM Launcher) 
+          -- },
           T3GroundDefense = {
               UEF = {'keb2302', 50}, -- V6 Rocket Installation (Intercontinental Ballistic Missile Launcher) 
           },

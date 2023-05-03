@@ -88,15 +88,12 @@ UnitBlueprint {
         'SORTECONOMY',
         'RESEARCHLOCKED',
     },
-    Defense = {
-
+    Defense = {
         ArmorType = 'Structure',
         EconomyThreatLevel = 863,
         Health = 12600,
         MaxHealth = 12600,
-        RegenRate = 5,
-
-
+        RegenRate = 5,
     },
     Description = '<LOC seb1312_desc>Engineering Mass Extractor',
     Display = {
@@ -154,8 +151,8 @@ UnitBlueprint {
         },
         HalfPriceUpgradeFromID = 'ueb1302',
         NaturalProducer = true, --This fixes the issue of it stopping producing if it consumes more than it produces
-        MaintenanceConsumptionPerSecondEnergy = 91,
-        ProductionPerSecondMass = 23,
+        MaintenanceConsumptionPerSecondEnergy = 60.75,
+        ProductionPerSecondMass = 20.25,
         RebuildBonusIds = {
             'ueb1302',
             'seb1312',
@@ -171,8 +168,6 @@ UnitBlueprint {
             --PitchBone = 'ArmB001',
             --YawBone = 'ArmA001',
         },
-        Category = 'Economy',
-        Classification = 'RULEUC_Resource',
         CommandCaps = {
             RULEUCC_Reclaim = true,
             RULEUCC_Repair = true,
@@ -181,12 +176,10 @@ UnitBlueprint {
         FactionName = 'UEF',
         Icon = 'amph',
         SelectionPriority = 5,
-        TechLevel = 'RULEUTL_Advanced',
         ToggleCaps = {
             RULEUTC_ProductionToggle = true,
         },
         UnitName = '<LOC seb1312_name>Mass Pump 3E',
-        UnitWeight = 1,
     },
     Intel = {
         VisionRadius = 20,
@@ -194,26 +187,21 @@ UnitBlueprint {
     LifeBarHeight = 0.075,
     LifeBarOffset = 0.35,
     LifeBarSize = 1.1,
-    Physics = {
-
+    Physics = {
         BuildOnLayerCaps = {
             LAYER_Land = true,
             LAYER_Seabed = true,
         },
-        BuildRestriction = 'RULEUBR_OnMassDeposit',
-
-        FlattenSkirt = true,
-
+        BuildRestriction = 'RULEUBR_OnMassDeposit',
+        FlattenSkirt = true,
         MeshExtentsX = 1.2,
         MeshExtentsY = 1.35,
-        MeshExtentsZ = 1.2,
-
+        MeshExtentsZ = 1.2,
         MotionType = 'RULEUMT_None',
         SkirtOffsetX = -0.5,
         SkirtOffsetZ = -0.5,
         SkirtSizeX = 2,
-        SkirtSizeZ = 2,
-
+        SkirtSizeZ = 2,
     },
     SelectionSizeX = 0.65,
     SelectionSizeZ = 0.65,

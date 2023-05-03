@@ -357,7 +357,7 @@ BuilderGroup {
     Builder {
         BuilderName = 'U4 Suicide AIR exp',                                     -- Random Builder Name.
         PlatoonTemplate = 'U4-Suicide 1 1',                                     -- Template Name. These units will be formed. See: "\lua\AI\PlatoonTemplates"
-        Priority = 10000,                                                       -- Priority. 1000 is normal.
+        Priority = 0,                                                       -- Priority. 1000 is normal.
         InstanceCount = 1,                                                      -- Number of plattons that will be formed.
         FormRadius = 10000,
         PriorityFunction = function(self, aiBrain)
@@ -394,7 +394,7 @@ BuilderGroup {
     Builder {
         BuilderName = 'U4 Suicide AIR T3',                                      -- Random Builder Name.
         PlatoonTemplate = 'U4-Suicide 1 1',                                     -- Template Name. These units will be formed. See: "\lua\AI\PlatoonTemplates"
-        Priority = 9000,                                                        -- Priority. 1000 is normal.
+        Priority = 0,                                                        -- Priority. 1000 is normal.
         InstanceCount = 1,                                                      -- Number of plattons that will be formed.
         FormRadius = 10000,
         PriorityFunction = function(self, aiBrain)

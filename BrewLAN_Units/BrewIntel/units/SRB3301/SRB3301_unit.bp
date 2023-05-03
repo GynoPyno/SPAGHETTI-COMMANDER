@@ -37,7 +37,6 @@ UnitBlueprint {
     CollisionOffsetY = -0.25,
     Defense = {
         ArmorType = 'Structure',
-        EconomyThreatLevel = 53,
         Health = 500,
         MaxHealth = 500,
     },
@@ -113,8 +112,6 @@ UnitBlueprint {
         SizeZ = 5,
     },
     General = {
-        Category = 'Intelligence',
-        Classification = 'RULEUC_Sensor',
         FactionName = 'Cybran',
         Icon = 'land',
         OrderOverrides = {
@@ -124,12 +121,10 @@ UnitBlueprint {
             },
         },
         SelectionPriority = 5,
-        TechLevel = 'RULEUTL_Advanced',
         ToggleCaps = {
             RULEUTC_IntelToggle = true,
         },
         UnitName = '<LOC srb3301_name>Qain',
-        UnitWeight = 1,
     },
     Intel = {
         OmniRadius = 300,

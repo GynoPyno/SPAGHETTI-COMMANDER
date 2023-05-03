@@ -247,7 +247,7 @@ UnitBlueprint {
             MuzzleSalvoDelay = 0,
             MuzzleSalvoSize = 1,
             MuzzleVelocity = 30,
-            ProjectileId = '/projectiles/TDFGauss01/TDFGauss01_proj.bp',
+            ProjectileId = '/mods/#marlos mods compilation/projectiles/tifantimattershells06/tifantimattershells06_proj.bp',
             ProjectilesPerOnFire = 3,
             RackBones = {
                 {
@@ -339,7 +339,7 @@ UnitBlueprint {
             MuzzleSalvoDelay = 0,
             MuzzleSalvoSize = 1,
             MuzzleVelocity = 30,
-            ProjectileId = '/projectiles/TDFGauss01/TDFGauss01_proj.bp',
+            ProjectileId = '/mods/#marlos mods compilation/projectiles/tifantimattershells06/tifantimattershells06_proj.bp',
             ProjectilesPerOnFire = 3,
             RackBones = {
                 {

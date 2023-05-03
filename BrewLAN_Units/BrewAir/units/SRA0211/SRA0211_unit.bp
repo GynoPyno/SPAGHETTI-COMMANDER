@@ -115,7 +115,6 @@ UnitBlueprint {
     },
     Defense = {
         ArmorType = 'Light',
-        EconomyThreatLevel = 1,
         Health = 1215,
         MaxHealth = 1215,
         SurfaceThreatLevel = 11,
@@ -185,7 +184,7 @@ UnitBlueprint {
         BuildCostMass = 420,
         BuildTime = 2400,
         MaintenanceConsumptionPerSecondEnergy = 30,
-        ResearchMultTime = 0.5,
+        ResearchMultEnergy = 0.5,
     },
     Footprint = {
         MaxSlope = 0.25,
@@ -193,8 +192,6 @@ UnitBlueprint {
         SizeZ = 1,
     },
     General = {
-        Category = 'Bomber',
-        Classification = 'RULEUC_MilitaryAircraft',
         CommandCaps = {
             RULEUCC_Attack = true,
             RULEUCC_CallTransport = true,
@@ -213,12 +210,10 @@ UnitBlueprint {
                 helpText = 'toggle_stealth_personal',
             },
         },
-        TechLevel = 'RULEUTL_Secret',
         ToggleCaps = {
             RULEUTC_StealthToggle = true,
         },
         UnitName = '<LOC sra0211_name>Condor',
-        UnitWeight = 1,
     },
     Intel = {
         RadarRadius = 65,

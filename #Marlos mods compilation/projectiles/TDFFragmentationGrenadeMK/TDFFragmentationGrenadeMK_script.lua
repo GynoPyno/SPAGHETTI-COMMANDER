@@ -7,12 +7,12 @@
 #**
 #**  Copyright © 2007 Gas Powered Games, Inc.  All rights reserved.
 #****************************************************************************
-local TFragmentationGrenade = import('/lua/terranprojectiles.lua').TFragmentationGrenade
+local TFragmentationGrenadeMK = import('/Mods/#Marlos mods compilation/lua/MKProjectiles.lua').TFragmentationGrenadeMK
 local EffectTemplate = import('/lua/EffectTemplates.lua')
 local TNapalmHvyCarpetBombProjectile = import('/lua/terranprojectiles.lua').TNapalmHvyCarpetBombProjectile
 local RandomFloat = import('/lua/utilities.lua').GetRandomFloat
 
-TDFFragmentationGrenade01 = Class(TFragmentationGrenade) {
+TDFFragmentationGrenade01 = Class(TFragmentationGrenadeMK) {
 
     FxAirUnitHitScale = 2,
     FxLandHitScale = 2,
@@ -40,7 +40,7 @@ TDFFragmentationGrenade01 = Class(TFragmentationGrenade) {
 	        
 			CreateDecal(self:GetPosition(), rotation, 'scorch_001_albedo', '', 'Albedo', size, size, 150, 15, self:GetArmy())
 		end	 
-		TFragmentationGrenade.OnImpact( self, TargetType, targetEntity )
+		TFragmentationGrenadeMK.OnImpact( self, TargetType, targetEntity )
     end,	
 	
 }

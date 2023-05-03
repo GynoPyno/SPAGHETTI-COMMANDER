@@ -1,3 +1,14 @@
+V23 (03.Jul.2022)
+
+updated function for Overlapping Shields, so it will not transfer damage to other shields.
+
+*************************************************************************************************************************************
+V22 (27.Apr.2022)
+
+Fixed a bug in OnCollisionCheck in case one of the objects is no real unit.
+Added check for restricted units for AI build former
+
+*************************************************************************************************************************************
 V21 (19.Jan.2021)
 
 All units: Changed DamageType for Death Weapon from Deathnuke to 'Nuke'.

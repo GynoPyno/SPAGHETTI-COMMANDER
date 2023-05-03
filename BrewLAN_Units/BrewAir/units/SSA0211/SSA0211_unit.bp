@@ -111,7 +111,6 @@ UnitBlueprint {
     CollisionOffsetZ = 0.2,
     Defense = {
         ArmorType = 'Light',
-        EconomyThreatLevel = 1,
         Health = 1235,
         MaxHealth = 1235,
         SurfaceThreatLevel = 12,
@@ -195,7 +194,7 @@ UnitBlueprint {
         BuildCostEnergy = 8400,
         BuildCostMass = 420,
         BuildTime = 2400,
-        ResearchMultTime = 0.5,
+        ResearchMultEnergy = 0.5,
     },
     Footprint = {
         MaxSlope = 0.25,
@@ -203,8 +202,6 @@ UnitBlueprint {
         SizeZ = 1,
     },
     General = {
-        Category = 'Bomber',
-        Classification = 'RULEUC_MilitaryAircraft',
         CommandCaps = {
             RULEUCC_Attack = true,
             RULEUCC_CallTransport = true,
@@ -217,9 +214,7 @@ UnitBlueprint {
         },
         FactionName = 'Seraphim',
         Icon = 'air',
-        TechLevel = 'RULEUTL_Secret',
         UnitName = '<LOC ssa0211_name>Sinn',
-        UnitWeight = 1,
     },
     Intel = {
         RadarRadius = 65,

@@ -1,9 +1,7 @@
 local EBC = '/lua/editor/EconomyBuildConditions.lua'
 local UCBC = '/lua/editor/UnitCountBuildConditions.lua'
 local MIBC = '/lua/editor/MiscBuildConditions.lua'
-local MABC = '/lua/editor/MarkerBuildConditions.lua'
-
-local MaxCapStructure = 0.12                                                   
+local MABC = '/lua/editor/MarkerBuildConditions.lua'                                           
 
 -- ===================================================-======================================================== --
 -- ==                                       Build Power TECH 1,2,3                                           == --
@@ -14,8 +12,8 @@ BuilderGroup {
     BuildersType = 'EngineerBuilder',
     Builder {
         BuilderName = 'Swarm Power low trend',
-        PlatoonTemplate = 'EngineerBuilder',
-        Priority = 650,
+        PlatoonTemplate = 'T1EngineerBuilderSwarm',
+        Priority = 655,
         InstanceCount = 2,                                                     
         DelayEqualBuildPlattons = {'Energy', 3},
         BuilderConditions = {
@@ -25,14 +23,19 @@ BuilderGroup {
             
             { UCBC, 'CheckBuildPlattonDelay', { 'Energy' }},
 
-            { EBC, 'LessThanEnergyTrend', { 0.0 } },             
+            { EBC, 'LessThanEnergyTrendOverTimeSwarm', { 0.0 } },             
         },
         BuilderType = 'Any',
         BuilderData = {
             NumAssistees = 1,
             Construction = {
-                AdjacencyCategory = categories.FACTORY * categories.STRUCTURE * (categories.AIR + categories.LAND),
-                AdjacencyDistance = 50,
+                AdjacencyPriority = {
+                    categories.STRUCTURE * categories.FACTORY * categories.AIR,
+                    categories.RADAR * categories.STRUCTURE,
+                    categories.FACTORY * categories.STRUCTURE * categories.LAND,
+                    categories.MASSEXTRACTION * categories.TECH1,
+                    categories.ENERGYSTORAGE,   
+                },
                 BuildClose = true,
                 LocationType = 'LocationType',
                 BuildStructures = {
@@ -48,28 +51,36 @@ BuilderGroup {
 
     Builder {
         BuilderName = 'Swarm Power low trend - Scale Power',
-        PlatoonTemplate = 'EngineerBuilder',
-        Priority = 660,
-        InstanceCount = 3,                                                     
+        PlatoonTemplate = 'T1EngineerBuilderSwarm',
+        Priority = 645,
+        InstanceCount = 2,                                                     
         DelayEqualBuildPlattons = {'Energy', 3},
         BuilderConditions = {
             { UCBC, 'HaveLessThanUnitsWithCategory', { 1, categories.ENERGYPRODUCTION - categories.TECH1 - categories.COMMAND } },
+
+            { UCBC, 'HaveLessThanUnitsInCategoryBeingBuilt', { 1, categories.STRUCTURE * categories.ENERGYPRODUCTION * (categories.TECH2 + categories.TECH3) }},
             
             { UCBC, 'CheckBuildPlattonDelay', { 'Energy' }},
 
-            { EBC, 'GreaterThanEconStorageCurrent', { 200, 2000}},
+            { EBC, 'GreaterThanMassEfficiencyOverTimeSwarm', { 0.95 }},
 
-            { EBC, 'LessThanEnergyTrend', { 4.0 } },
+            { EBC, 'LessThanEnergyTrendOverTimeSwarm', { 8.0 } },
         },
         BuilderType = 'Any',
         BuilderData = {
             NumAssistees = 1,
             Construction = {
-                AdjacencyCategory = categories.FACTORY * categories.STRUCTURE * (categories.AIR + categories.LAND),
-                AdjacencyDistance = 50,
+                AdjacencyPriority = {
+                    categories.STRUCTURE * categories.FACTORY * categories.AIR,
+                    categories.RADAR * categories.STRUCTURE,
+                    categories.FACTORY * categories.STRUCTURE * categories.LAND,
+                    categories.MASSEXTRACTION * categories.TECH1,
+                    categories.ENERGYSTORAGE,   
+                },
                 BuildClose = true,
                 LocationType = 'LocationType',
                 BuildStructures = {
+                    'T1EnergyProduction',
                     'T1EnergyProduction',
                 },
             }
@@ -78,14 +89,14 @@ BuilderGroup {
 
     Builder {
         BuilderName = 'Swarm Power Hydrocarbon Normal',
-        PlatoonTemplate = 'EngineerBuilder',
-        Priority = 660,
+        PlatoonTemplate = 'T1EngineerBuilderSwarm',
+        Priority = 675,
         DelayEqualBuildPlattons = {'Energy', 1},
         InstanceCount = 1,
         BuilderConditions = {
-            { MABC, 'CanBuildOnHydroSwarm', { 'LocationType', 240, -1000, 2, 1, 'AntiSurface', 1 }},            
+            { MABC, 'CanBuildOnHydroSwarm', { 'LocationType', 240, -1000, 4, 1, 'AntiSurface', 1 }},            
 
-            { EBC, 'GreaterThanEconIncomeSwarm',  { 1.0, 4.0}}, 
+            { EBC, 'GreaterThanEconIncomeOverTimeSwarm',  { 0.2, 1.0}}, 
 
             { UCBC, 'CheckBuildPlattonDelay', { 'Energy' }},
         },
@@ -106,13 +117,17 @@ BuilderGroup {
 
     Builder {
         BuilderName = 'S2 Power',
-        PlatoonTemplate = 'T2EngineerBuilder',
+        PlatoonTemplate = 'T2EngineerBuilderSwarm',
         Priority = 1000,
         InstanceCount = 1,
         BuilderConditions = {
+            { UCBC, 'HaveLessThanUnitsWithCategory', { 2, categories.ENGINEER * categories.TECH3 } },
+
             { UCBC, 'HaveLessThanUnitsWithCategory', { 1, categories.ENERGYPRODUCTION * categories.TECH3 } },
             
-            { EBC, 'LessThanEnergyTrend', { 8.0 } },              -- Ratio from 0 to 1. (1=100%)
+            { UCBC, 'HaveLessThanUnitsInCategoryBeingBuilt', { 1, categories.STRUCTURE * categories.ENERGYPRODUCTION * categories.TECH3 }},
+            
+            { EBC, 'LessThanEnergyTrendOverTimeSwarm', { 8.0 } },              -- Ratio from 0 to 1. (1=100%)
 
             { UCBC, 'HaveLessThanUnitsInCategoryBeingBuilt', { 1, categories.STRUCTURE * categories.ENERGYPRODUCTION * categories.TECH2 }},
         },
@@ -122,8 +137,12 @@ BuilderGroup {
             Construction = {
                 DesiresAssist = true,
                 BuildClose = false,
-                AdjacencyCategory = (categories.STRUCTURE * categories.SHIELD) + (categories.FACTORY * (categories.TECH3 + categories.TECH2 + categories.TECH1)),
-                AvoidCategory = categories.ENERGYPRODUCTION * categories.TECH2,
+                AdjacencyPriority = {
+                    categories.SHIELD * categories.STRUCTURE,
+                    categories.STRUCTURE * categories.FACTORY * categories.AIR,
+                    categories.RADAR * categories.STRUCTURE,
+                    categories.FACTORY * categories.STRUCTURE * categories.LAND,
+                },
                 maxUnits = 1,
                 maxRadius = 10,
                 LocationType = 'LocationType',
@@ -139,15 +158,15 @@ BuilderGroup {
     -- ============ --
 
     Builder {
-        BuilderName = 'S3 Power0',
-        PlatoonTemplate = 'EngineerBuilderT3&SUB',
+        BuilderName = 'S3 Power',
+        PlatoonTemplate = 'EngineerBuilderT3&SUBSwarm',
         Priority = 2700,
         DelayEqualBuildPlattons = {'Energy', 10},
         InstanceCount = 1,
         BuilderConditions = {
             { UCBC, 'CheckBuildPlattonDelay', { 'Energy' }},
 
-            { EBC, 'LessThanEnergyTrend', { 0.0 } },              -- Ratio from 0 to 1. (1=100%)
+            { EBC, 'LessThanEnergyTrendOverTimeSwarm', { 0.0 } },              -- Ratio from 0 to 1. (1=100%)
         },
         BuilderType = 'Any',
         BuilderData = {
@@ -155,8 +174,14 @@ BuilderGroup {
             Construction = {
                 DesiresAssist = true,
                 BuildClose = false,
-                AdjacencyCategory = (categories.STRUCTURE * categories.SHIELD) + (categories.FACTORY * (categories.TECH3 + categories.TECH2 + categories.TECH1)),
-                AvoidCategory = categories.ENERGYPRODUCTION * categories.TECH3,
+                AdjacencyPriority = {
+                    categories.SHIELD * categories.STRUCTURE,
+                    categories.MASSPRODUCTION * categories.TECH3,
+                    categories.STRUCTURE * categories.GATE,
+                    categories.STRUCTURE * categories.FACTORY * categories.AIR,
+                    categories.RADAR * categories.STRUCTURE,
+                    categories.FACTORY * categories.STRUCTURE * categories.LAND,
+                },
                 maxUnits = 1,
                 maxRadius = 15,
                 LocationType = 'LocationType',
@@ -173,11 +198,13 @@ BuilderGroup {
 
     Builder {
         BuilderName = 'T1 Energy Storage Builder OverCharge',
-        PlatoonTemplate = 'EngineerBuilder',
+        PlatoonTemplate = 'T1EngineerBuilderSwarm',
         Priority = 800,
         BuilderConditions = {
             { MIBC, 'GreaterThanGameTime', { 300 } },
+
             { UCBC, 'UnitCapCheckLess', { .7 } },
+
             { UCBC, 'HaveLessThanUnitsWithCategory', { 1, 'ENERGYSTORAGE' }},
         },
         BuilderType = 'Any',
@@ -192,12 +219,17 @@ BuilderGroup {
     },
     Builder {
         BuilderName = 'T1 Energy Storage Builder',
-        PlatoonTemplate = 'EngineerBuilder',
+        PlatoonTemplate = 'T1EngineerBuilderSwarm',
         Priority = 500,
         BuilderConditions = {
             { MIBC, 'GreaterThanGameTime', { 600 } },
+
             { UCBC, 'UnitCapCheckLess', { .7 } },
-            { EBC, 'GreaterThanEconStorageRatioSwarm', { 0.20, 0.30 } },             -- Ratio from 0 to 1. (1=100%)
+
+            { EBC, 'GreaterThanEconStorageCurrentSwarm', { 100, 1000}},
+
+            { EBC, 'GreaterThanEconStorageRatioSwarm', { 0.01, 0.95 } },             -- Ratio from 0 to 1. (1=100%)
+            
             { UCBC, 'HaveLessThanUnitsWithCategory', { 9, 'ENERGYSTORAGE' }},
         },
         BuilderType = 'Any',
@@ -217,7 +249,7 @@ BuilderGroup {
 
     Builder {
         BuilderName = 'S1 Reclaim T1 Pgens',
-        PlatoonTemplate = 'EngineerBuilder',
+        PlatoonTemplate = 'T1EngineerBuilderSwarm',
         PlatoonAIPlan = 'ReclaimStructuresAI',
         Priority = 790,
         InstanceCount = 2,
@@ -235,12 +267,12 @@ BuilderGroup {
 
     Builder {
         BuilderName = 'S1 Reclaim T1 Pgens cap',
-        PlatoonTemplate = 'EngineerBuilder',
+        PlatoonTemplate = 'T1EngineerBuilderSwarm',
         PlatoonAIPlan = 'ReclaimStructuresAI',
         Priority = 790,
         InstanceCount = 2,
         BuilderConditions = {
-            { EBC, 'GreaterThanEconTrendSwarm', { 0.0, 1.0 } }, -- relative income
+            { EBC, 'GreaterThanEconTrendOverTimeSwarm', { 0.0, 1.0 } }, -- relative income
 
             { UCBC, 'HaveGreaterThanUnitsWithCategory', { 0, categories.STRUCTURE * categories.ENERGYPRODUCTION * (categories.TECH2 + categories.TECH3) }},
 
@@ -257,7 +289,7 @@ BuilderGroup {
 
     Builder {
         BuilderName = 'S1 Reclaim T2 Pgens',
-        PlatoonTemplate = 'EngineerBuilder',
+        PlatoonTemplate = 'T1EngineerBuilderSwarm',
         PlatoonAIPlan = 'ReclaimStructuresAI',
         Priority = 790,
         InstanceCount = 2,
@@ -275,12 +307,12 @@ BuilderGroup {
 
     Builder {
         BuilderName = 'S1 Reclaim T2 Pgens cap',
-        PlatoonTemplate = 'EngineerBuilder',
+        PlatoonTemplate = 'T1EngineerBuilderSwarm',
         PlatoonAIPlan = 'ReclaimStructuresAI',
         Priority = 790,
         InstanceCount = 2,
         BuilderConditions = {
-            { EBC, 'GreaterThanEconTrendSwarm', { 0.0, 50.0 } }, -- relative income
+            { EBC, 'GreaterThanEconTrendOverTimeSwarm', { 0.0, 50.0 } }, -- relative income
 
             { UCBC, 'HaveGreaterThanUnitsWithCategory', { 0, categories.STRUCTURE * categories.ENERGYPRODUCTION * categories.TECH3 }},
 
@@ -297,7 +329,7 @@ BuilderGroup {
 
     Builder {
         BuilderName = 'S1 Reclaim E storage cap',
-        PlatoonTemplate = 'EngineerBuilder',
+        PlatoonTemplate = 'T1EngineerBuilderSwarm',
         PlatoonAIPlan = 'ReclaimStructuresAI',
         Priority = 790,
         InstanceCount = 2,
@@ -309,6 +341,137 @@ BuilderGroup {
         BuilderData = {
             Location = 'LocationType',
             Reclaim = {categories.STRUCTURE * categories.ENERGYSTORAGE},
+        },
+        BuilderType = 'Any',
+    },
+}
+
+
+BuilderGroup {
+    BuilderGroupName = 'SExpansion23 Energy Builders',                              
+    BuildersType = 'EngineerBuilder',
+
+    -- ============ --
+    --    TECH 2    --
+    -- ============ --
+
+    Builder {
+        BuilderName = 'S2 Power Expansion',
+        PlatoonTemplate = 'T2EngineerBuilderSwarm',
+        Priority = 1000,
+        InstanceCount = 1,
+        BuilderConditions = {
+            { UCBC, 'HaveLessThanUnitsWithCategory', { 1, categories.ENERGYPRODUCTION * categories.TECH3 } },
+
+            { UCBC, 'IsEngineerNotBuildingSwarm', { categories.ENERGYPRODUCTION * (categories.TECH2 + categories.TECH3) }},
+            
+            { UCBC, 'HaveLessThanUnitsInCategoryBeingBuilt', { 1, categories.STRUCTURE * categories.ENERGYPRODUCTION * categories.TECH3 }},
+            
+            { EBC, 'LessThanEnergyTrendOverTimeSwarm', { 8.0 } },              -- Ratio from 0 to 1. (1=100%)
+        },
+        BuilderType = 'Any',
+        BuilderData = {
+            NumAssistees = 25,
+            Construction = {
+                DesiresAssist = true,
+                BuildClose = false,
+                AdjacencyPriority = {
+                    categories.SHIELD * categories.STRUCTURE,
+                    categories.STRUCTURE * categories.FACTORY * categories.AIR,
+                    categories.RADAR * categories.STRUCTURE,
+                    categories.FACTORY * categories.STRUCTURE * categories.LAND,
+                },
+                maxUnits = 1,
+                maxRadius = 10,
+                LocationType = 'LocationType',
+                BuildStructures = {
+                    'T2EnergyProduction',
+                },
+            }
+        }
+    },
+
+    -- ============ --
+    --    TECH 3    --
+    -- ============ --
+
+    Builder {
+        BuilderName = 'S3 Power Expansion',
+        PlatoonTemplate = 'EngineerBuilderT3&SUBSwarm',
+        Priority = 2700,
+        DelayEqualBuildPlattons = {'Energy', 10},
+        InstanceCount = 1,
+        BuilderConditions = {
+            { UCBC, 'CheckBuildPlattonDelay', { 'Energy' }},
+
+            { UCBC, 'IsEngineerNotBuildingSwarm', { categories.ENERGYPRODUCTION * categories.TECH3 }},
+
+            { EBC, 'LessThanEnergyTrendOverTimeSwarm', { 0.0 } },              -- Ratio from 0 to 1. (1=100%)
+        },
+        BuilderType = 'Any',
+        BuilderData = {
+            NumAssistees = 40,
+            Construction = {
+                DesiresAssist = true,
+                BuildClose = false,
+                AdjacencyPriority = {
+                    categories.SHIELD * categories.STRUCTURE,
+                    categories.MASSPRODUCTION * categories.TECH3,
+                    categories.STRUCTURE * categories.GATE,
+                    categories.STRUCTURE * categories.FACTORY * categories.AIR,
+                    categories.RADAR * categories.STRUCTURE,
+                    categories.FACTORY * categories.STRUCTURE * categories.LAND,
+                },
+                maxUnits = 1,
+                maxRadius = 15,
+                LocationType = 'LocationType',
+                BuildStructures = {
+                    'T3EnergyProduction',
+                },
+            }
+        }
+    },
+
+    -- ======================= --
+    --    Reclaim Buildings    --
+    -- ======================= --
+
+    Builder {
+        BuilderName = 'S1 Reclaim T2 Pgens Expansion',
+        PlatoonTemplate = 'T1EngineerBuilderSwarm',
+        PlatoonAIPlan = 'ReclaimStructuresAI',
+        Priority = 790,
+        InstanceCount = 2,
+        BuilderConditions = {
+            { UCBC, 'HaveGreaterThanUnitsWithCategory', { 2, categories.STRUCTURE * categories.ENERGYPRODUCTION * categories.TECH3 }},
+
+            { UCBC, 'UnitsGreaterAtLocation', { 'LocationType', 0, categories.STRUCTURE * categories.TECH2 * categories.ENERGYPRODUCTION - categories.HYDROCARBON }},
+        },
+        BuilderData = {
+            Location = 'LocationType',
+            Reclaim = {categories.STRUCTURE * categories.TECH2 * categories.ENERGYPRODUCTION - categories.HYDROCARBON},
+        },
+        BuilderType = 'Any',
+    },
+
+    Builder {
+        BuilderName = 'S1 Reclaim T2 Pgens Cap Expansion',
+        PlatoonTemplate = 'T1EngineerBuilderSwarm',
+        PlatoonAIPlan = 'ReclaimStructuresAI',
+        Priority = 790,
+        InstanceCount = 2,
+        BuilderConditions = {
+            { EBC, 'GreaterThanEconTrendOverTimeSwarm', { 0.0, 50.0 } }, -- relative income
+
+            { UCBC, 'HaveGreaterThanUnitsWithCategory', { 0, categories.STRUCTURE * categories.ENERGYPRODUCTION * categories.TECH3 }},
+
+            { UCBC, 'UnitsGreaterAtLocation', { 'LocationType', 0, categories.STRUCTURE * categories.TECH2 * categories.ENERGYPRODUCTION - categories.HYDROCARBON }},
+            
+            { UCBC, 'UnitCapCheckGreater', { 0.95 } },
+        },
+        BuilderData = {
+            Location = 'LocationType',
+            Reclaim = {categories.STRUCTURE * categories.TECH2 * categories.ENERGYPRODUCTION - categories.HYDROCARBON},
         },
         BuilderType = 'Any',
     },

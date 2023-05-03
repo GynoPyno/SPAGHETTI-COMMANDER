@@ -2,7 +2,7 @@
 -- File     :  /cdimage/units/BAA0309/BAA0309_script.lua
 -- Author(s):  John Comes, David Tomandl, Jessica St. Croix, Gordon Duclos
 -- Summary  :  Aeon T2 Transport Script
--- Copyright © 2006 Gas Powered Games, Inc.  All rights reserved.
+-- Copyright Â© 2006 Gas Powered Games, Inc.  All rights reserved.
 --------------------------------------------------------------------------
 
 local AirTransport = import('/lua/defaultunits.lua').AirTransport
@@ -25,6 +25,13 @@ BAA0309 = Class(AirTransport) {
         SonicPulseBattery4 = Class(AAASonicPulseBatteryWeapon) {},
     },
 
+    OnCreate = function(self)
+        AirTransport.OnCreate(self)
+
+        -- allow this unit to teleport
+        self:AddCommandCap('RULEUCC_Teleport')
+    end,
+
     -- Override air destruction effects so we can do something custom here
     CreateUnitAirDestructionEffects = function(self, scale)
         self:ForkThread(self.AirDestructionEffectsThread, self)
@@ -40,7 +47,9 @@ BAA0309 = Class(AirTransport) {
 
     OnStopBeingBuilt = function(self,builder,layer)
         AirTransport.OnStopBeingBuilt(self,builder,layer)
-        self:DisableUnitIntel('unitScript', 'CloakField') -- It's only used to denote the Tele range
+
+        -- only used to show teleport range
+        self:DisableIntel('CloakField')
     end,
 }
 

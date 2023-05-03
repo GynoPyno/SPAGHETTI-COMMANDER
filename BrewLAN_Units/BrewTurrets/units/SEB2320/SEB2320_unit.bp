@@ -49,11 +49,11 @@ UnitBlueprint {
     },
     CollisionOffsetY = -0.375,
     Defense = {
-        ArmorType = 'Normal',
-        EconomyThreatLevel = 102,
+        ArmorType = 'Structure',
+        EconomyThreatLevel = 117,
         Health = 8625,
         MaxHealth = 8625,
-        SurfaceThreatLevel = 17,
+        SurfaceThreatLevel = 20,
     },
     Description = '<LOC seb2320_desc>Heavy Point Defense',
     Display = {
@@ -93,8 +93,6 @@ UnitBlueprint {
         SizeZ = 1,
     },
     General = {
-        Category = 'Defense',
-        Classification = 'RULEUC_Weapon',
         CommandCaps = {
             RULEUCC_Attack = true,
             RULEUCC_RetaliateToggle = true,
@@ -103,9 +101,7 @@ UnitBlueprint {
         FactionName = 'UEF',
         Icon = 'land',
         SelectionPriority = 5,
-        TechLevel = 'RULEUTL_Secret',
         UnitName = '<LOC seb2320_name>Hiro',
-        UnitWeight = 1,
     },
     Intel = {
         VisionRadius = 40,

@@ -128,7 +128,7 @@ UnitBlueprint {
                         Bones = {
                             'URS0201',
                         },
-                        Scale = 1.16,
+                        Scale = 1.6,
                         Type = 'SeaIdle01',
                     },
                 },
@@ -218,7 +218,7 @@ UnitBlueprint {
                         Bones = {
                             'WakeBack',
                         },
-                        Scale = 0.93,
+                        Scale = 1.2,
                         Type = 'BackWake',
                     },
                 },
@@ -226,7 +226,7 @@ UnitBlueprint {
         },
         PlaceholderMeshName = 'UXS0004',
         SpawnRandomRotation = true,
-        UniformScale = 0.9,
+        UniformScale = 0.6,
         WaterAnimationDeath = {
             {
                 Animation = '/Mods/#Marlos mods compilation/units/KRS0302/KRS0302_Asink.sca',
@@ -307,12 +307,12 @@ UnitBlueprint {
         TurnRadius = 20,
         TurnRate = 40,
     },
-    SelectionSizeX = 1.4,
-    SelectionSizeZ = 7.2,
-    SelectionThickness = 0.2,
-    SizeX = 2.3,
+    SelectionSizeX = 1.2,
+    SelectionSizeZ = 4.8,
+    SelectionThickness = 0.15,
+    SizeX = 2.1,
     SizeY = 1.8,
-    SizeZ = 11.2,
+    SizeZ = 7.1,
     StrategicIconName = 'icon_ship3_directfire',
     StrategicIconSortPriority = 155,
     Veteran = {

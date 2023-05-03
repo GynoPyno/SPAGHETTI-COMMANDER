@@ -307,17 +307,17 @@ function InitializeStats()
     Columns.Score = {}
     Columns.Score.Index   = 1
     Columns.Score.Active  = 'score'
-    Columns.Score.Keys    = { 'score', 'ratio.killsToLoses'} --, 'ratio.killsToBuilt'} 
+    Columns.Score.Keys    = { 'score', 'ratio.killsToLoses'} -- 'ratio.killsToBuilt'
      
     Columns.Mass = {}
     Columns.Mass.Index    = 1
     Columns.Mass.Active   = 'eco.massIncome'
-    Columns.Mass.Keys     = { 'eco.massIncome', 'eco.massReclaim', 'eco.massStored'} --, 'eco.massTotal'}
+    Columns.Mass.Keys     = { 'eco.massIncome', 'eco.massReclaim', 'eco.massStored'}
     
     Columns.Engy = {}
     Columns.Engy.Index    = 1
     Columns.Engy.Active   = 'eco.engyIncome'
-    Columns.Engy.Keys     = { 'eco.engyIncome', 'eco.engyReclaim'}  
+    Columns.Engy.Keys     = { 'eco.engyIncome', 'eco.engyReclaim'}
      
     Columns.Units = {}
     Columns.Units.Index   = 1
@@ -327,7 +327,7 @@ function InitializeStats()
     Columns.Total = {}
     Columns.Total.Index   = 1
     Columns.Total.Active  = 'eco.massTotal'
-    Columns.Total.Keys    = { 'eco.massTotal', 'kills.mass' }
+    Columns.Total.Keys    = { 'eco.massTotal', 'kills.mass'} -- 'loses.mass'
      
 end
 
@@ -716,6 +716,7 @@ function CreateArmyLine(armyID, army)
         group.massColumn:SetColor(textColorMass)
         LayoutHelpers.AtRightIn(group.massColumn, group, position)
         LayoutHelpers.AtVerticalCenterIn(group.massColumn, group)
+
     end
 
     -- create score data column
@@ -742,6 +743,38 @@ function CreateArmyLine(armyID, army)
         group.nameColumn.Right:Set(group.scoreColumn.Left)
         --group.nameColumn.Right:Set(position - sw)
         group.nameColumn:SetClipToWidth(true)
+    end
+
+    if (isTeamArmy and not sessionReplay) then
+        -- UI for showing total energy in storage
+        position = iconSize * 2
+        position = position + iconSize + 5
+
+        group.StorageEngyIcon = CreateInfoIcon(group, 'eco.engyStored.dds')
+        LayoutHelpers.AtRightIn(group.StorageEngyIcon, group, position)
+        LayoutHelpers.AtVerticalCenterIn(group.StorageEngyIcon, group)
+        SetIconSize(group.StorageEngyIcon)
+
+        position = position + iconSize + 3
+        group.engyStorageColumn = UIUtil.CreateText(group, '0', fontSize, fontName)
+        group.engyStorageColumn:DisableHitTest()
+        group.engyStorageColumn:SetColor(textColorEngy)
+        LayoutHelpers.AtRightIn(group.engyStorageColumn, group, position)
+        LayoutHelpers.AtVerticalCenterIn(group.engyStorageColumn, group)    
+
+        -- UI for showing total mass in storage
+        position = position + 30
+        group.StorageMassIcon = CreateInfoIcon(group, 'eco.massStored.dds')
+        LayoutHelpers.AtRightIn(group.StorageMassIcon, group, position)
+        LayoutHelpers.AtVerticalCenterIn(group.StorageMassIcon, group)
+        SetIconSize(group.StorageMassIcon)
+
+        position = position + iconSize + 2
+        group.massStorageColumn = UIUtil.CreateText(group, '0', fontSize, fontName)
+        group.massStorageColumn:DisableHitTest()
+        group.massStorageColumn:SetColor(textColorMass)
+        LayoutHelpers.AtRightIn(group.massStorageColumn, group, position)
+        LayoutHelpers.AtVerticalCenterIn(group.massStorageColumn, group)    
     end
     
     -- TODO figure out if it is possible to ACCESS and show info about allied players in Sim mod!
@@ -878,15 +911,41 @@ function CreateSortBoxBase(group, column, customPath)
     return checkbox
 end
 
+local AutoToggleShouldBeDone = {}
+local AutoToggleCoolDownTime = {}
+
+-- Overrides the automatic toggling functionality for the amount of time defined in GameOptions['SSB_Auto_Toggle_Override']
+function toggleOverride(columname)
+    if GameOptions['SSB_Auto_Toggle_Override'] ~= 0 and GameOptions['SSB_Auto_Toggle_' .. columname .. '_Column'] == true then
+        AutoToggleShouldBeDone[columname] = true
+        AutoToggleCoolDownTime[columname] = GetGameTimeSeconds() + GameOptions['SSB_Auto_Toggle_Override']
+    end
+end
+
+-- Checks if overriding the toggle functionality should end
+-- Automatic toggling stops after the time defined in the GameOptions['SSB_Auto_Toggle_Override']
+function checkToggleOverride(columname)
+    if AutoToggleShouldBeDone[columname] == nil or AutoToggleCoolDownTime == nil or AutoToggleCoolDownTime[columname] == nil then
+        return
+    end
+    if AutoToggleShouldBeDone[columname] == true and AutoToggleCoolDownTime[columname] < GetGameTimeSeconds() then
+        GameOptions['SSB_Auto_Toggle_' .. columname .. '_Column'] = true
+    end
+end
+
 function CreateSortBoxForEcoColumn(group, column, isMass)
     local checkbox = CreateSortBoxBase(group, column)
 
     checkbox.OnClick = function(self, eventModifiers)
         self:ToggleCheck()
         if isMass then
+            toggleOverride('Mass')
+
              Columns.Mass.Active = column
              GameOptions['SSB_Auto_Toggle_Mass_Column'] = false
         else
+            toggleOverride('Engy')
+
              Columns.Engy.Active = column 
              GameOptions['SSB_Auto_Toggle_Engy_Column'] = false
         end 
@@ -902,7 +961,10 @@ end
 function CreateSortBoxForUnitsColumn(group, column)
     local checkbox = CreateSortBoxBase(group, column)
 
-    checkbox.OnClick = function(self, eventModifiers) 
+    checkbox.OnClick = function(self, eventModifiers)
+
+        toggleOverride('Units')
+    
         Columns.Units.Active = column 
         GameOptions['SSB_Auto_Toggle_Units_Column'] = false
         if eventModifiers.Right then 
@@ -917,6 +979,9 @@ function CreateSortBoxForScoreColumn(group, column)
     local checkbox = CreateSortBoxBase(group, column)
 
     checkbox.OnClick = function(self, eventModifiers)
+
+        toggleOverride('Score')
+
         Columns.Score.Active = column 
         GameOptions['SSB_Auto_Toggle_Score_Column'] = false
         if eventModifiers.Right then 
@@ -957,6 +1022,9 @@ function CreateSortBoxForTotalColumn(group, column)
     local checkbox = CreateSortBoxBase(group, column)
 
     checkbox.OnClick = function(self, eventModifiers)
+
+        toggleOverride('Total')
+
         Columns.Total.Active = column 
         GameOptions['SSB_Auto_Toggle_Total_Column'] = false
         if eventModifiers.Right then 
@@ -1568,7 +1636,7 @@ function GetStatsForArmy(army, column, useFormatting)
 end
 -- create team for index or player's army
 function CreateTeam(armyIndex, armies)
-    --log.Trace('InitializeStats()... creating team for army='..armyIndex)
+    log.Trace('InitializeStats()... creating team for army='..armyIndex)
      
     local team = {} 
     team.key = ''
@@ -1973,6 +2041,8 @@ function UpdatePlayerStats(armyID, armies, scoreData)
     if player.units.land > 0 then Columns.Exists['units.land'] = true end
     if player.units.navy > 0 then Columns.Exists['units.navy'] = true end
     if player.units.air > 0 then Columns.Exists['units.air'] = true end
+    if player.kills.mass > 0 then Columns.Exists['kills.mass'] = true end
+    if player.loses.mass > 0 then Columns.Exists['loses.mass'] = true end
 
     local team = Stats.teams[player.teamID]
     UpdateTeamStats(team, player)
@@ -1998,6 +2068,7 @@ function UpdateTeamStats(team, player)
     team.eco.massSpent   = team.eco.massSpent   + player.eco.massSpent
     team.eco.engyTotal   = team.eco.engyTotal   + player.eco.engyTotal
     team.eco.engySpent   = team.eco.engySpent   + player.eco.engySpent
+    team.eco.engyStored  = team.eco.engyStored  + player.eco.engyStored
     team.eco.massReclaim = team.eco.massReclaim + player.eco.massReclaim
     team.eco.engyReclaim = team.eco.engyReclaim + player.eco.engyReclaim
     -- update team's kills Stats
@@ -2332,7 +2403,18 @@ function _OnBeat()
            if line.isArmyLine and data then
                player = UpdatePlayerStats(armyID, armies, data)
            end
-               
+           
+           local teamId = Stats.armies[armyID].teamID
+           local team = Stats.teams[teamId]
+           --if (data) then
+           -- if (line.massStorageColumn.SetText ~= nil) then
+           --     if (team.eco.massStored ~= nil) then
+           --         val = num.frmt(team.eco.massStored)
+           --         line.massStorageColumn:SetText(val)
+           --     end
+           --    end    
+           --end               
+
            if line.dead then 
                if sessionReplay and focusedArmyID == armyID then
                    UpdateUnitsInfo(0, 0) 
@@ -2439,6 +2521,19 @@ function _OnBeat()
                -- update army's score
                if team.score <= -1 then
                   line.scoreColumn:SetText(LOC("<LOC _Playing>Playing"))
+                  if (line.massStorageColumn.SetText ~= nil) then
+                    if (team.eco.massStored ~= nil) then
+                        val = num.frmt(team.eco.massStored)
+                        line.massStorageColumn:SetText(val)
+                    end
+                   end    
+                   if (line.engyStorageColumn.SetText ~= nil) then
+                    if (team.eco.engyStored ~= nil) then
+                        val = num.frmt(team.eco.engyStored)
+                        line.engyStorageColumn:SetText(val)
+                    end
+                   end    
+
                else
                   line.scoreColumn:SetText(' '..GetStatsForArmy(team, Columns.Score.Active))
                end 
@@ -2483,6 +2578,12 @@ local switchTime = 0
 
 function SwitchColumns()
     local gameTime = GetGameTimeSeconds()
+
+    checkToggleOverride('Mass')
+    checkToggleOverride('Engy')
+    checkToggleOverride('Units')
+    checkToggleOverride('Score')
+    checkToggleOverride('Total')
 
     local switchInterval = GameOptions['SSB_Auto_Toggle_Interval'] or 10 -- in seconds
     if switchInterval > 1 and switchInterval <= gameTime - switchTime then

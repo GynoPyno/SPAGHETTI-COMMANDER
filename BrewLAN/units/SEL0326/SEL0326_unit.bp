@@ -59,7 +59,7 @@ UnitBlueprint {
         Health = 1000,
         MaxHealth = 1000,
     },
-    Description = '<LOC sel0326_desc>Mobile Air Staging Platform',
+    Description = '<LOC sl0326_desc>Mobile Air Staging Platform',
     Display = {
         Abilities = {
             '<LOC ability_airstaging>Air Staging',
@@ -100,8 +100,6 @@ UnitBlueprint {
         BuildTime = 2100,--350,
     },
     General = {
-        Category = 'Strategic',
-        Classification = 'RULEUC_MilitaryVehicle',
         CommandCaps = {
             RULEUCC_CallTransport = true,
             RULEUCC_Guard = true,
@@ -119,9 +117,7 @@ UnitBlueprint {
             },
         },
         SelectionPriority = 4,
-        TechLevel = 'RULEUTL_Secret',
         UnitName = '<LOC sel0326_name>Bird Nest',
-        UnitWeight = 1,
     },
     LifeBarHeight = 0.075,
     LifeBarOffset = 1.4,

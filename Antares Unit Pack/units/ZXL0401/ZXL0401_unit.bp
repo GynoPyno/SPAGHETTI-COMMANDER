@@ -202,9 +202,9 @@ UnitBlueprint {
         UniformScale = 0.05,
     },
     Economy = {
-        BuildCostEnergy = 600000,
-        BuildCostMass = 50000,
-        BuildTime = 30000,
+        BuildCostEnergy = 300000,
+        BuildCostMass = 24000,
+        BuildTime = 20000,
     },
     General = {
         Category = 'Direct Fire',

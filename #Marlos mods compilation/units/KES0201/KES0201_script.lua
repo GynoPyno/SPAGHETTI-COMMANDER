@@ -10,7 +10,7 @@
 local EffectTemplate = import('/lua/EffectTemplates.lua')
 local TSeaUnit = import('/lua/terranunits.lua').TSeaUnit
 local WeaponFile = import('/lua/terranweapons.lua')
-local TDFGaussCannonWeapon = WeaponFile.TDFGaussCannonWeapon
+local TDFGaussCannonWeapon = WeaponFile.TDFShipGaussCannonWeapon
 
 MK54 = Class(TSeaUnit) {
     DestructionTicks = 200,

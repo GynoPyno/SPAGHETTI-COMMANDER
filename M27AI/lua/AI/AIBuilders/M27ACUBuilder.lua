@@ -1,3 +1,4 @@
+--OBSOLETE - below isnt united by M27AI
 local UCBC = '/lua/editor/UnitCountBuildConditions.lua'
 local EBC = '/lua/editor/EconomyBuildConditions.lua'
 local IBC = '/lua/editor/InstantBuildConditions.lua'
@@ -8,10 +9,25 @@ local SAI = '/lua/ScenarioPlatoonAI.lua'
 local MIBC = '/lua/editor/MiscBuildConditions.lua'
 local MABC = '/lua/editor/MarkerBuildConditions.lua'
 
-BuilderGroup {
+--[[BuilderGroup {
     BuilderGroupName = 'M27ACUBuildOrder', -- Globally unique key that the AI base template file uses to add the contained builders to your AI.
     BuildersType = 'EngineerBuilder', -- The kind of builder this is.  One of 'EngineerBuilder', 'PlatoonFormBuilder', or 'FactoryBuilder'.
+    Builder {
+        BuilderName = 'Ignore', -- Names need to be GLOBALLY unique.  Prefixing the AI name will help avoid name collisions with other AIs.
+        PlatoonTemplate = 'M27CommanderBuilder', -- Specify what platoon template to use, see the PlatoonTemplates folder.
+        Priority = 1500,
+        BuilderConditions = {
+            { MIBC, 'M27TestReturnFalse', {true} },
+        },
+        BuilderData = {
+            Construction = {
+                BuildStructures = { 'T1LandFactory',
+                }
+            }
+        }
+    },--]]
     -- The initial build order - note this is set to repeat with a <1 factory condition, due to rare issue on 1 map (so possible happens on others) where depending on the adjacency location chosen for building the factory wont build with the feirst build command, but after waiting 1 tick and retrying it will
+    --[[
     Builder {
         BuilderName = 'M27AIFirstEverFactory', -- Names need to be GLOBALLY unique.  Prefixing the AI name will help avoid name collisions with other AIs.
         PlatoonTemplate = 'M27CommanderBuilder', -- Specify what platoon template to use, see the PlatoonTemplates folder.
@@ -29,8 +45,8 @@ BuilderGroup {
                 }
             }
         }
-    },
-
+    },--]]
+--[[
     Builder {
         BuilderName = 'M27AIFirstEverMex', -- Names need to be GLOBALLY unique.  Prefixing the AI name will help avoid name collisions with other AIs.
         PlatoonTemplate = 'M27CommanderBuilder', -- Specify what platoon template to use, see the PlatoonTemplates folder.
@@ -150,7 +166,7 @@ BuilderGroup {
     },
 
     --Build on unclaimed mex in build area - commented out for now as ACUMain logic should do this
-    --[[Builder {
+    Builder {
         BuilderName = 'M27ACUBuildUnclaimedMex',
         PlatoonTemplate = 'M27CommanderBuilder',
         Priority = 800,
@@ -168,7 +184,7 @@ BuilderGroup {
     },]]--
 
     --Factories and other AI behaviour pre gun
-    Builder {
+    --[[Builder {
         BuilderName = 'M27AIExtraLandFacsInitial1', -- Names need to be GLOBALLY unique.  Prefixing the AI name will help avoid name collisions with other AIs.
         PlatoonTemplate = 'M27CommanderBuilder3', -- Specify what platoon template to use, see the PlatoonTemplates folder.
         Priority = 998,
@@ -178,7 +194,7 @@ BuilderGroup {
             { EBC, 'M27ResourceStoredCurrent', { true, true, 20}}, --at least 20 mass
             { EBC, 'M27ResourceStoredCurrent', { true, false, 250}}, --at least 250 energy stored
             { EBC, 'M27GreaterThanEnergyIncome', {true, 79}}, -->79 gross energy income (i.e. want to get hydro or T1 power before this)
-            { UCBC, 'HaveLessThanUnitsWithCategory', { 2, categories.FACTORY}},
+            { UCBC, 'HaveLessThanUnitsWithCategory', { 1, categories.FACTORY}},
 
 
         },
@@ -202,7 +218,7 @@ BuilderGroup {
             { EBC, 'M27ResourceStoredCurrent', { true, true, 150}},
             { EBC, 'M27ResourceStoredCurrent', { true, false, 100}}, --at least 100 energy stored
             { EBC, 'M27GreaterThanEnergyIncome', {true, 79}}, -->79 gross energy income (i.e. want to get hydro or T1 power before this)
-            { UCBC, 'HaveLessThanUnitsWithCategory', { 2, categories.FACTORY}},
+            { UCBC, 'HaveLessThanUnitsWithCategory', { 1, categories.FACTORY}},
 
 
         },
@@ -215,31 +231,10 @@ BuilderGroup {
                 }
             }
         }
-    },
-    Builder {
-        BuilderName = 'M27AIExtraLandFacsEvenMoreD', -- Names need to be GLOBALLY unique.  Prefixing the AI name will help avoid name collisions with other AIs.
-        PlatoonTemplate = 'M27CommanderBuilder3', -- Specify what platoon template to use, see the PlatoonTemplates folder.
-        Priority = 20,
-        BuilderConditions = { -- The build conditions determine if this builder is available to be used or not.
-            --{ MIBC, 'M27NearbyHydro', { false } },
-            { EBC, 'M27ResourceStoredCurrent', { true, true, 500}}, --at least 500 mass
-            { EBC, 'M27ExcessEnergyIncome', { true, 40 }},
-            { EBC, 'M27ResourceStoredCurrent', { true, false, 250}}, --at least 250 energy
-            { EBC, 'M27GreaterThanEnergyIncome', {true, 79}}, -->79 gross energy income (i.e. want to get hydro or T1 power before this)
-            { MIBC, 'M27NoEnemiesNearACU', { true, 50, 35} } --Need intel of 35 and no enemies within up to 50 to be true
-        },
-        InstantCheck = true,
-        BuilderType = 'Any',
-        BuilderData = {
-            Construction = {
-                BuildStructures = {
-                    'T1LandFactory',
-                }
-            }
-        }
-    },
+    },--]]
 
     --Assist hydro if its being built
+    --[[
     Builder {
         BuilderName = 'M27ACU Assist Hydro M27',
         PlatoonTemplate = 'M27ACUHydroAssister',
@@ -249,7 +244,7 @@ BuilderGroup {
             { MIBC, 'M27NearbyHydro', { true } }, --Includes gametime condition
         },
         BuilderType = 'Any',
-    },
+    },--]]
     --Higher priority assister if Hydro will be built but hasn't yet
     --[[Builder {
         BuilderName = 'M27ACUAssistNearbyEngi',
@@ -265,6 +260,7 @@ BuilderGroup {
     },]]--
 
     --Expand (unless not got hydro yet in which case will move into position to assist hydro)
+    --[[
     Builder {
         BuilderName = 'M27ACUExpand',
         PlatoonTemplate = 'M27ACUExpand',
@@ -282,9 +278,9 @@ BuilderGroup {
             { MIBC, 'M27ACUHasGunUpgrade', { true, true } }, --top priority once gun is done
         },
         BuilderType = 'Any',
-    },
+    },--]]
 
-
+    --[[
     --Gun upgrades by faction:
     Builder {
         BuilderName = 'M27GunComUEF', -- Names need to be GLOBALLY unique.  Prefixing the AI name will help avoid name collisions with other AIs.
@@ -293,10 +289,7 @@ BuilderGroup {
         BuilderConditions = { -- The build conditions determine if this builder is available to be used or not.
             { UCBC, 'CmdrHasUpgrade', { 'HeavyAntiMatterCannon', false }},
             { MIBC, 'FactionIndex', {1}},
-            { EBC, 'M27ExcessEnergyIncome', { true, 180 }},
-            { EBC, 'M27GreaterThanEnergyIncome', { true, 400 }},
-            { MIBC, 'M27SafeToGetACUUpgrade', {true}},
-            --NOTE: If changing these, also update the M27Overseer logic that disbands the ACU main platoon if these conditiosn are satisfied
+            { MIBC, 'M27WantACUToGetGunUpgrade', {true}},
         },
         BuilderType = 'Any',
         PlatoonAddFunctions = { {SAI, 'BuildOnce'}, },
@@ -312,9 +305,7 @@ BuilderGroup {
         BuilderConditions = { -- The build conditions determine if this builder is available to be used or not.
             { UCBC, 'CmdrHasUpgrade', { 'CrysalisBeam', false }},
             { MIBC, 'FactionIndex', {2}},
-            { EBC, 'M27ExcessEnergyIncome', { true, 180 }},
-            { EBC, 'M27GreaterThanEnergyIncome', { true, 400 }},
-            { MIBC, 'M27SafeToGetACUUpgrade', {true}},
+            { MIBC, 'M27WantACUToGetGunUpgrade', {true}},
         },
         BuilderType = 'Any',
         PlatoonAddFunctions = { {SAI, 'BuildOnce'}, },
@@ -329,9 +320,7 @@ BuilderGroup {
         BuilderConditions = { -- The build conditions determine if this builder is available to be used or not.
             { UCBC, 'CmdrHasUpgrade', { 'HeatSink', false }},
             { MIBC, 'FactionIndex', {2}},
-            { EBC, 'M27ExcessEnergyIncome', { true, 180 }},
-            { EBC, 'M27GreaterThanEnergyIncome', { true, 420 }},
-            { MIBC, 'M27SafeToGetACUUpgrade', {true}},
+            { MIBC, 'M27WantACUToGetGunUpgrade', {true}},
         },
         BuilderType = 'Any',
         PlatoonAddFunctions = { {SAI, 'BuildOnce'}, },
@@ -346,8 +335,7 @@ BuilderGroup {
         BuilderConditions = { -- The build conditions determine if this builder is available to be used or not.
             { UCBC, 'CmdrHasUpgrade', { 'HeatSink', false }},
             { MIBC, 'FactionIndex', {2}},
-            { EBC, 'M27GreaterThanEnergyIncome', { true, 459 }},
-            { MIBC, 'M27SafeToGetACUUpgrade', {true}},
+            { MIBC, 'M27WantACUToGetGunUpgrade', {true}},
         },
         BuilderType = 'Any',
         PlatoonAddFunctions = { {SAI, 'BuildOnce'}, },
@@ -362,9 +350,7 @@ BuilderGroup {
         BuilderConditions = { -- The build conditions determine if this builder is available to be used or not.
             { UCBC, 'CmdrHasUpgrade', { 'CoolingUpgrade', false }},
             { MIBC, 'FactionIndex', {3}},
-            { EBC, 'M27ExcessEnergyIncome', { true, 180 }},
-            { EBC, 'M27GreaterThanEnergyIncome', { true, 400 }},
-            { MIBC, 'M27SafeToGetACUUpgrade', {true}},
+            { MIBC, 'M27WantACUToGetGunUpgrade', {true}},
         },
         BuilderType = 'Any',
         PlatoonAddFunctions = { {SAI, 'BuildOnce'}, },
@@ -379,14 +365,12 @@ BuilderGroup {
         BuilderConditions = { -- The build conditions determine if this builder is available to be used or not.
             { UCBC, 'CmdrHasUpgrade', { 'RateOfFire', false }},
             { MIBC, 'FactionIndex', {4}},
-            { EBC, 'M27ExcessEnergyIncome', { true, 180 }},
-            { EBC, 'M27GreaterThanEnergyIncome', { true, 400 }},
-            { MIBC, 'M27SafeToGetACUUpgrade', {true}},
+            { MIBC, 'M27WantACUToGetGunUpgrade', {true}},
         },
         BuilderType = 'Any',
         PlatoonAddFunctions = { {SAI, 'BuildOnce'}, },
         BuilderData = {
             Enhancement = { 'RateOfFire' },
         },
-    },
-}
+    },--]]
+--}

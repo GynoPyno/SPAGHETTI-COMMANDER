@@ -27,6 +27,7 @@ UnitBlueprint {
         'BUILTBYTIER2FIELD',
         'BUILTBYTIER3FIELD',
         'OVERLAYRADAR',
+        'OVERLAYSONAR',
         'SERAPHIM',
         'STRUCTURE',
         'TECH2',
@@ -76,8 +77,6 @@ UnitBlueprint {
     },
     General = {
         CapCost = 0.1,
-        Category = 'Defense',
-        Classification = 'RULEUC_Weapon',
         CommandCaps = {
             RULEUCC_RetaliateToggle = true,
         },
@@ -91,12 +90,10 @@ UnitBlueprint {
             },
         },
         SelectionPriority = 5,
-        TechLevel = 'RULEUTL_Basic',
         ToggleCaps = {
             RULEUTC_WeaponToggle = true,
         },
         UnitName = '<LOC ssb2221_name>Zhanasee',
-        UnitWeight = 1,
     },
     Intel = {
         Cloak = true,

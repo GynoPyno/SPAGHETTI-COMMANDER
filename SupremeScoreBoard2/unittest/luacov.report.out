@@ -1,0 +1,370 @@
+==============================================================================
+..////modules/gameresultnew.lua
+==============================================================================
+    
+  1 local drawnotified = {}
+  1 function Resetdrawnotified()
+  9     drawnotified = {}
+    end
+    
+  1 function DoGameResultNew(armyID, result, currentEvents, _Resultstring, _Announces)
+ 11     local Resultstring = {}
+ 11     if armyID ~= GetFocusArmy() then
+  7         Resultstring = _Resultstring.OtherArmy
+        else 
+  4         Resultstring = _Resultstring.MyArmy
+        end
+    
+ 11     if result == 'victory' then
+  3         _Announces.AnnounceVictory(armyID, Resultstring.victory)
+  3         return
+        end
+    
+  8     if result ~= 'defeat' then
+**0         return
+        end
+    
+  8     local whokilledwho = {}
+  8     local acuDestroyed = currentEvents.ACUDestroyed or {}
+ 31     for i,acu in pairs(acuDestroyed) do
+ 23         whokilledwho[acu.KilledArmy] = acu.InstigatorArmy
+            -- print(acu.KilledArmy .. ' killed by ' .. acu.InstigatorArmy)
+        end
+    
+  8     local message = ''
+    
+  8     local killerId = whokilledwho[armyID]
+    
+  8     if whokilledwho[killerId] == armyID then
+            -- check if draw has been notified before
+  4         if drawnotified[armyID] == nil and drawnotified[killerId] == nil then
+  3             message = ' '.. LOC(Resultstring['draw']).. ' ' 
+  3             _Announces.AnnounceDraw(armyID, message, killerId)
+  3             drawnotified[armyID] = true
+  3             drawnotified[killerId] = true
+            end
+  4     elseif killerId ~= nil then
+  1         message = ' '.. LOC(Resultstring['defeat']).. ' ' 
+  1         _Announces.AnnounceDeath(armyID, message, killerId)
+        else
+    
+            -- ctrl + k
+  3         message = ' killed by suicide '
+  3         _Announces.AnnounceDeath(armyID, message, armyID)
+        end
+    end
+
+==============================================================================
+..////modules/score_events.lua
+==============================================================================
+  1 local modPath = '/mods/SupremeScoreBoard2/'
+  1 local modScripts  = modPath..'modules/'
+    
+  1 CurrentEvents = {}
+  1 CurrentEvents.ACUEntersTransporter = {}
+  1 CurrentEvents.ACUDestroyed = {}
+    
+  1 function UpdateEvents(newEvents)
+        -- insert every element
+  3     if newEvents.ACUEntersTransporter then
+**0         for i,acu in pairs(newEvents.ACUEntersTransporter) do
+**0             table.insert(CurrentEvents.ACUEntersTransporter, acu)
+            end
+        end
+  3     if newEvents.ACUDestroyed then
+  7         for i,acu in pairs(newEvents.ACUDestroyed) do
+  4             table.insert(CurrentEvents.ACUDestroyed, acu)
+            end
+        end
+    end
+
+==============================================================================
+test_gameresult.lua
+==============================================================================
+  1 package.path = package.path .. ";../?.lua"
+  1 luaunit = require('luaunit')
+  1 modScripts = ''
+    
+  1 function GetVersion()
+**0     return 3756
+    end
+    
+  1 local OtherArmyResultStrings = {
+        --TODO add localization tags and update strings when integrating with FAF
+  1     victory  =   ' has won this game! ',      -- <LOC usersync_0001>
+  1     defeat   =    'has been defeated by',    -- <LOC usersync_0002>
+  1     draw     = '   has drawn with   ',          -- <LOC usersync_0003>
+  1     gameOver = 'Game Over.',              -- <LOC usersync_0004>
+    }
+    
+  1 local MyArmyResultStrings = {
+        --TODO add localization tags and update strings when integrating with FAF
+  1     victory =    " You have won this game! ",    -- <LOC GAMERESULT_0000>
+  1     defeat  =     "You have been defeated by",  -- <LOC GAMERESULT_0001>
+  1     draw    = "    You have draw with   ",         -- <LOC GAMERESULT_0002>
+  1     replay  = "Replay Finished.",           -- <LOC GAMERESULT_0003>
+    }
+    
+  1 gameresult = require('../modules/gameresultnew')
+  1 updateevent = require('../modules/score_events')
+    
+    --mock function
+  1 function AnnounceDraw(armyID, message, killerId)
+**0     luaunit.assert_equals(1, armyID)
+    end
+    
+    --mock function
+  1 function GetFocusArmy()
+ 11     return 1
+    end
+    
+    --mock function
+  1 function LOC(string)
+  4     return string
+    end
+    
+    
+  1 local ResultStrings = {}
+  1 ResultStrings.OtherArmy = OtherArmyResultStrings
+  1 ResultStrings.MyArmy = MyArmyResultStrings
+    
+  1 local Announces = {}
+  1 Announces.AnnounceDeath        = AnnounceDeath
+  1 Announces.AnnounceDeathUnknown = AnnounceDeathUnknown
+  1 Announces.AnnounceDraw         = AnnounceDraw
+  1 Announces.AnnounceVictory      = AnnounceVictory
+    
+    
+    -- prepare sync
+  1 local sync = {}
+  1 local events = sync.Events or { }
+  1 sync.Events = events
+  1 local acuDestroyed = events.ACUDestroyed or { }
+  1 events.ACUDestroyed = acuDestroyed
+    
+    
+    
+    -- sync the event
+  2 table.insert(acuDestroyed, {
+  1     Timestamp = 123,
+  1     InstigatorArmy = 2,
+  1     KilledArmy = 1
+    })
+    
+  1 UpdateEvents(sync.Events)
+    
+  1 local events = { }
+  1 sync.Events = events
+  1 local acuDestroyed = events.ACUDestroyed or { }
+  1 events.ACUDestroyed = acuDestroyed
+    
+  2 table.insert(acuDestroyed, {
+  1     Timestamp = 234,
+  1     InstigatorArmy = 3,
+  1     KilledArmy = 2
+    })
+    
+  1 UpdateEvents(sync.Events)
+    
+    
+  1 local events = { }
+  1 sync.Events = events
+  1 local acuDestroyed = events.ACUDestroyed or { }
+  1 events.ACUDestroyed = acuDestroyed
+    
+  2 table.insert(acuDestroyed, {
+  1     Timestamp = 234,
+  1     InstigatorArmy = 10,
+  1     KilledArmy = 11
+    })
+  2 table.insert(acuDestroyed, {
+  1     Timestamp = 234,
+  1     InstigatorArmy = 11,
+  1     KilledArmy = 10
+    })
+    
+  1 UpdateEvents(sync.Events)
+    
+    
+    
+    
+    -- Test is run here
+    -- first assert function
+    
+    
+  1 TestGameresult = {}
+  1     TestGameresult.Announces = {}
+  2     function TestGameresult:setUp()
+  7         TestGameresult.AnnounceDeathCalled = false
+  7         TestGameresult.AnnounceDrawCalled = false
+  7         Resetdrawnotified()
+            
+  7         function AnnounceDeath(armyID, message, killerId)
+  2             TestGameresult.AnnounceDeathCalled = true
+            end
+  7         function AnnounceDraw(armyID, message, killerId)
+  2             TestGameresult.AnnounceDrawCalled = true
+            end
+  7         function AnnounceVictory(armyID, message)
+  1             TestGameresult.AnnounceVictoryCalled = true
+            end
+            
+  7         TestGameresult.Announces.AnnounceDeath   = AnnounceDeath
+  7         TestGameresult.Announces.AnnounceDraw    = AnnounceDraw
+  7         TestGameresult.Announces.AnnounceVictory = AnnounceVictory
+        end
+    
+  2     function TestGameresult:testCheckIfVictoryExits()
+  1         DoGameResultNew(1, 'victory', CurrentEvents, ResultStrings, TestGameresult.Announces)
+  1         luaunit.assert_false(TestGameresult.AnnounceDeathCalled)
+  1         luaunit.assert_false(TestGameresult.AnnounceDrawCalled)
+        end
+    
+  2     function TestGameresult:testCheckDefeat()
+  1         DoGameResultNew(1, 'defeat', events, ResultStrings, TestGameresult.Announces)
+    
+  1         luaunit.assert_true(TestGameresult.AnnounceDeathCalled)
+        end
+    
+    
+  2     function TestGameresult:testCheckDefeat2()
+  1         DoGameResultNew(2, 'defeat', CurrentEvents, ResultStrings, TestGameresult.Announces)
+    
+  1         luaunit.assert_true(TestGameresult.AnnounceDeathCalled)
+        end
+    
+  2     function TestGameresult:testDraw()
+  1         DoGameResultNew(10, 'defeat', CurrentEvents, ResultStrings, TestGameresult.Announces)
+    
+  1         luaunit.assert_false(TestGameresult.AnnounceDeathCalled)
+  1         luaunit.assert_true(TestGameresult.AnnounceDrawCalled)
+        end
+    
+  2     function TestGameresult:testDrawOnlyOnce()
+  1         DoGameResultNew(10, 'defeat', CurrentEvents, ResultStrings, TestGameresult.Announces)
+  1         luaunit.assert_false(TestGameresult.AnnounceDeathCalled)
+  1         luaunit.assert_true(TestGameresult.AnnounceDrawCalled)
+        
+  1         TestGameresult.AnnounceDeathCalled = false
+  1         TestGameresult.AnnounceDrawCalled = false
+        
+  1         DoGameResultNew(11, 'defeat', CurrentEvents, ResultStrings, TestGameresult.Announces)
+  1         luaunit.assert_false(TestGameresult.AnnounceDeathCalled)
+  1         luaunit.assert_false(TestGameresult.AnnounceDrawCalled)
+        end
+    
+  2     function TestGameresult:testVictory()
+  1         function AnnounceVictoryMock(armyID, Resultstring)
+  1             luaunit.assert_equals(Resultstring, MyArmyResultStrings.victory)
+            end
+  1         TestGameresult.Announces.AnnounceVictory = AnnounceVictoryMock
+  1         DoGameResultNew(1, 'victory', CurrentEvents, ResultStrings, TestGameresult.Announces)
+  1         luaunit.assert_false(TestGameresult.AnnounceDeathCalled)
+  1         luaunit.assert_false(TestGameresult.AnnounceDrawCalled)
+  1         luaunit.assert_true(TestGameresult.AnnounceVictoryCalled)
+        end
+    
+  2     function TestGameresult:testVictoryOtherArmy()
+  1         function AnnounceVictoryMock(armyID, Resultstring)
+  1             luaunit.assert_equals(Resultstring, OtherArmyResultStrings.victory)
+            end
+  1         TestGameresult.Announces.AnnounceVictory = AnnounceVictoryMock
+  1         DoGameResultNew(2, 'victory', CurrentEvents, ResultStrings, TestGameresult.Announces)
+  1         luaunit.assert_false(TestGameresult.AnnounceDeathCalled)
+  1         luaunit.assert_false(TestGameresult.AnnounceDrawCalled)
+  1         luaunit.assert_true(TestGameresult.AnnounceVictoryCalled)
+        end
+    
+    
+  2     function TestGameresult:tearDown()
+        end
+    
+    --separate test, which is not using the global sync structure
+  1 function testCheckNoKillSyncedThereforeSuicide()
+        -- reset these
+  1     acuDestroyed = {} 
+  1     events.ACUDestroyed = acuDestroyed
+  1     Resetdrawnotified()
+  1     local AnnounceDeathCalled = false
+  1     local AnnounceDrawCalled = false
+  1     function AnnounceDeath(armyID, message, killerId)
+  1         AnnounceDeathCalled = true
+  1         luaunit.assert_equals(armyID, killerId)
+  1         luaunit.assertEquals(' killed by suicide ', message)
+        end
+  1     Announces.AnnounceDeath = AnnounceDeath
+  1     function AnnounceDraw(armyID, message, killerId)
+**0         AnnounceDrawCalled = true
+        end
+  1     Announces.AnnounceDraw = AnnounceDraw
+    
+  1     DoGameResultNew(1, 'defeat', events, ResultStrings, Announces)
+    
+    
+  1     luaunit.assert_true(AnnounceDeathCalled)
+  1     luaunit.assert_false(AnnounceDrawCalled)
+    end
+    
+    -- test, which is not using the global sync structure
+  1 function testCheckKillthenDraw()
+        -- reset these
+  1     acuDestroyed = {} 
+  1     events.ACUDestroyed = acuDestroyed
+    
+  2     table.insert(acuDestroyed, {
+  1         Timestamp = 234,
+  1         InstigatorArmy = 10,
+  1         KilledArmy = 11
+        })
+    
+  1     Resetdrawnotified()
+  1     local AnnounceDeathCalled = false
+  1     local AnnounceDrawCalled = false
+  1     function AnnounceDeath(armyID, message, killerId)
+  1         AnnounceDeathCalled = true
+  1         luaunit.assert_equals(armyID, killerId)
+  1         luaunit.assertEquals(' killed by suicide ', message)
+        end
+  1     Announces.AnnounceDeath = AnnounceDeath
+  1     function AnnounceDraw(armyID, message, killerId)
+  1         AnnounceDrawCalled = true
+        end
+  1     Announces.AnnounceDraw = AnnounceDraw
+    
+  1     DoGameResultNew(10, 'defeat', events, ResultStrings, Announces)
+    
+    
+  1     luaunit.assert_true(AnnounceDeathCalled)
+  1     luaunit.assert_false(AnnounceDrawCalled)
+    
+  1     AnnounceDeathCalled = false
+    
+  2     table.insert(acuDestroyed, {
+  1         Timestamp = 234,
+  1         InstigatorArmy = 11,
+  1         KilledArmy = 10
+        })
+    
+  1     DoGameResultNew(11, 'defeat', CurrentEvents, ResultStrings, Announces)
+    
+  1     luaunit.assert_false(AnnounceDeathCalled)
+  1     luaunit.assert_true(AnnounceDrawCalled)
+    end
+    
+    
+    
+    
+    
+  1 os.exit( luaunit.LuaUnit.run() )
+
+==============================================================================
+Summary
+==============================================================================
+
+File                            Hits Missed Coverage
+----------------------------------------------------
+..////modules/gameresultnew.lua 29   1      96.67%
+..////modules/score_events.lua  10   2      83.33%
+test_gameresult.lua             162  3      98.18%
+----------------------------------------------------
+Total                           201  6      97.10%

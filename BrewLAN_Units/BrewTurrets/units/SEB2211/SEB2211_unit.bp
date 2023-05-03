@@ -48,7 +48,7 @@ UnitBlueprint {
         EconomyThreatLevel = 23,
         Health = 2500,
         MaxHealth = 2500,
-        SurfaceThreatLevel = 11,
+        SurfaceThreatLevel = 12,
     },
     Description = '<LOC sbui2311_desc>Anti-Armor Point Defense',
     Display = {
@@ -96,8 +96,6 @@ UnitBlueprint {
         SizeZ = 1,
     },
     General = {
-        Category = 'Defense',
-        Classification = 'RULEUC_Weapon',
         CommandCaps = {
             RULEUCC_Attack = true,
             RULEUCC_RetaliateToggle = true,
@@ -106,9 +104,7 @@ UnitBlueprint {
         FactionName = 'UEF',
         Icon = 'land',
         SelectionPriority = 5,
-        TechLevel = 'RULEUTL_Secret',
         UnitName = '<LOC seb2211_name>Stouty',
-        UnitWeight = 1,
     },
     Intel = {
         VisionRadius = 50,

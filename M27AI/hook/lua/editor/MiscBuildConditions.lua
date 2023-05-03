@@ -7,15 +7,15 @@ local M27Conditions = import('/mods/M27AI/lua/AI/M27CustomConditions.lua')
 
 function M27IsXNearbyMex(aiBrain, bool, iMexNumber)
     --Note: The distance is set to nil to avoid confusion as RecordMexNearStartPosition's distance only matters the first time ever it's called; it's called by aibrain before build conditions, hence whatever number is entered here has no effect
-    local iNearbyMex = M27MapInfo.RecordMexNearStartPosition(M27Utilities.GetAIBrainArmyNumber(aiBrain), nil, true)
+    local iNearbyMex = M27MapInfo.RecordMexNearStartPosition(M27Utilities.GetAIBrainArmyNumber(aiBrain), nil, true, true)
 
     if iNearbyMex == iMexNumber then return bool
     else return not(bool)
     end
 end
 function M27IsXPlusNearbyMex(aiBrain, bool, iMexNumber)
-    local bDebugMessages = false
-    local iNearbyMex = M27MapInfo.RecordMexNearStartPosition(M27Utilities.GetAIBrainArmyNumber(aiBrain), nil, true)
+    local bDebugMessages = false if M27Utilities.bGlobalDebugOverride == true then   bDebugMessages = true end
+    local iNearbyMex = M27MapInfo.RecordMexNearStartPosition(M27Utilities.GetAIBrainArmyNumber(aiBrain), nil, true, true)
     if bDebugMessages == true then LOG('M27IsXPlusNearbyMex: iNearbyMex='..iNearbyMex) end
     if iNearbyMex >= iMexNumber then return bool
     else return not(bool)
@@ -25,7 +25,7 @@ end
 function M27IsNearbyHydro(aiBrain, bool, iMaxDistance)
     --NOTE: Repalced with M27NearbyHydro for decision on whether ACU should help with building hydro instead of t1 power
     --returns true if hydrocarbon is within iMaxDistance of start location; checks every 5s
-    local iNearbyHydro = M27MapInfo.RecordHydroNearStartPosition(M27Utilities.GetAIBrainArmyNumber(aiBrain), iMaxDistance, true)
+    local iNearbyHydro = M27MapInfo.RecordHydroNearStartPosition(M27Utilities.GetAIBrainArmyNumber(aiBrain), iMaxDistance, true, true)
     if iNearbyHydro >= 1 then return bool
     else return not(bool) end
 end
@@ -33,7 +33,7 @@ end
 function M27IsUnclaimedHydro(aiBrain, bool, bOurSideOfMap)
     --returns true if are any unclaimed hydro positions on the map (refreshes every 5s)
     --bOurSideOfMap: true if only consider hydro positions closer to us than enemy
-    local bDebugMessages = false
+    local bDebugMessages = false if M27Utilities.bGlobalDebugOverride == true then   bDebugMessages = true end
     local sFunctionRef = 'M27IsUnclaimedHydro'
     if M27MapInfo.HydroCount > 0 then
         local iLastCheck = aiBrain[sFunctionRef]
@@ -55,7 +55,7 @@ function M27IsUnclaimedHydro(aiBrain, bool, bOurSideOfMap)
 end
 
 function M27IsNoNearbyHydro(aiBrain, bool, iMaxDistance)
-    local iNearbyHydro = M27MapInfo.RecordHydroNearStartPosition(M27Utilities.GetAIBrainArmyNumber(aiBrain), iMaxDistance, true)
+    local iNearbyHydro = M27MapInfo.RecordHydroNearStartPosition(M27Utilities.GetAIBrainArmyNumber(aiBrain), iMaxDistance, true, true)
     if iNearbyHydro <= 0 then return bool else return not(bool) end
 end
 
@@ -70,7 +70,7 @@ end
 
 function M27HydroUnderConstruction(aiBrain, bool)
 --Returns true if a hydro is under construction; resets hydro tracker variable if any hydro has been completed
-    local bDebugMessages = false
+    local bDebugMessages = false if M27Utilities.bGlobalDebugOverride == true then   bDebugMessages = true end
     local iArmy = M27Utilities.GetAIBrainArmyNumber(aiBrain)
     if M27ConUtility.tHydroBuilder[iArmy][1] == nil then
         --LOG('Build condition: Hydro Under construction: Not started yet')
@@ -108,7 +108,7 @@ function M27MexToFactoryRatio(aiBrain, bool, iMexesPerFactory)
 end
 
 function M27NeedDefenders(aiBrain, bool)
-    local bDebugMessages = false
+    local bDebugMessages = false if M27Utilities.bGlobalDebugOverride == true then   bDebugMessages = true end
     if bDebugMessages == true then
         if aiBrain[M27Overseer.refbNeedDefenders] == nil then aiBrain[M27Overseer.refbNeedDefenders] = false end
         LOG('MIBC: M27NeedDefenders: aiBrain[M27Overseer.refbNeedDefenders]='..tostring(aiBrain[M27Overseer.refbNeedDefenders])) end
@@ -116,12 +116,19 @@ function M27NeedDefenders(aiBrain, bool)
 end
 
 function M27NeedScoutPlatoons(aiBrain, bool)
-    local bDebugMessages = false
+    local bDebugMessages = false if M27Utilities.bGlobalDebugOverride == true then   bDebugMessages = true end
     if bDebugMessages == true then LOG('M27NeedScoutPlatoons: aiBrain[M27Overseer.refbNeedScoutPlatoons]='..tostring(aiBrain[M27Overseer.refbNeedScoutPlatoons])..'; bool='..tostring(bool)) end
     if aiBrain[M27Overseer.refbNeedScoutPlatoons] == true then return bool else return not(bool) end
 end
 function M27NeedScoutsBuilt(aiBrain, bool)
-    if aiBrain[M27Overseer.refbNeedScoutsBuilt] == true then return bool else return not(bool) end
+    local bWantScouts = false
+    if aiBrain[refiScoutShortfallInitialRaider] > 0 then bWantScouts = true
+        elseif aiBrain[refiScoutShortfallACU] > 0 then bWantScouts = true
+        elseif aiBrain[refiScoutShortfallIntelLine] > 0 then bWantScouts = true
+        elseif aiBrain[refiScoutShortfallLargePlatoons] > 0 then bWantScouts = true
+    end
+    --refiScoutShortfallAllPlatoons - not high priority
+    if bWantScouts == true then return bool else return not(bool) end
 end
 
 function M27NeedMAABuilt(aiBrain, bool, iMassOnMAAVsEnemyAir)
@@ -129,7 +136,7 @@ function M27NeedMAABuilt(aiBrain, bool, iMassOnMAAVsEnemyAir)
 end
 
 function M27IsUnclaimedMexNearACU(aiBrain, bool)
-    local bDebugMessages = false
+    local bDebugMessages = false if M27Utilities.bGlobalDebugOverride == true then   bDebugMessages = true end
     if bDebugMessages == true then
         if aiBrain[M27Overseer.refbUnclaimedMexNearACU] == nil then
             LOG('MIBC M27IsUnclaimedMexNearACU: refbUnclaimedMexNearACU=nil')
@@ -138,9 +145,10 @@ function M27IsUnclaimedMexNearACU(aiBrain, bool)
     if aiBrain[M27Overseer.refbUnclaimedMexNearACU] == true then return bool else return not(bool) end
 end
 
-function M27IsReclaimNearACU(aiBrain, bool)
+--Removed below and related flag in v15 for performance
+--[[function M27IsReclaimNearACU(aiBrain, bool)
     if aiBrain[M27Overseer.refbReclaimNearACU] == true then return bool else return not(bool) end
-end
+end--]]
 
 function M27SafeToGetACUUpgrade(aiBrain, bool)
 
@@ -159,11 +167,15 @@ function M27SafeToGetACUUpgrade(aiBrain, bool)
     if M27Conditions.SafeToGetACUUpgrade(aiBrain) == true then return bool else return not(bool) end
 end
 
+function M27WantACUToGetGunUpgrade(aiBrain, bool)
+    if M27Conditions.WantToGetFirstACUUpgrade(aiBrain, false) == true then return bool else return not(bool) end
+end
+
 function M27ACUHasGunUpgrade(aiBrain, bool, bBothUpgrades)
     --For some reason referencing this function from elsewhere causes an error, so M27GeneralLogic includes a variant of this
     --Returns true if commander has finished any of the gun upgrades
     --[[
-    local bDebugMessages = false
+    local bDebugMessages = false if M27Utilities.bGlobalDebugOverride == true then   bDebugMessages = true end
     local oACU = M27Utilities.GetACU(aiBrain)
     local bHasGun = false
     local tGunUpgrades = { 'HeavyAntiMatterCannon',
@@ -179,7 +191,7 @@ function M27ACUHasGunUpgrade(aiBrain, bool, bBothUpgrades)
     end
     if bDebugMessages == true then LOG('M27ACUHasGunUpgradebHasGun: No gun upgrades, returning false') end
     return not(bool)]]--
-    local bDebugMessages = false
+    local bDebugMessages = false if M27Utilities.bGlobalDebugOverride == true then   bDebugMessages = true end
     local sFunctionRef = 'M27ACUHasGunUpgrade'
     local bHasGun = M27Conditions.DoesACUHaveGun(aiBrain, bBothUpgrades)
     if bDebugMessages == true then LOG(sFunctionRef..': ACU has gun='..tostring(bHasGun)..'; bool condition='..tostring(bool)) end

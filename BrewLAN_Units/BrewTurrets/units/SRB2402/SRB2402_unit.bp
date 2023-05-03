@@ -40,7 +40,6 @@ UnitBlueprint {
     },
     CollisionOffsetY = -1,
     Defense = {
-        AirThreatLevel = 500,
         ArmorType = 'Structure',
         EconomyThreatLevel = 269,
         Health = 23000,
@@ -86,8 +85,6 @@ UnitBlueprint {
         SizeZ = 3,
     },
     General = {
-        Category = 'Defense',
-        Classification = 'RULEUC_Weapon',
         CommandCaps = {
             RULEUCC_Attack = true,
             RULEUCC_RetaliateToggle = true,
@@ -96,9 +93,7 @@ UnitBlueprint {
         FactionName = 'Cybran',
         Icon = 'land',
         SelectionPriority = 5,
-        TechLevel = 'RULEUTL_Secret',
         UnitName = '<LOC srb2402_name>Neolith',
-        UnitWeight = 1,
     },
     Intel = {
         VisionRadius = 28,

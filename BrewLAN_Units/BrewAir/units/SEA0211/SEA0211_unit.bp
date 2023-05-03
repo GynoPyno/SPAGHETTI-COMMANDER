@@ -111,7 +111,6 @@ UnitBlueprint {
     Defense = {
         AirThreatLevel = 1,
         ArmorType = 'Light',
-        EconomyThreatLevel = 1,
         Health = 1250,
         MaxHealth = 1250,
         SurfaceThreatLevel = 12,
@@ -183,7 +182,7 @@ UnitBlueprint {
         BuildCostEnergy = 8400,
         BuildCostMass = 420,
         BuildTime = 2400,
-        ResearchMultTime = 0.5,
+        ResearchMultEnergy = 0.5,
     },
     Footprint = {
         MaxSlope = 0.25,
@@ -191,8 +190,6 @@ UnitBlueprint {
         SizeZ = 1,
     },
     General = {
-        Category = 'Bomber',
-        Classification = 'RULEUC_MilitaryAircraft',
         CommandCaps = {
             RULEUCC_Attack = true,
             RULEUCC_CallTransport = true,
@@ -205,9 +202,7 @@ UnitBlueprint {
         },
         FactionName = 'UEF',
         Icon = 'air',
-        TechLevel = 'RULEUTL_Advanced',
         UnitName = '<LOC sea0211_name>Tornado',
-        UnitWeight = 1,
     },
     Intel = {
         RadarRadius = 65,

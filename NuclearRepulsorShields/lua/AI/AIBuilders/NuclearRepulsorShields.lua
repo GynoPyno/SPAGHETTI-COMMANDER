@@ -15,6 +15,7 @@ BuilderGroup {
         InstanceCount = 1,
         BuilderConditions = {
             -- When do we want to build this ?
+            { UCBC, 'CanBuildShieldCategory', { categories.STRUCTURE * categories.SHIELD * categories.EXPERIMENTAL * categories.VILLAGESHIELD } },
             { UCBC, 'HaveGreaterThanUnitsWithCategory', { 2, categories.TECH3 * categories.ENERGYPRODUCTION }},
             -- Do we need additional conditions to build it ?
             -- Have we the eco to build it ?
@@ -50,6 +51,7 @@ BuilderGroup {
         InstanceCount = 2,
         BuilderConditions = {
             -- When do we want to build this ?
+            { UCBC, 'CanBuildShieldCategory', { categories.STRUCTURE * categories.SHIELD * categories.EXPERIMENTAL * categories.VILLAGESHIELD } },
             -- Do we need additional conditions to build it ?
             -- Have we the eco to build it ?
             { UCBC, 'HaveGreaterThanUnitsWithCategory', { 0, categories.STRUCTURE * categories.EXPERIMENTAL * categories.ECONOMIC }},
@@ -83,6 +85,7 @@ BuilderGroup {
         InstanceCount = 1,
         BuilderConditions = {
             -- When do we want to build this ?
+            { UCBC, 'CanBuildShieldCategory', { categories.STRUCTURE * categories.SHIELD * categories.EXPERIMENTAL * categories.CITYSHIELD } },
             { UCBC, 'UnitsGreaterAtLocation', { 'LocationType', 2, categories.STRUCTURE * categories.SHIELD * categories.EXPERIMENTAL * categories.VILLAGESHIELD}},
             -- Do we need additional conditions to build it ?
             -- Have we the eco to build it ?
@@ -118,6 +121,7 @@ BuilderGroup {
         InstanceCount = 2,
         BuilderConditions = {
             -- When do we want to build this ?
+            { UCBC, 'CanBuildShieldCategory', { categories.STRUCTURE * categories.SHIELD * categories.EXPERIMENTAL * categories.CITYSHIELD } },
             { UCBC, 'UnitsGreaterAtLocation', { 'LocationType', 2, categories.STRUCTURE * categories.SHIELD * categories.EXPERIMENTAL * categories.VILLAGESHIELD}},
             -- Do we need additional conditions to build it ?
             -- Have we the eco to build it ?
@@ -152,6 +156,7 @@ BuilderGroup {
         InstanceCount = 1,
         BuilderConditions = {
             -- When do we want to build this ?
+            { UCBC, 'CanBuildShieldCategory', { categories.STRUCTURE * categories.SHIELD * categories.EXPERIMENTAL * categories.METROSHIELD } },
             { UCBC, 'UnitsGreaterAtLocation', { 'LocationType', 1, categories.STRUCTURE * categories.SHIELD * categories.EXPERIMENTAL * categories.CITYSHIELD}},
             -- Do we need additional conditions to build it ?
             -- Have we the eco to build it ?
@@ -187,6 +192,7 @@ BuilderGroup {
         InstanceCount = 1,
         BuilderConditions = {
             -- When do we want to build this ?
+            { UCBC, 'CanBuildShieldCategory', { categories.STRUCTURE * categories.SHIELD * categories.EXPERIMENTAL * categories.METROSHIELD } },
             { UCBC, 'UnitsGreaterAtLocation', { 'LocationType', 1, categories.STRUCTURE * categories.SHIELD * categories.EXPERIMENTAL * categories.CITYSHIELD}},
             -- Do we need additional conditions to build it ?
             -- Have we the eco to build it ?

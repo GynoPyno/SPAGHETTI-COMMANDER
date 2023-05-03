@@ -9,7 +9,7 @@ BuilderGroup {
     BuildersType = 'EngineerBuilder',
     Builder {
         BuilderName = 'S4 Paragon 1st mass40',
-        PlatoonTemplate = 'T3EngineerBuildernoSUB',
+        PlatoonTemplate = 'T3EngineerBuildernoSUBSwarm',
         Priority = 300,
         DelayEqualBuildPlattons = {'Paragon', 60},
         BuilderConditions = {
@@ -23,7 +23,7 @@ BuilderGroup {
 
             { UCBC, 'HaveGreaterThanUnitsWithCategory', { 0, categories.EXPERIMENTAL}},
 
-            { EBC, 'GreaterThanEconStorageRatioSwarm', { 0.40, 0.90}}, 
+            { EBC, 'GreaterThanEconStorageCurrentSwarm', { 100, 1000}},
 
             { UCBC, 'CheckBuildPlattonDelay', { 'Paragon' }},
 
@@ -49,7 +49,7 @@ BuilderGroup {
     },
     Builder {
         BuilderName = 'S4 Paragon 1st 35min',
-        PlatoonTemplate = 'T3EngineerBuildernoSUB',
+        PlatoonTemplate = 'T3EngineerBuildernoSUBSwarm',
         Priority = 350,
         DelayEqualBuildPlattons = {'Paragon', 60},
         BuilderConditions = {
@@ -85,15 +85,15 @@ BuilderGroup {
     },
     Builder {
         BuilderName = 'S4 Paragon 1st HighTrend',
-        PlatoonTemplate = 'T3EngineerBuildernoSUB',
-        Priority = 3500,
+        PlatoonTemplate = 'T3EngineerBuildernoSUBSwarm',
+        Priority = 350,
         DelayEqualBuildPlattons = {'Paragon', 60},
         BuilderConditions = {
             { UCBC, 'HasNotParagon', {} },
 
             { UCBC, 'GreaterThanGameTimeSeconds', { 60*60 } },
 
-            { EBC, 'GreaterThanEconTrendSwarm', { 18.0, 270.0 } },                      
+            { EBC, 'GreaterThanEconTrendOverTimeSwarm', { 18.0, 270.0 } },                      
          
             { UCBC, 'CanBuildCategorySwarm', { categories.STRUCTURE * categories.EXPERIMENTAL * categories.ECONOMIC } },
 
@@ -123,7 +123,7 @@ BuilderGroup {
     },
     Builder {
         BuilderName = 'S4 Paragon 2nd',
-        PlatoonTemplate = 'T3EngineerBuildernoSUB',
+        PlatoonTemplate = 'T3EngineerBuildernoSUBSwarm',
         Priority = 350,
         BuilderConditions = {
             { UCBC, 'HasParagon', {} },
@@ -160,7 +160,7 @@ BuilderGroup {
     },
     Builder {
         BuilderName = 'S4 Paragon 3nd',
-        PlatoonTemplate = 'T3EngineerBuildernoSUB',
+        PlatoonTemplate = 'T3EngineerBuildernoSUBSwarm',
         Priority = 350,
         BuilderConditions = {
             { UCBC, 'HasParagon', {} },

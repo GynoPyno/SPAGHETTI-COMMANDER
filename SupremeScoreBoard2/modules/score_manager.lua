@@ -221,6 +221,7 @@ function GetArmyTableEco()
     eco.engyTotal   = 0
     eco.engySpent   = 0
     eco.engyReclaim = 0
+    eco.engyStored  = 0
 
     eco.buildPowerUsed  = 0
     eco.buildPowerTotal = 0

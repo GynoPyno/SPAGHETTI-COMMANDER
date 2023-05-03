@@ -780,7 +780,7 @@ UnitBlueprint {
             CameraShakeMin = 0,
             CameraShakeRadius = 50,
             Label = 'MainGun3',
-            MaxRadius = 90,
+            MaxRadius = 130,
             MuzzleChargeDelay = 2.5,
             MuzzleSalvoDelay = 0,
             MuzzleSalvoSize = 1,

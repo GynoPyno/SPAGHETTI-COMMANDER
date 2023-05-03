@@ -1,6 +1,5 @@
 local modPath = '/mods/SupremeScoreBoard2/'
 local modScripts  = modPath..'modules/'
-local log  = import(modScripts..'ext.logging.lua')
 
 CurrentEvents = {}
 CurrentEvents.ACUEntersTransporter = {}
@@ -17,13 +16,5 @@ function UpdateEvents(newEvents)
         for i,acu in pairs(newEvents.ACUDestroyed) do
             table.insert(CurrentEvents.ACUDestroyed, acu)
         end
-    end
-
-    -- traverse complete list
-    for i,acu in pairs(CurrentEvents.ACUEntersTransporter) do
-        log.Trace("Timestamp: " .. acu.Timestamp .. " id: " .. acu.ACUArmyID)
-    end
-    for i,acu in pairs(CurrentEvents.ACUDestroyed) do
-        log.Trace("Timestamp: " .. acu.Timestamp .. " id: " .. acu.KilledArmy)
     end
 end

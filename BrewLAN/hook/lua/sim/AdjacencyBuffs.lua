@@ -303,8 +303,8 @@ do
     ---------------------------------------------------------
     -- AVENGERS ASSEMBLE
     ---------------------------------------------------------
-    for buff, data in buffs do
-        for size, val in data.SizeData do
+    for buff, data in pairs(buffs) do
+        for size, val in pairs(data.SizeData) do
             local name = buff .. "Size" .. size
             local cat = 'STRUCTURE SIZE' .. tostring(size)
             BuffBlueprint({
@@ -324,7 +324,7 @@ do
                     },
                 },
             })
-            for i, v in data.IncludeIn do
+            for i, v in pairs(data.IncludeIn) do
                 table.insert(v,name)
             end
         end
@@ -361,8 +361,8 @@ BuffBlueprint {
     OnBuffRemove = AdjBuffFuncs.EnergyBuildBuffRemove,
     Affects = {
         EnergyActive = {
-            Add = -1,
-            Mult = 1.0,
+            Add = -0,
+            Mult = 0.1,
         },
     },
 }
@@ -398,7 +398,7 @@ BuffBlueprint {
     Affects = {
         EnergyWeapon = {
             Add = 0,
-            Mult = .1,
+            Mult = 0.1,
         },
     },
 }
@@ -416,7 +416,7 @@ BuffBlueprint {
     Affects = {
         RateOfFire = {
             Add = 0,
-            Mult = .65,
+            Mult = 0.65,
         },
     },
 }
@@ -433,8 +433,8 @@ BuffBlueprint {
     OnBuffRemove = AdjBuffFuncs.MassBuildBuffRemove,
     Affects = {
         MassActive = {
-            Add = -1,
-            Mult = 1.0,
+            Add = 0,
+            Mult = 0.1,
         },
     },
 }

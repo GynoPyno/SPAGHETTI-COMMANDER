@@ -87,11 +87,11 @@ UnitBlueprint {
     #AverageDensity = 1,
     Buffs = {
         Regen = {
-            Level1 = 110,
-            Level2 = 220,
-            Level3 = 250,
-            Level4 = 340,
-            Level5 = 455,
+            Level1 = 1100,
+            Level2 = 2200,
+            Level3 = 2300,
+            Level4 = 3400,
+            Level5 = 4550,
         },
     },
     BuildIconSortPriority = 100,
@@ -245,7 +245,7 @@ UnitBlueprint {
         UnitWeight = 1,
     },
     Intel = {
-        VisionRadius = 70,
+        VisionRadius = 100,
     },
     Interface = {
         HelpText = '<LOC QRA4404a_help>Siege Assault Gunship',
@@ -969,7 +969,7 @@ UnitBlueprint {
             RackSalvoSize = 1,
             RackSlavedToTurret = false,
             RangeCategory = 'UWRC_InDirectFire',
-            RateOfFire = 5,
+            RateOfFire = 9,
             TargetCheckInterval = 1,
             TargetPriorities = {
                 'SPECIALHIGHPRI',               

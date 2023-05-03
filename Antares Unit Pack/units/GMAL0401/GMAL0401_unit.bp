@@ -585,7 +585,7 @@ UnitBlueprint {
             BallisticArc = 'RULEUBA_LowArc',
             BeamCollisionDelay = 0.1,
             BeamLifetime = 0,
-            Damage = 950,
+            Damage = 2500,
             DamageRadius = 2,
             DamageType = 'Normal',
             DisplayName = 'Abyss',
@@ -668,7 +668,7 @@ UnitBlueprint {
             BallisticArc = 'RULEUBA_LowArc',
             BeamCollisionDelay = 0.1,
             BeamLifetime = 0,
-            Damage = 950,
+            Damage = 2500,
             DamageType = 'Normal',
             DisplayName = 'Abyss',
             FireTargetLayerCapsTable = {

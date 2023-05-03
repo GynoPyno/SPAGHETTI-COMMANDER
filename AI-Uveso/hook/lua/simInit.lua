@@ -1,6 +1,6 @@
 local UvesoOffsetSimInitLUA = debug.getinfo(1).currentline - 1
 SPEW('['..string.gsub(debug.getinfo(1).source, ".*\\(.*.lua)", "%1")..', line:'..UvesoOffsetSimInitLUA..'] * AI-Uveso: offset simInit.lua')
---445
+--556
 
 local FormatGameTimeSeconds = import('/mods/AI-Uveso/lua/AI/uvesoutilities.lua').FormatGameTimeSeconds
 
@@ -87,7 +87,8 @@ function BeginSession()
 
     ValidateModFilesUveso()
     -- init data for target manager
-    import('/mods/AI-Uveso/lua/AI/AITargetManager.lua').InitAITargetManagerData()
+    local WantedGridCellSize = math.floor( math.max( ScenarioInfo.size[1], ScenarioInfo.size[2] ) / 36)
+    import('/mods/AI-Uveso/lua/AI/AITargetManager.lua').InitAITargetManagerData(WantedGridCellSize)
 
     if ScenarioInfo.Options.AIPathingDebug ~= 'off' then
         -- import functions for marker generator
@@ -501,7 +502,7 @@ function CreateAIMarkers()
     -- import functions for marker generator
     local AIMarkerGenerator = import("/mods/AI-Uveso/lua/AI/AIMarkerGenerator.lua")
     -- init Generator variables
-    AIMarkerGenerator.InitMarkerGenerator()
+    AIMarkerGenerator.SetWantedGridCellSize(WantedGridCellSize)
     local markerTable, NavalMarkerPositions, LandMarkerPositions
     -- build a table with dirty / unpathable terrain
     AIMarkerGenerator.BuildTerrainPathMap()
@@ -509,8 +510,6 @@ function CreateAIMarkers()
     --ForkThread(AIMarkerGenerator.PathableTerrainRenderThread)
     AIDebug(string.format("* AI-Uveso: Function CreateAIMarkers(): building TerrainPathMap finished, runtime: %.2f seconds.", GetSystemTimeSecondsOnlyForProfileUse() - START  ), true, UvesoOffsetSimInitLUA)
 
-    -- Set grid cell size for air (half the size than normal layers)
-    AIMarkerGenerator.SetWantedGridCellSize(WantedGridCellSize * 2)
     -- build marker grid for air
     AIMarkerGenerator.CreateMarkerGrid("Air")
     -- build connections for air
@@ -523,8 +522,6 @@ function CreateAIMarkers()
     -- convert markers and copy to MASTERCHAIN
     ConvertMarkerTableToFAF(markerTable, "Air")
 
-    -- Set grid cell size for land
-    AIMarkerGenerator.SetWantedGridCellSize(WantedGridCellSize)
     -- build marker grid for land
     local STARTSUB = GetSystemTimeSecondsOnlyForProfileUse()
     AIMarkerGenerator.CreateMarkerGrid("Land")
@@ -543,8 +540,6 @@ function CreateAIMarkers()
     -- convert markers and copy to MASTERCHAIN
     ConvertMarkerTableToFAF(markerTable, "Land")
 
-    -- Set grid cell size for water
-    AIMarkerGenerator.SetWantedGridCellSize(WantedGridCellSize)
     -- build marker grid for water
     AIMarkerGenerator.CreateMarkerGrid("Water")
     -- build connections for water
@@ -557,8 +552,6 @@ function CreateAIMarkers()
     -- convert markers and copy to MASTERCHAIN
     ConvertMarkerTableToFAF(markerTable, "Water")
 
-    -- Set grid cell size for amphibious
-    AIMarkerGenerator.SetWantedGridCellSize(WantedGridCellSize)
     -- build marker grid for amphibious
     AIMarkerGenerator.CreateMarkerGrid("Amphibious")
     -- build connections for amphibious
@@ -571,8 +564,6 @@ function CreateAIMarkers()
     -- convert markers and copy to MASTERCHAIN
     ConvertMarkerTableToFAF(markerTable, "Amphibious")
 
-    -- Set grid cell size for hover
-    AIMarkerGenerator.SetWantedGridCellSize(WantedGridCellSize)
     -- build marker grid for hover
     AIMarkerGenerator.CreateMarkerGrid("Hover")
     -- build connections for hover
@@ -592,6 +583,9 @@ function CreateAIMarkers()
     --create land expansions
     LandMarkerPositions = AIMarkerGenerator.CreateLandExpansions()
     ConvertLandExpansionsToFAF(LandMarkerPositions)
+
+    -- clear the PathMap[]
+    AIMarkerGenerator.ClearMemoryMarkerGenerator()
 
     AILog(string.format("* AI-Uveso: Function CreateAIMarkers(): Marker generator finished, runtime: %.2f seconds.", GetSystemTimeSecondsOnlyForProfileUse() - START  ), true, UvesoOffsetSimInitLUA)
 
@@ -616,6 +610,7 @@ function ConvertMarkerTableToFAF(markerTable, layer)
                     ['graph'] = 'Default'..layer,
                     ['GraphArea'] = markerTable[x][z].GraphArea,
                     ['impassability'] = markerTable[x][z].impassability,
+                    ['gridPos'] = {x, z}
                 }
                 -- copy adjacent
                 if markerTable[x][z].adjacentTo[1] then
@@ -1012,8 +1007,8 @@ function DrawHeatMap()
     local mapXGridCount, mapZGridCount = import('/mods/AI-Uveso/lua/AI/AITargetManager.lua').HeatMapGridCountXZ()
     local playableArea = import('/mods/AI-Uveso/lua/AI/AITargetManager.lua').GetPlayableArea()
     local px, py, pz = 0,1000,0
-    local threatScale = { Land = 1, Air = 1, Water = 1, Amphibious = 1, ecoValue = 1}
-    local highestThreat = { Land = 1, Air = 1, Water = 1, Amphibious = 1, ecoValue = 1}
+    local threatScale = { Land = 1, Air = 1, Water = 1, Amphibious = 1, ecoValue = 1, Ghost = 1}
+    local highestThreat = { Land = 1, Air = 1, Water = 1, Amphibious = 1, ecoValue = 1, Ghost = 1}
     local FocussedArmy
     local heatMap
     local enemyMainForce
@@ -1135,7 +1130,7 @@ function DrawHeatMap()
                     -- draw ecoValue
                     if ArmyBrains[FocussedArmy].highestEnemyEcoValue["All"] then
                         pr["ecoValue"] = heatMap[x][z].highestEnemyEcoValue["All"] * threatScale["ecoValue"]
-                        DrawCircle( { px, py, pz }, pr["ecoValue"] , '80FFFFFF' )
+                        DrawCircle( { px, py, pz }, pr["ecoValue"] , '80A0A0A0' )
                         -- get the highest value to scale all circles
                         if heatMap[x][z].highestEnemyEcoValue["All"] > highestThreat["ecoValue"] then
                             highestThreat["ecoValue"] = heatMap[x][z].highestEnemyEcoValue["All"]
@@ -1143,12 +1138,36 @@ function DrawHeatMap()
                         -- draw box with highest ecoValue
                         for _, ecoValue in pairs(ArmyBrains[FocussedArmy].highestEnemyEcoValue["All"]) do
                             if ecoValue.gridPos[1] == x and ecoValue.gridPos[2] == z then
-                                DrawLine({ 2 + px-HeatMapGridSizeX/2, py,  2 + pz-HeatMapGridSizeZ/2}, {-2 + px+HeatMapGridSizeX/2, py,  2 + pz-HeatMapGridSizeZ/2}, 'ffFFFFFF') -- U
-                                DrawLine({ 2 + px-HeatMapGridSizeX/2, py, -2 + pz+HeatMapGridSizeZ/2}, {-2 + px+HeatMapGridSizeX/2, py, -2 + pz+HeatMapGridSizeZ/2}, 'ffFFFFFF') -- D
-                                DrawLine({ 2 + px-HeatMapGridSizeX/2, py,  2 + pz-HeatMapGridSizeZ/2}, { 2 + px-HeatMapGridSizeX/2, py, -2 + pz+HeatMapGridSizeZ/2}, 'ffFFFFFF') -- L
-                                DrawLine({-2 + px+HeatMapGridSizeX/2, py,  2 + pz-HeatMapGridSizeZ/2}, {-2 + px+HeatMapGridSizeX/2, py, -2 + pz+HeatMapGridSizeZ/2}, 'ffFFFFFF') -- R
+                                DrawLine({ 2 + px-HeatMapGridSizeX/2, py,  2 + pz-HeatMapGridSizeZ/2}, {-2 + px+HeatMapGridSizeX/2, py,  2 + pz-HeatMapGridSizeZ/2}, '80A0A0A0') -- U
+                                DrawLine({ 2 + px-HeatMapGridSizeX/2, py, -2 + pz+HeatMapGridSizeZ/2}, {-2 + px+HeatMapGridSizeX/2, py, -2 + pz+HeatMapGridSizeZ/2}, '80A0A0A0') -- D
+                                DrawLine({ 2 + px-HeatMapGridSizeX/2, py,  2 + pz-HeatMapGridSizeZ/2}, { 2 + px-HeatMapGridSizeX/2, py, -2 + pz+HeatMapGridSizeZ/2}, '80A0A0A0') -- L
+                                DrawLine({-2 + px+HeatMapGridSizeX/2, py,  2 + pz-HeatMapGridSizeZ/2}, {-2 + px+HeatMapGridSizeX/2, py, -2 + pz+HeatMapGridSizeZ/2}, '80A0A0A0') -- R
                                 -- draw a line to base
-                                DrawLine(basePosition, {px, py, pz}, 'ffFFFFFF') -- M
+                                DrawLine(basePosition, {px, py, pz}, '80A0A0A0') -- M
+                            end
+                        end
+                    end
+
+                    -- ****
+                    -- ECO
+                    -- ****
+                    -- draw Ghost
+                    if heatMap[x][z].highestEnemyEcoValue["Ghost"] then
+                        pr["Ghost"] = heatMap[x][z].highestEnemyEcoValue["Ghost"] * threatScale["ecoValue"]
+                        DrawCircle( { px, py, pz }, pr["Ghost"] , '807070FF' )
+                        -- get the highest value to scale all circles
+                        if heatMap[x][z].highestEnemyEcoValue["Ghost"] > highestThreat["Ghost"] then
+                            highestThreat["Ghost"] = heatMap[x][z].highestEnemyEcoValue["Ghost"]
+                        end
+                        -- draw box with highest Ghost
+                        for _, Ghost in pairs(ArmyBrains[FocussedArmy].highestEnemyEcoValue["Ghost"]) do
+                            if Ghost.gridPos[1] == x and Ghost.gridPos[2] == z then
+                                DrawLine({ 2 + px-HeatMapGridSizeX/2, py,  2 + pz-HeatMapGridSizeZ/2}, {-2 + px+HeatMapGridSizeX/2, py,  2 + pz-HeatMapGridSizeZ/2}, '807070FF') -- U
+                                DrawLine({ 2 + px-HeatMapGridSizeX/2, py, -2 + pz+HeatMapGridSizeZ/2}, {-2 + px+HeatMapGridSizeX/2, py, -2 + pz+HeatMapGridSizeZ/2}, '807070FF') -- D
+                                DrawLine({ 2 + px-HeatMapGridSizeX/2, py,  2 + pz-HeatMapGridSizeZ/2}, { 2 + px-HeatMapGridSizeX/2, py, -2 + pz+HeatMapGridSizeZ/2}, '807070FF') -- L
+                                DrawLine({-2 + px+HeatMapGridSizeX/2, py,  2 + pz-HeatMapGridSizeZ/2}, {-2 + px+HeatMapGridSizeX/2, py, -2 + pz+HeatMapGridSizeZ/2}, '807070FF') -- R
+                                -- draw a line to base
+                                DrawLine(basePosition, {px, py, pz}, '807070FF') -- M
                             end
                         end
                     end
@@ -1160,11 +1179,13 @@ function DrawHeatMap()
             threatScale["Water"] = (math.min( HeatMapGridSizeX, HeatMapGridSizeZ ) - 1) / 2 / highestThreat["Water"]
             threatScale["Amphibious"] = (math.min( HeatMapGridSizeX, HeatMapGridSizeZ ) - 1) / 2 / highestThreat["Amphibious"]
             threatScale["ecoValue"] = (math.min( HeatMapGridSizeX, HeatMapGridSizeZ ) - 1) / 2 / highestThreat["ecoValue"]
+            threatScale["Ghost"] = (math.min( HeatMapGridSizeX, HeatMapGridSizeZ ) - 1) / 2 / highestThreat["Ghost"]
             highestThreat["Land"] = 0
             highestThreat["Air"] = 0
             highestThreat["Water"] = 0
             highestThreat["Amphibious"] = 0
             highestThreat["ecoValue"] = 0
+            highestThreat["Ghost"] = 0
         end -- if FocussedArmy > 0 then
     end
 end
@@ -1173,7 +1194,7 @@ function ValidateModFilesUveso()
     local ModName = 'AI-Uveso'
     local ModDirectory = 'AI-Uveso'
     local Files = 87
-    local Bytes = 2024362
+    local Bytes = 2066287
     local modlocation = ""
     for i, mod in __active_mods do
         if mod.name == ModName then

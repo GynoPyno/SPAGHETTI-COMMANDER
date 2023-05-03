@@ -12,7 +12,7 @@ Description['seb2103'] = "<LOC Unit_Description_BrewLAN_T1D001>Light stationary 
 Description['sab2103'] = "<LOC Unit_Description_BrewLAN_T1D001>Light stationary artillery. Designed to engage low to mid-level units."
 Description['srb2103'] = "<LOC Unit_Description_BrewLAN_T1D001>Light stationary artillery. Designed to engage low to mid-level units."
 Description['ssb2103'] = "<LOC Unit_Description_BrewLAN_T1D001>Light stationary artillery. Designed to engage low to mid-level units."
- 
+
 --Tech 1 protection units
 Description['sab4102'] = "<LOC Unit_Description_BrewLAN_T1P001>Generates a protective shield around units and structures within its radius. Upgradable twice."
 Description['seb4102'] = "<LOC Unit_Description_BrewLAN_T1P001>Generates a protective shield around units and structures within its radius. Upgradable twice."
@@ -145,6 +145,7 @@ Description['sel0322'] = "<LOC Unit_Description_BrewLAN_T3L021>Mobile shield gen
 Description['sal0322'] = "<LOC Unit_Description_BrewLAN_T3L022>Mobile shield generator."
 Description['sel0326'] = "<LOC Unit_Description_BrewLAN_T3L023>Mobile platform for refueling and repairing aircraft. Air patrols will automatically use platform."
 Description['srl0312'] = "<LOC Unit_Description_BrewLAN_T3L024>Stealth tank. Armed with twin proton cannons, a dual purpose missile launcher, and torpedo defenses."
+Description['sal0312'] = "<LOC Unit_Description_BrewLAN_T3L025>Hovering mobile tactical missile platform. Armed with highly accurate Serpentine tactical missiles."
 
 --Tech 3 buildings
 Description['srb2306'] = "<LOC Unit_Description_BrewLAN_T3B001>Heavy defensive tower. Attacks land- and sea-based units with a powerful sweeping laser. Does not engage aircraft or submerged units. Requires cumulative amounts of energy to maintain prolonged fire; will overheat if active for too long."
@@ -202,7 +203,7 @@ Description['sab0401'] = "<LOC Unit_Description_BrewLAN_T4B009>Constructs air un
 Description['srb0401'] = "<LOC Unit_Description_BrewLAN_T4B010>Constructs land units."
 Description['ssb0401'] = "<LOC Unit_Description_BrewLAN_T4B011>Constructs naval units."
 Description['seb2401'] = "<LOC Unit_Description_BrewLAN_T4B012>Experimental defensive building. Consumes large amounts of power with each shot."
-Description['sab5401'] = "<LOC Unit_Description_BrewLAN_T4B013>Experimental teleportation device. Teleports itself and each mobile unit and structure within its operational radius to targeted locations for a great energy cost. Has a cooldown period after use."
+Description['sab5401'] = "<LOC Unit_Description_BrewLAN_T4B013>Experimental teleportation device. Teleports itself and each mobile unit and structure within its operational radius to targeted location for a great energy cost. Has a cooldown period after use."
 
 --Experimental land units
 Description['ssl0403'] = "<LOC Unit_Description_BrewLAN_T4L001>Experimental amphibious repair, capture, and reclamation unit. Gains the blueprints of units and wreckages by reclaiming them."
@@ -227,6 +228,7 @@ Description['srl0003'] = "<LOC Unit_Description_BrewLAN_T3L010>Mobile cloaking s
 Description['srl0004'] = "<LOC Unit_Description_BrewLAN_T3L009>Mobile cloaking missile launcher. Can fire at land- air- and sea-based units, but must decloak to fire."
 Description['srl0005'] = "<LOC Unit_Description_BrewLAN_T3L004>Mobile strategic missile defense. Build costs include first missile, however the vehicle lacks a fabrication suite to produce additional missiles unassisted."
 Description['srl0006'] = "<LOC Unit_Description_BrewLAN_T3L011>Mobile multiple rocket launcher. Long reload time. Designed to overwhelm enemy shields and tactical missile defenses with large salvos."
+Description['srl0007'] = "<LOC Unit_Description_BrewLAN_T3L024>Stealth tank. Armed with twin proton cannons, a dual purpose missile launcher, and torpedo defenses."
 
 --Support commander upgrades
 Description['uel0301-eesup'] ="<LOC Unit_Description_BrewLAN_E001>Adds field engineer build capabilities to the SACU."

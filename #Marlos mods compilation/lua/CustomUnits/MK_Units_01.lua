@@ -9,9 +9,9 @@ UnitList = {
               Seraphim = {'ksl0301', 50}, -- Juun tzu (Main Battle Tank) 
               UEF = {'kel0301', 50}, -- Jerus (Main Battle Tank) 
           },
-		  T1LandDFTank = {
-		  UEF = {'kel0101', 60}, -- M551 Sheridan (Heavy Tank) 
-		  },
+		  -- T1LandDFTank = {
+		  -- UEF = {'kel0101', 60}, -- M551 Sheridan (Heavy Tank) 
+		  -- },
 		  T2LandDFTank = {
 			  UEF = {'kel0201', 50}, -- Paddur (Mobile APC) 
 		  },

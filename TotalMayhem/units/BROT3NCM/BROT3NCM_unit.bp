@@ -579,10 +579,10 @@ UnitBlueprint {
             BeamLifetime = 1.2,
             CollideFriendly = false,
             ContinuousBeam = true,
-            Damage = 960,
+            Damage = 1000,
             DamageFriendly = false,
             DamageType = 'Normal',
-            DamageRadius = 2.8,
+            DamageRadius = 3,
             DisplayName = 'Microwave Laser',
             FireTargetLayerCapsTable = {
                 Land = 'Land|Water|Seabed',

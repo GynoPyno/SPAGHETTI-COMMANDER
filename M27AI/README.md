@@ -1,2 +1,2 @@
 # M27AI
-A mimimal AI implementation for the game Supreme Commander: Forged Alliance.  MicroAI was used as a base, with adjustments made ontop of this by maudlin27.
+Refer to https://forum.faforever.com/topic/2373/ai-development-guide-and-m27ai-v1-devlog for a link to the devlog used for creation of this AI.  Adaptive AI for Forged Alliance Forever.

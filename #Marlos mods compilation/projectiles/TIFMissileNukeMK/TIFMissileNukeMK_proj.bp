@@ -50,6 +50,14 @@ ProjectileBlueprint {
     },
     General = {
         Category = 'Missile',
+        EntityCategory = {
+            'UEF',
+            'PROJECTILE',
+            'INDIRECTFIRE',
+            'TACTICAL',
+            'MISSILE',
+            'NOSPLASHDAMAGE',
+        },
         Faction = 'UEF',
     },
     Interface = {
@@ -57,7 +65,7 @@ ProjectileBlueprint {
     },
     Physics = {
         Acceleration = 3,
-        CollideEntity = false,
+        CollideEntity = true,
         CollideSurface = true,
         DestroyOnWater = false,
         InitialSpeed = 3,
