@@ -1,6 +1,6 @@
 UnitBlueprint {
     AI = {
-        AttackAngle = 10,
+        AttackAngle = 15,
         StagingPlatformScanRadius = 300,
         RefuelingMultiplier = 75,
         RefuelingRepairAmount = 500,
@@ -192,8 +192,8 @@ UnitBlueprint {
                     },
                     {
                         Bones = {
-                            'Wheel_Left01',
-                            'Wheel_Right01',
+                            'Exhaust_Left01',
+                            'Exhaust_Right01',
                         },
                         Type = 'Surface02',
                     },
@@ -222,10 +222,10 @@ UnitBlueprint {
                     },
                     {
                         Bones = {
-                            'Wheel_Left01',
-                            'Wheel_Left02',
-                            'Wheel_Right01',
-                            'Wheel_Right02',
+                            'Exhaust_Left01',
+                            'Exhaust_Left02',
+                            'Exhaust_Right01',
+                            'Exhaust_Right02',
                         },
                         Type = 'GroundKickup04',
                     },

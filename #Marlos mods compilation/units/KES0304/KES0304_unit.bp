@@ -119,7 +119,7 @@ UnitBlueprint {
                         Bones = {
                             'MK52',
                         },
-                        Scale = 2.35,
+                        Scale = 5.35,
                         Type = 'SeaIdle01',
                     },
                 },
@@ -142,21 +142,21 @@ UnitBlueprint {
                         Bones = {
                             'Front_Left_Wake',
                         },
-                        Scale = 1.5,
+                        Scale = 3.5,
                         Type = 'LeftFrontWake',
                     },
                     {
                         Bones = {
                             'Front_Right_Wake',
                         },
-                        Scale = 1.5,
+                        Scale = 3.5,
                         Type = 'RightFrontWake',
                     },
                     {
                         Bones = {
                             'Back_Wake',
                         },
-                        Scale = 1.5,
+                        Scale = 3.5,
                         Type = 'BackWake',
                     },
                 },
@@ -605,7 +605,7 @@ UnitBlueprint {
             Audio = {
                 Fire = Sound {
                     Bank = 'UELWeapon',
-                    Cue = 'UEB2108_Missile_Cruise',
+                    Cue = 'UEB2304_Missile_Flayer',
                     LodCutoff = 'Weapon_LodCutoff',
                 },
             },

@@ -19,7 +19,7 @@ local ADFDisruptorCannonWeapon = import('/lua/aeonweapons.lua').ADFDisruptorWeap
 
 
 --Custom files
-local NavalCannonOblivionWeapon = import('/lua/aeon_naval_weapons.lua').ADFCannonOblivionNaval
+local NavalCannonOblivionWeapon = import('/lua/aeonweapons.lua').ADFCannonOblivionNaval
 
 URS0303 = Class(AHoverLandUnit) {
 

@@ -1,9 +1,0 @@
-name = "Calibers Nuke Icons"
-uid = "11755-227923-1815151_44744"
-description = "Provides a unique highlight to strategic missile launchers and strategic missile defense, making them much easier to identify."
-copyright = "Caliber"
-author = "Caliber"
-icon = "/mods/Calibersnuke/icon.png"
-version = 1
-exclusive = false
-ui_only = true

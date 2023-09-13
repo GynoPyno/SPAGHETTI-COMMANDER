@@ -1,23 +1,18 @@
 ProjectileBlueprint {
     Audio = {
-        ExistLoop = Sound {
-            Bank = 'UELWeapon',
-            Cue = 'UEF_Nuke_Flight',
-            LodCutoff = 'DefaultLodCutoff',
-        },
         ImpactTerrain = Sound {
             Bank = 'MarlosSoundsUEF',
-            Cue = 'big_fuel',
+            Cue = 'exp_mega',
             LodCutoff = 'Weapon_LodCutoff',
         },
         ImpactWater = Sound {
             Bank = 'MarlosSoundsUEF',
-            Cue = 'big_fuel',
+            Cue = 'exp_mega',
             LodCutoff = 'Weapon_LodCutoff',
         },
         NukeExplosion = Sound {
             Bank = 'MarlosSoundsUEF',
-            Cue = 'big_fuel',
+            Cue = 'exp_mega',
             LodCutoff = 'Weapon_LodCutoff',
         },
     },

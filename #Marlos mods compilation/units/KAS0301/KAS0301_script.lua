@@ -11,7 +11,7 @@
 local ASeaUnit = import('/lua/aeonunits.lua').ASeaUnit
 local WeaponsFile = import('/lua/aeonweapons.lua')
 local AAAZealotMissileWeapon = WeaponsFile.AAAZealotMissileWeapon
-local NavalCannonOblivionWeapon = import('/lua/aeon_naval_weapons.lua').ADFCannonOblivionNaval
+local NavalCannonOblivionWeapon = import('/lua/aeonweapons.lua').ADFCannonOblivionNaval
 local DreadnoughtLaser = import('/mods/#Marlos mods compilation/lua/MKWeapons.lua').DreadnoughtLaser
 local AAMWillOWisp = import('/lua/aeonweapons.lua').AAMWillOWisp
 

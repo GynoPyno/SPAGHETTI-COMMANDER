@@ -1,0 +1,19 @@
+UnitBlueprint {
+    Merge = true,
+	 Categories = {
+        "AIR",
+        "BUILTBYTIER2FACTORY",
+        "BUILTBYTIER3FACTORY",
+        "GROUNDATTACK",
+        "MOBILE",
+        "OVERLAYDIRECTFIRE",
+        "PRODUCTSC1",
+        "RECLAIMABLE",
+        "SELECTABLE",
+        "SNIPEMODE",
+        "TECH2",
+        "TRANSPORTATION",
+        "UEF",
+        "VISIBLETORECON",
+    },
+}	

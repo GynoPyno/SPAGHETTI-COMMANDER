@@ -135,28 +135,28 @@ UnitBlueprint {
                 Effects = {
                     {
                         Bones = {
-                            'KRL0301',
+                            'MK60',
                         },
                         Scale = 0.6,
                         Type = 'LeftFrontWake',
                     },
                     {
                         Bones = {
-                            'KRL0301',
+                            'MK60',
                         },
                         Scale = 0.6,
                         Type = 'RightFrontWake',
                     },
                     {
                         Bones = {
-                            'KRL0301',
+                            'MK60',
                         },
                         Scale = 0.6,
                         Type = 'BackWake',
                     },
                     {
                         Bones = {
-                            'KRL0301',
+                            'MK60',
                         },
                         Offset = {
                             0,

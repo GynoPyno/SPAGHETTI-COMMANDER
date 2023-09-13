@@ -209,8 +209,8 @@ UnitBlueprint {
             AboveWaterTargetsOnly = true,
             Audio = {
                 Fire = Sound {
-                    Bank = 'UELWeapon',
-                    Cue = 'UEL0201_Cannon_Sgl',
+                    Bank = 'MarlosSoundsUEF',
+                    Cue = '37mm_61_k',
                     LodCutoff = 'Weapon_LodCutoff',
                 },
             },
@@ -283,8 +283,8 @@ UnitBlueprint {
             AboveWaterTargetsOnly = true,
             Audio = {
                 Fire = Sound {
-                    Bank = 'URLWeapon',
-                    Cue = 'URB2305_Missile_Cruise',
+                    Bank = 'UELWeapon',
+                    Cue = 'UEL0111_Missile_Cruise',
                     LodCutoff = 'Weapon_LodCutoff',
                 },
             },

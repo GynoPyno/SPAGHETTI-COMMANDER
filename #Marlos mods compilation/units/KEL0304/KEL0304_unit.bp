@@ -205,8 +205,8 @@ UnitBlueprint {
             ArtilleryShieldBlocks = true,
             Audio = {
                 Fire = Sound {
-                    Bank = 'XEL_Weapons',
-                    Cue = 'XEL0306_Missile_Cruise',
+                    Bank = 'UELWeapon',
+                    Cue = 'UEB2304_Missile_Flayer',
                     LodCutoff = 'Weapon_LodCutoff',
                 },
             },

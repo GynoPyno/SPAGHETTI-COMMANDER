@@ -1,0 +1,16 @@
+name = "Jaggeds Infrastructure Pack"
+uid = "fff6f6c8-148a-11de-8c30-0811211c9a8c"
+version = 3
+copyright = "Ejionar/Varaxis/mythixgirl/Puledro/Yaru"
+description = "T2/3 E/M-Storage - Engineering stations & EXMEX for all - amph.SMD's - (works with most mods)"
+author = "A lot of ppl and Jagged"
+icon = "/mods/Jaggeds_Infrastructure_Pack/mod_icon.png"
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+requires = { }
+requiresNames = { }
+conflicts = { }
+before = { }
+after = { }
