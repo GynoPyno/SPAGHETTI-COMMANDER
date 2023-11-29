@@ -18,10 +18,15 @@ function CreateModUI(isReplay, _parent)
  	HoldTimeAI =  (tonumber(ScenarioInfo.Options.HoldTimeAI) * 60) + (tonumber(ScenarioInfo.Options.WavesStartTimeAI) * 60) + (BreakTime * 60)
 	ArtySpawn = 0
 	ArtyOn = tostring(ScenarioInfo.Options.ArtyOn)
-	if ArtyOn == "On" then
+	if ArtyOn ~= "Off" then
 		ArtySpawn = (tonumber(ScenarioInfo.Options.ArtySpawnTime) * 60) + (tonumber(ScenarioInfo.Options.HoldTimeAI) * 60) + (tonumber(ScenarioInfo.Options.WavesStartTimeAI) * 60) + (BreakTime * 60)
 	end
-	EndGameHoldTime = (tonumber(ScenarioInfo.Options.EndGameHoldTime) * 60)
+	EndGameHoldTime = tostring(ScenarioInfo.Options.EndGameHoldTime)
+	if EndGameHoldTime ~= "Off --" then
+		EndGameHoldTime = (tonumber(ScenarioInfo.Options.EndGameHoldTime) * 60)
+	else
+		EndGameHoldTime = 0
+	end	
 	if EndGameHoldTime > 0 then
 		ArtySpawn = EndGameHoldTime + (tonumber(ScenarioInfo.Options.HoldTimeAI) * 60) + (tonumber(ScenarioInfo.Options.WavesStartTimeAI) * 60) + (BreakTime * 60)
 	end

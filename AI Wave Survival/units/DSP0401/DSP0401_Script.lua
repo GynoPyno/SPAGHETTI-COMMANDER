@@ -10,6 +10,7 @@
 
 local SWalkingLandUnit = import('/lua/seraphimunits.lua').SWalkingLandUnit
 local WeaponsFile = import ('/lua/seraphimweapons.lua')
+local WeaponFile2 = import("/lua/terranweapons.lua")
 local SDFExperimentalPhasonProj = WeaponsFile.SDFExperimentalPhasonProj
 local SDFAireauWeapon = WeaponsFile.SDFAireauWeapon
 local SDFSinnuntheWeapon = WeaponsFile.SDFSinnuntheWeapon
@@ -18,6 +19,8 @@ local utilities = import('/lua/utilities.lua')
 local EffectUtil = import('/lua/EffectUtilities.lua')
 local explosion = import('/lua/defaultexplosions.lua')
 local DeathNukeWeapon = import("/lua/sim/defaultweapons.lua").DeathNukeWeapon
+local CANNaniteTorpedoWeapon = import('/lua/cybranweapons.lua').CANNaniteTorpedoWeapon
+local TIFCruiseMissileLauncherSub = WeaponFile2.TIFCruiseMissileLauncherSub
 
 DSP0401 = Class(SWalkingLandUnit) {
 
@@ -60,6 +63,8 @@ DSP0401 = Class(SWalkingLandUnit) {
         
         LeftAA = Class(SAAOlarisCannonWeapon) {},
         RightAA = Class(SAAOlarisCannonWeapon) {},
+		Torpedo = Class(CANNaniteTorpedoWeapon) {},
+		CruiseMissiles = ClassWeapon(TIFCruiseMissileLauncherSub) {},
     },
     
     StartBeingBuiltEffects = function(self, builder, layer)

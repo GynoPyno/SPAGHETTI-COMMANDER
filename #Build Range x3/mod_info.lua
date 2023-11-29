@@ -1,0 +1,15 @@
+name = "Build Range x3"
+uid = "20c2f36f-6e78-4304-a8e1-fea3ef754d16"
+version = 3
+description = "Triples the build range of all units, and default units have had their build circle updated to reflect on the change. (This version fixes a problem where engineers added by mods weren't receiving the bonus range)"
+author = "Hakito (aka HakitoJin)"
+icon = "/mods/#Build Range x3/icon.png"
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+requires = {}
+requiresNames = {}
+conflicts = {}
+before = {}
+after = {}

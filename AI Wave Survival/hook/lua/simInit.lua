@@ -1,13 +1,15 @@
 
-local OLDSetupSession = SetupSession
+--[[local OLDSetupSession = SetupSession
 function SetupSession()
     OLDSetupSession()
     import('/mods/AI Wave Survival/lua/AI/AIBuilders/E Land Experimental Formers.lua')
-end
+end]]--
 
 local parentBeginSession = BeginSession
 
 function BeginSession()
+
+        import("/lua/sim/navutils.lua").Generate() -- <-- needs to be called before everything else that may rely on it
 
 	ScenarioInfo.Options.Victory = "domination" 
 	  -- dun break anything!

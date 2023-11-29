@@ -19,6 +19,7 @@ local TDFRiotWeapon = WeaponsFile.TDFRiotWeapon
 local TAALinkedRailgun = WeaponsFile.TAALinkedRailgun
 local TANTorpedoAngler = WeaponsFile.TANTorpedoAngler
 local DeathNukeWeapon = import("/lua/sim/defaultweapons.lua").DeathNukeWeapon
+local TIFCruiseMissileLauncherSub = WeaponsFile.TIFCruiseMissileLauncherSub
 
 local EffectTemplate = import('/lua/EffectTemplates.lua')
 
@@ -41,6 +42,7 @@ DUE0401 = Class(TMobileFactoryUnit) {
         RightAAGun = Class(TAALinkedRailgun) {},
         LeftAAGun = Class(TAALinkedRailgun) {},
         Torpedo = Class(TANTorpedoAngler) {},
+		CruiseMissiles = ClassWeapon(TIFCruiseMissileLauncherSub) {},
     },
 
     FxDamageScale = 2.5,

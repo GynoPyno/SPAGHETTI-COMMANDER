@@ -62,6 +62,12 @@ do
 			  if bp.Enhancements and bp.Enhancements.Teleporter then
 			  bp.Enhancements.Teleporter = nil
 			  end
+			  if bp.Enhancements and bp.Enhancements.PersonalTeleporter then
+			  bp.Enhancements.PersonalTeleporter = nil
+			  end
+			  if bp.Enhancements and bp.Enhancements.AntiAirSubsystem then
+			  bp.Enhancements.AntiAirSubsystem = nil
+			  end
         end -- end loop
 		
 	end -- end function ModBlueprints(all_bps)
