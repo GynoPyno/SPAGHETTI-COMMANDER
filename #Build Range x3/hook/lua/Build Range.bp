@@ -1,0 +1,58 @@
+RangeModifier  = 3 --> Range multiplier for default units
+
+commRange      = 10 * RangeModifier
+engiRange      = 5  * RangeModifier
+hiveLvl1       = 15 * RangeModifier
+hiveLvl2       = 20 * RangeModifier
+hiveLvl3       = 25 * RangeModifier
+
+--The lack of MaxHealth in empty blueprints causes a crash when the mod "PathOfVeterancy" is used, that's why I excluded nomads
+--Also, units added by mods seem to be unaffected by this method, so I left them for "Blueprints.lua" to solve
+
+-- UnitBlueprint {Merge = true,BlueprintId="inu0001",Economy = {MaxBuildDistance = commRange,},} --Nomads
+	-- UnitBlueprint {Merge = true,BlueprintId="inu0301",Economy = {MaxBuildDistance = commRange,},} --SACU
+	-- UnitBlueprint {Merge = true,BlueprintId="inu1001",Economy = {MaxBuildDistance = engiRange,},} --T1 Engineer
+	-- UnitBlueprint {Merge = true,BlueprintId="inu1005",Economy = {MaxBuildDistance = engiRange,},} --T2 Engineer
+	-- UnitBlueprint {Merge = true,BlueprintId="inu2001",Economy = {MaxBuildDistance = engiRange,},} --T3 Engineer
+	-- UnitBlueprint {Merge = true,BlueprintId="inu3008",Economy = {MaxBuildDistance = engiRange,},} --Field Engineer
+UnitBlueprint {Merge = true,BlueprintId="uel0001",Economy = {MaxBuildDistance = commRange,},} --UEF
+	--UnitBlueprint {Merge = true,BlueprintId="eel0001",Economy = {MaxBuildDistance = commRange,},} --ACU (MOD, BlackOps ACUS)
+	UnitBlueprint {Merge = true,BlueprintId="uel0301",Economy = {MaxBuildDistance = commRange,},} --SACU
+	--UnitBlueprint {Merge = true,BlueprintId="uef0101",Economy = {MaxBuildDistance = engiRange,},} --Experimental Flying Engineer (MOD)
+	UnitBlueprint {Merge = true,BlueprintId="uel0105",Economy = {MaxBuildDistance = engiRange,},} --T1 Engineer
+	UnitBlueprint {Merge = true,BlueprintId="uel0208",Economy = {MaxBuildDistance = engiRange,},} --T2 Engineer
+	UnitBlueprint {Merge = true,BlueprintId="uel0309",Economy = {MaxBuildDistance = engiRange,},} --T3 Engineer
+	UnitBlueprint {Merge = true,BlueprintId="xel0209",Economy = {MaxBuildDistance = engiRange,},} --Field Engineer
+	UnitBlueprint {Merge = true,BlueprintId="xeb0104",Economy = {MaxBuildDistance = hiveLvl1,},}  --Engineering Station
+	UnitBlueprint {Merge = true,BlueprintId="xeb0204",Economy = {MaxBuildDistance = hiveLvl2,},}  --Engineering Station
+	--UnitBlueprint {Merge = true,BlueprintId="xeb0304",Economy = {MaxBuildDistance = hiveLvl2,},}  --Engineering Station (MOD, T3 stations)
+	UnitBlueprint {Merge = true,BlueprintId="xea3204",Economy = {MaxBuildDistance = engiRange,},} --Engineering Drone
+UnitBlueprint {Merge = true,BlueprintId="url0001",Economy = {MaxBuildDistance =  commRange,},} --Cybran
+	--UnitBlueprint {Merge = true,BlueprintId="erl0001",Economy = {MaxBuildDistance = commRange,},} --ACU (MOD, BlackOps ACUS)
+	UnitBlueprint {Merge = true,BlueprintId="url0301",Economy = {MaxBuildDistance = commRange,},} --SACU
+	--UnitBlueprint {Merge = true,BlueprintId="cef0101",Economy = {MaxBuildDistance = engiRange,},} --Experimental Flying Engineer (MOD)
+	UnitBlueprint {Merge = true,BlueprintId="url0105",Economy = {MaxBuildDistance = engiRange,},} --T1 Engineer
+	UnitBlueprint {Merge = true,BlueprintId="url0208",Economy = {MaxBuildDistance = engiRange,},} --T2 Engineer
+	UnitBlueprint {Merge = true,BlueprintId="url0309",Economy = {MaxBuildDistance = engiRange,},} --T3 Engineer
+	UnitBlueprint {Merge = true,BlueprintId="xrb0104",Economy = {MaxBuildDistance = hiveLvl1,},}  --The Hive Level 1
+	UnitBlueprint {Merge = true,BlueprintId="xrb0204",Economy = {MaxBuildDistance = hiveLvl2,},}  --The Hive Level 2
+	UnitBlueprint {Merge = true,BlueprintId="xrb0304",Economy = {MaxBuildDistance = hiveLvl3,},}  --The Hive Level 3
+	--UnitBlueprint {Merge = true,BlueprintId="xrb0404",Economy = {MaxBuildDistance = hiveLvl3,},}  --The Hive Level 3 (MOD, T3 stations)
+UnitBlueprint {Merge = true,BlueprintId="ual0001",Economy = {MaxBuildDistance = commRange,},} --Aeon
+	--UnitBlueprint {Merge = true,BlueprintId="eal0001",Economy = {MaxBuildDistance = commRange,},} --ACU (MOD, BlackOps ACUS)
+	UnitBlueprint {Merge = true,BlueprintId="ual0301",Economy = {MaxBuildDistance = commRange,},} --SACU
+	--UnitBlueprint {Merge = true,BlueprintId="aef0101",Economy = {MaxBuildDistance = engiRange,},} --Experimental Flying Engineer (MOD)
+	UnitBlueprint {Merge = true,BlueprintId="ual0105",Economy = {MaxBuildDistance = engiRange,},} --T1 Engineer
+	UnitBlueprint {Merge = true,BlueprintId="ual0208",Economy = {MaxBuildDistance = engiRange,},} --T2 Engineer
+	UnitBlueprint {Merge = true,BlueprintId="ual0309",Economy = {MaxBuildDistance = engiRange,},} --T3 Engineer
+	--UnitBlueprint {Merge = true,BlueprintId="smp0077",Economy = {MaxBuildDistance = engiRange,},} --T3 Engineer Assist (MOD)
+	--UnitBlueprint {Merge = true,BlueprintId="xab0104",Economy = {MaxBuildDistance = hiveLvl3,},}  --Engineering Station (MOD, T3 stations)
+UnitBlueprint {Merge = true,BlueprintId="xsl0001",Economy = {MaxBuildDistance = commRange,},} --Seraphim
+	--UnitBlueprint {Merge = true,BlueprintId="esl0001",Economy = {MaxBuildDistance = commRange,},} --ACU (MOD, BlackOps ACUS)
+	UnitBlueprint {Merge = true,BlueprintId="xsl0301",Economy = {MaxBuildDistance = commRange,},} --SACU
+	--UnitBlueprint {Merge = true,BlueprintId="sef0101",Economy = {MaxBuildDistance = engiRange,},} --Experimental Flying Engineer (MOD)
+	UnitBlueprint {Merge = true,BlueprintId="xsl0105",Economy = {MaxBuildDistance = engiRange,},} --T1 Engineer
+	UnitBlueprint {Merge = true,BlueprintId="xsl0208",Economy = {MaxBuildDistance = engiRange,},} --T2 Engineer
+	UnitBlueprint {Merge = true,BlueprintId="xsl0309",Economy = {MaxBuildDistance = engiRange,},} --T3 Engineer
+	--UnitBlueprint {Merge = true,BlueprintId="smp0072",Economy = {MaxBuildDistance = engiRange,},} --T3 Engineer Assist (MOD)
+	--UnitBlueprint {Merge = true,BlueprintId="xsb0104",Economy = {MaxBuildDistance = hiveLvl3,},}  --Engineering Station (MOD, T3 stations)

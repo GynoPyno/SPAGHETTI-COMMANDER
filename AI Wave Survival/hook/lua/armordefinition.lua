@@ -4,7 +4,7 @@
 
     -- Armor Definition
     'Normal 1.0',
-    'Overcharge 1.25',
+    'Overcharge 2.5',
     'Deathnuke 0.032',
     'ExperimentalFootfall 0.0',
     'CzarBeam 0.33',

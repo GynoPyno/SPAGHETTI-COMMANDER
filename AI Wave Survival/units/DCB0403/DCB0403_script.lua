@@ -16,7 +16,7 @@ local EffectTemplate = import('/lua/EffectTemplates.lua')
 local utilities = import('/lua/Utilities.lua')
 local EffectUtil = import('/lua/EffectUtilities.lua')
 local Entity = import('/lua/sim/Entity.lua').Entity
-
+local WeaponFile2 = import("/lua/terranweapons.lua")
 local Weapon = import('/lua/sim/Weapon.lua').Weapon
 local CybranWeaponsFile = import('/lua/cybranweapons.lua')
 local CDFHvyProtonCannonWeapon = CybranWeaponsFile.CDFHvyProtonCannonWeapon
@@ -24,6 +24,7 @@ local CANNaniteTorpedoWeapon = CybranWeaponsFile.CANNaniteTorpedoWeapon
 local CIFSmartCharge = CybranWeaponsFile.CIFSmartCharge
 local CAABurstCloudFlakArtilleryWeapon = CybranWeaponsFile.CAABurstCloudFlakArtilleryWeapon
 local CDFBrackmanCrabHackPegLauncherWeapon = CybranWeaponsFile.CDFBrackmanCrabHackPegLauncherWeapon
+local TIFCruiseMissileLauncherSub = WeaponFile2.TIFCruiseMissileLauncherSub
 local DeathNukeWeapon = import("/lua/sim/defaultweapons.lua").DeathNukeWeapon
 
 DCB0403 = Class(CWalkingLandUnit) {
@@ -39,6 +40,7 @@ DCB0403 = Class(CWalkingLandUnit) {
         AntiTorpedo = Class(CIFSmartCharge) {},
         AAGun = Class(CAABurstCloudFlakArtilleryWeapon) {},
         HackPegLauncher= Class(CDFBrackmanCrabHackPegLauncherWeapon){},
+		CruiseMissiles = ClassWeapon(TIFCruiseMissileLauncherSub) {},
 		DeathWeapon = ClassWeapon(DeathNukeWeapon) {},
     },
     

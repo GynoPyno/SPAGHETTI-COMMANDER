@@ -215,7 +215,7 @@ UnitBlueprint {
             ContinuousBeam = false,
             Damage = 600,
             DamageFriendly = false,
-            DamageRadius = 0.1,
+            DamageRadius = 2,
             DamageType = 'Normal',
             DisplayName = 'Unstable Phason Laser',
             FireTargetLayerCapsTable = {

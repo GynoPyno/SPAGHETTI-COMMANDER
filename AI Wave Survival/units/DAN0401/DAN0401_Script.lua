@@ -9,11 +9,14 @@
 #****************************************************************************
 local AWalkingLandUnit = import('/lua/aeonunits.lua').AWalkingLandUnit
 local WeaponsFile = import ('/lua/aeonweapons.lua')
+local WeaponFile2 = import("/lua/terranweapons.lua")
 local ADFPhasonLaser = WeaponsFile.ADFPhasonLaser
 local ADFTractorClaw = WeaponsFile.ADFTractorClaw
 local utilities = import('/lua/utilities.lua')
 local explosion = import('/lua/defaultexplosions.lua')
 local DeathNukeWeapon = import("/lua/sim/defaultweapons.lua").DeathNukeWeapon
+local CANNaniteTorpedoWeapon = import('/lua/cybranweapons.lua').CANNaniteTorpedoWeapon
+local TIFCruiseMissileLauncherSub = WeaponFile2.TIFCruiseMissileLauncherSub
 
 DAN0401 = Class(AWalkingLandUnit) {
 
@@ -22,6 +25,8 @@ DAN0401 = Class(AWalkingLandUnit) {
         RightArmTractor = Class(ADFTractorClaw) {},
         LeftArmTractor = Class(ADFTractorClaw) {},
 		DeathWeapon = ClassWeapon(DeathNukeWeapon) {},
+		Torpedo = Class(CANNaniteTorpedoWeapon) {},
+		CruiseMissiles = ClassWeapon(TIFCruiseMissileLauncherSub) {},
     },
     
 

@@ -78,7 +78,16 @@ StormTacMissile = Class(SLaanseTacticalMissile) {
 			local spiritUnit = CreateUnitHPR('SPIRIT0402', self:GetArmy(), position[1], position[2], position[3], 0, 0, 0)
 		end
 		self:Destroy()
-	end,	
+	end,
+	
+	OnKilled = function(self)
+		local position = self:GetPosition()
+		local spiritUnit = CreateUnitHPR('SPIRIT0402', self:GetArmy(), position[1], position[2], position[3], 0, 0, 0)
+		if Random(1, 3) == 2 then
+			local spiritUnit = CreateUnitHPR('SPIRIT0402', self:GetArmy(), position[1], position[2], position[3], 0, 0, 0)
+		end
+		self:Destroy()
+	end,
 	
 }
 TypeClass = StormTacMissile

@@ -3,6 +3,7 @@
 local victory = import('/lua/victory.lua')
 local ScenarioFramework = import('/lua/ScenarioFramework.lua')
 local ScenarioUtils = import('/lua/sim/ScenarioUtilities.lua')
+local NavUtils = import("/lua/sim/navutils.lua")
 --local ScenarioPlatoonAI = import('/lua/ai/ScenarioPlatoonAI.lua')
 local landUnitsL = { Tech4 = {} }
 local landUnitsM = { Tech4 = {} }
@@ -37,15 +38,16 @@ local closestEnemyBrains = { CBrains = {} }
 local aiSecondaryBuildings = { secondaryBuildings = {} }
 local validWaterPositions = { positions = {} }
 local validWaterPositions2 = { positions2 = {} }
+local validRiftPositions = { positions = {} }
+validNotRiftPositions = { positions = {} }
 local humanACUs = { HACUs = {} }
 local allyHQACU = { AllyACUs = {} }
---local airUnitsE = { Tech4 = {} }
---local airUnitsaaa = { Tech3 = {} }
---local airUnitsaa = { Tech2 = {} }
---local airUnitsa = { Tech1 = {} }
---local navalUnitsHeavy = { Tech3 = {} }
---local nukeSubmarines = { subs = {} }
---local landUnitsl = { Tech1 = {} }
+RiftUnitsL = { Tech4 = {} }
+RiftUnitsM = { Tech4 = {} }
+RiftUnitsH = { Tech4 = {} }
+BigRiftUnitsL = { Tech4 = {} }
+BigRiftUnitsM = { Tech4 = {} }
+BigRiftUnitsH = { Tech4 = {} }
 local AllEnemyUnitsLandDefense = {}
 local AllEnemyUnitsLandEconomy = {}
 local AllEnemyUnitsAntiNavy = {}
@@ -53,6 +55,8 @@ local AllEnemyUnitsSubs = {}
 local AllEnemyUnitsBombers = {}
 local AllEnemyUnitsAir = {}
 local AllEnemyUnitsNaval = {}
+local sizeX, sizeZ = GetMapSize()
+HQSetFlag = false
 hBrains = 0
 aBrainsHQ = 0
 land4 = 0
@@ -74,6 +78,12 @@ omega = 0
 TranLland = 0
 TranMland = 0
 TranHland = 0
+RiftLland = 0
+RiftMland = 0
+RiftHland = 0
+BigRiftLland = 0
+BigRiftMland = 0
+BigRiftHland = 0
 LNavyHeavy = 0
 MNavyHeavy = 0
 HNavyHeavy = 0
@@ -83,6 +93,7 @@ LAirHeavy = 0
 HlandHeavy = 0
 MlandHeavy = 0
 LlandHeavy = 0
+RiftUnits = 4
 TotalMayhemWaves = "Not Adjustable - Totally Random!"
 TotalMayhemLand = 10
 TotalMayhemAir = 10
@@ -143,6 +154,8 @@ MinorBossSpawns = "Land+Air"
 ExperimentalSpawns = "Land+Air+Navy"
 BossWaveEndlessSpawn = "Off"
 SecondaryBuildingFlag = "Off"
+SupportBaseMulti = 1
+SupportBaseNukes = 'SB Nuke Retaliation - On'
 SpawnAlliesForceFlag = "On - Land + Air"
 GameTime = 60
 GameTimeNavy = 60
@@ -173,7 +186,7 @@ NavyExpMulti = 1
 YoloTime = 360
 WaveStyle = "Dynamic Attack Waves"
 humans = 0
-EndGameHoldTime = 0
+EndGameHoldTime = "Off --"
 TorpBomberStartTime = 0
 ExtraWaveDelay = 0
 GameBreak = 0
@@ -199,9 +212,9 @@ AIWavePlayer = "Random"
 secondaryspawn = "Off"
 KillPlayerUnit = 300
 KillNavyLandUnit = 450
-HQDefenses = "HQ S-Tier Defenses"
+HQDefenses = "HQ S2-Tier Defenses"
 HQDefensesPD = "HQ Guardian PD S-Tier"
-SecSpawnDefences = "2nd Spawn S-Tier Defenses"
+SecSpawnDefences = "2nd Spawn S2-Tier Defenses"
 SecSpawnPD = "2nd Spawn Universal PD A-Tier"
 TMDType = "GTD4201"
 SMDType = "ASD4302"
@@ -247,6 +260,7 @@ Navyx4 = 1
 Navyx5 = 1
 Nukex1 = 180
 Nukex2 = 300
+AmphibiousCheck = 'Enabled'
 totalEnemyMass = 0
 massDamageBoost = 0
 massDamageBoostBoss = 0
@@ -263,6 +277,7 @@ Alt2ndSpawn = "Off"
 SalvationCheck = false
 AltHQCheck = false
 Alt2ndCheck = false
+ErrorMessage = false
 AltHQHealth = "Invulnerable --"
 Alt2ndHealth = "Invulnerable --"
 SecondSpawnCheck = false
@@ -302,6 +317,7 @@ TransportEndTime = "Endless --"
 TransportUnits = "Only Bots (Mixed Race)"
 TransportExpChance = "Off --"
 TranSpawnLocation = "All Sides"
+HQAllyRestrict = "HQ Allies No Restrictions"
 LandRedirectCycleRunning = false
 AirRedirectCycleRunning = false
 NavyRedirectCycleRunning = false
@@ -324,6 +340,7 @@ SpecWeapFlag01 = false
 SpecWeapFlag02 = false
 SpecWeapFlag03 = false
 EndGameCondition = false
+HQAlert = false
 local NavyTimeFlag = false
 local AirTimeFlag = false
 local AlliedForceSpawned = false
@@ -353,11 +370,6 @@ local totalExpUnits = 0
 local totalEnemySMDs = 0
 local totalTthreeRes = 0
 local totalEnemyEndgamers = 0
---local aiWeakUnitsCleared = false
---local aiPersonality = ""
---local difficultyFactor = 1
---local endGameBossCreated = false
---local currentEnemyLevel
 function STRfour()
     ---------------------------------------UEF Waves-------------------------------------------------------------------------------------------------------------
 	if UEFWaves == "UEF On" then
@@ -539,7 +551,7 @@ function STRfour()
 							table.insert(HNavyUnits.Tech4, id)
 					end
 					if ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Air+Navy" or ExperimentalSpawns == "Navy" then
-						if table.find(bp.Categories, 'UEF') and table.find(bp.Categories, 'NAVAL') and table.find(bp.Categories, 'EXPERIMENTAL') and table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'TRANSPORTFOCUS') then
+						if table.find(bp.Categories, 'UEF') and table.find(bp.Categories, 'NAVAL') and table.find(bp.Categories, 'EXPERIMENTAL') and table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'TRANSPORTFOCUS') and id ~= "edc0305" then
 							ENavy = ENavy + 1
 							table.insert(ENavyUnits.Tech4, id)
 						end
@@ -728,7 +740,7 @@ function STRfour()
 							table.insert(HNavyUnits.Tech4, id)
 					end
 					if ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Air+Navy" or ExperimentalSpawns == "Navy" then
-						if table.find(bp.Categories, 'CYBRAN') and table.find(bp.Categories, 'NAVAL') and table.find(bp.Categories, 'EXPERIMENTAL') and table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'TRANSPORTFOCUS') then
+						if table.find(bp.Categories, 'CYBRAN') and table.find(bp.Categories, 'NAVAL') and table.find(bp.Categories, 'EXPERIMENTAL') and table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'TRANSPORTFOCUS') and id ~= "edc0305" then
 								ENavy = ENavy + 1
 								table.insert(ENavyUnits.Tech4, id)
 						end
@@ -917,7 +929,7 @@ function STRfour()
 							table.insert(HNavyUnits.Tech4, id)
 					end
 					if ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Air+Navy" or ExperimentalSpawns == "Navy" then
-						if table.find(bp.Categories, 'AEON') and table.find(bp.Categories, 'NAVAL') and table.find(bp.Categories, 'EXPERIMENTAL') and table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'TRANSPORTFOCUS') then
+						if table.find(bp.Categories, 'AEON') and table.find(bp.Categories, 'NAVAL') and table.find(bp.Categories, 'EXPERIMENTAL') and table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'TRANSPORTFOCUS') and id ~= "edc0305" then
 								ENavy = ENavy + 1
 								table.insert(ENavyUnits.Tech4, id)
 						end
@@ -1106,7 +1118,7 @@ function STRfour()
 						table.insert(HNavyUnits.Tech4, id)
 				end
 				if ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Air+Navy" or ExperimentalSpawns == "Navy" then
-					if table.find(bp.Categories, 'SERAPHIM') and table.find(bp.Categories, 'NAVAL') and table.find(bp.Categories, 'EXPERIMENTAL') and table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'TRANSPORTFOCUS') then
+					if table.find(bp.Categories, 'SERAPHIM') and table.find(bp.Categories, 'NAVAL') and table.find(bp.Categories, 'EXPERIMENTAL') and table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'TRANSPORTFOCUS') and id ~= "edc0305" then
 							ENavy = ENavy + 1
 							table.insert(ENavyUnits.Tech4, id)
 					end
@@ -1600,7 +1612,7 @@ function TablesForTotalMayhemMods()
 					end
 					--T4 Navy--
 					if ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Air+Navy" or ExperimentalSpawns == "Navy" then
-						if table.find(bp.Categories, 'UEF') and table.find(bp.Categories, 'NAVAL') and table.find(bp.Categories, 'EXPERIMENTAL') and table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'TRANSPORTFOCUS') then
+						if table.find(bp.Categories, 'UEF') and table.find(bp.Categories, 'NAVAL') and table.find(bp.Categories, 'EXPERIMENTAL') and table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'TRANSPORTFOCUS') and id ~= "edc0305" then
 							ENavy = ENavy + 1
 							table.insert(ENavyUnits.Tech4, id)
 						end
@@ -1906,7 +1918,7 @@ function TablesForTotalMayhemMods()
 					end
 					--T4 Navy--
 					if ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Air+Navy" or ExperimentalSpawns == "Navy" then
-						if table.find(bp.Categories, 'CYBRAN') and table.find(bp.Categories, 'NAVAL') and table.find(bp.Categories, 'EXPERIMENTAL') and table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'TRANSPORTFOCUS') then
+						if table.find(bp.Categories, 'CYBRAN') and table.find(bp.Categories, 'NAVAL') and table.find(bp.Categories, 'EXPERIMENTAL') and table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'TRANSPORTFOCUS') and id ~= "edc0305" then
 							ENavy = ENavy + 1
 							table.insert(ENavyUnits.Tech4, id)
 						end
@@ -2212,7 +2224,7 @@ function TablesForTotalMayhemMods()
 					end
 					--T4 Navy--
 					if ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Air+Navy" or ExperimentalSpawns == "Navy" then
-						if table.find(bp.Categories, 'AEON') and table.find(bp.Categories, 'NAVAL') and table.find(bp.Categories, 'EXPERIMENTAL') and table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'TRANSPORTFOCUS') then
+						if table.find(bp.Categories, 'AEON') and table.find(bp.Categories, 'NAVAL') and table.find(bp.Categories, 'EXPERIMENTAL') and table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'TRANSPORTFOCUS') and id ~= "edc0305" then
 							ENavy = ENavy + 1
 							table.insert(ENavyUnits.Tech4, id)
 						end
@@ -2518,7 +2530,7 @@ function TablesForTotalMayhemMods()
 					end
 					--T4 Navy--
 					if ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Air+Navy" or ExperimentalSpawns == "Navy" then
-						if table.find(bp.Categories, 'SERAPHIM') and table.find(bp.Categories, 'NAVAL') and table.find(bp.Categories, 'EXPERIMENTAL') and table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'TRANSPORTFOCUS') then
+						if table.find(bp.Categories, 'SERAPHIM') and table.find(bp.Categories, 'NAVAL') and table.find(bp.Categories, 'EXPERIMENTAL') and table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'TRANSPORTFOCUS') and id ~= "edc0305" then
 							ENavy = ENavy + 1
 							table.insert(ENavyUnits.Tech4, id)
 						end
@@ -3764,8 +3776,9 @@ function TFl4() -- Land Spawn
         local rspawn = nil
 		local posX = nil
 		local posZ = nil
-        --local enemyParagonsCount = totalEnemyParagons
-        --local isAirUnit = false
+        --local MapCheck = false
+		local Chance
+		--local count = 0
         if land4 == 1 then
             WaitTicks(Random(1, 6))
             if secondaryspawn ~= "Off" and spawnrateland > 0 and SecondarySpawnDead == false then
@@ -3824,72 +3837,95 @@ function TFl4() -- Land Spawn
                 if rspawn ~= nil then
                     local oldposX = posX
                     local oldposZ = posZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(15, 30)
-                        posZ = posZ + Random(15, 30)
-                    else
-                        posX = posX - Random(15, 30)
-                        posZ = posZ + Random(15, 30)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(15, 30)
-                        posZ = posZ - Random(15, 30)
-                    else
-                        posX = posX - Random(15, 30)
-                        posZ = posZ - Random(15, 30)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(15, 30)
-                        posX = posX + Random(15, 30)
-                    else
-                        posZ = posZ - Random(15, 30)
-                        posX = posX + Random(15, 30)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(15, 30)
-                        posX = posX - Random(15, 30)
-                    else
-                        posZ = posZ - Random(15, 30)
-                        posX = posX - Random(15, 30)
-                    end
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 55)
+							posZ = posZ + Random(1, 55)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 55)
+							posZ = posZ + Random(1, 55)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 55)
+							posZ = posZ - Random(1, 55)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 55)
+							posZ = posZ - Random(1, 55)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 55)
+							posX = posX + Random(1, 55)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 55)
+							posX = posX + Random(1, 55)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 55)
+							posX = posX - Random(1, 55)
+						else
+							posZ = posZ - Random(1, 55)
+							posX = posX - Random(1, 55)
+						end
+
+						if posX < 5 then
+							posX = Random(5, 55)
+						end
+						if posX > (sizeX - 5) then
+							posX = sizeX - Random(5, 55)
+						end
+						if posZ < 5 then
+							posZ = Random(5, 55)
+						end
+						if posZ > (sizeZ - 5) then
+							posZ = sizeZ - Random(5, 55)
+						end
                     unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
                     if unit == nil then
                         local posX = oldposX
                         local posZ = oldposZ
-                        if Random(1, 2) == 2 then
-                            posX = posX + Random(15, 30)
-                            posZ = posZ + Random(15, 30)
-                        else
-                            posX = posX - Random(15, 30)
-                            posZ = posZ + Random(15, 30)
-                        end
-                        if Random(1, 2) == 2 then
-                            posX = posX + Random(15, 30)
-                            posZ = posZ - Random(15, 30)
-                        else
-                            posX = posX - Random(15, 30)
-                            posZ = posZ - Random(15, 30)
-                        end
-                        if Random(1, 2) == 2 then
-                            posZ = posZ + Random(15, 30)
-                            posX = posX + Random(15, 30)
-                        else
-                            posZ = posZ - Random(15, 30)
-                            posX = posX + Random(15, 30)
-                        end
-                        if Random(1, 2) == 2 then
-                            posZ = posZ + Random(15, 30)
-                            posX = posX - Random(15, 30)
-                        else
-                            posZ = posZ - Random(15, 30)
-                            posX = posX - Random(15, 30)
-                        end
-                        local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
+							Chance = Random(1, 8)
+							if Chance == 1 then
+								posX = posX + Random(1, 55)
+								posZ = posZ + Random(1, 55)
+							elseif Chance == 2 then
+								posX = posX - Random(1, 55)
+								posZ = posZ + Random(1, 55)
+							elseif Chance == 3 then
+								posX = posX + Random(1, 55)
+								posZ = posZ - Random(1, 55)
+							elseif Chance == 4 then
+								posX = posX - Random(1, 55)
+								posZ = posZ - Random(1, 55)
+							elseif Chance == 5 then
+								posZ = posZ + Random(1, 55)
+								posX = posX + Random(1, 55)
+							elseif Chance == 6 then
+								posZ = posZ - Random(1, 55)
+								posX = posX + Random(1, 55)
+							elseif Chance == 7 then
+								posZ = posZ + Random(1, 55)
+								posX = posX - Random(1, 55)
+							else
+								posZ = posZ - Random(1, 55)
+								posX = posX - Random(1, 55)
+							end
+
+							if posX < 5 then
+								posX = Random(5, 55)
+							end
+							if posX > (sizeX - 5) then
+								posX = sizeX - Random(5, 55)
+							end
+							if posZ < 5 then
+								posZ = Random(5, 55)
+							end
+							if posZ > (sizeZ - 5) then
+								posZ = sizeZ - Random(5, 55)
+							end
+                        local terrainAltitude = GetTerrainHeight(posX, posZ)
                         unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
-                        if unit and unit ~= nil and not unit.Dead then
-                            LOG("sa: HPR T4 (unit) = " .. rspawn)
-                        end
-                    end
+          
+						if unit and unit ~= nil and not unit.Dead then
+							LOG("sa: Land (unit) = " .. rspawn)
+						end
+					end
                     if unit and unit ~= nil and not unit.Dead and (HPBonusAI > 0 or ParagonCycle ~= "Off") then
                         if GameTime < 0.33 then
 							totalIncrease = HealthBonus * 0.5
@@ -3925,7 +3961,7 @@ function TFl4() -- Land Spawn
                     end
 					if KillPlayerUnit > 0 then
 						SuicideLandNavyUnit(unit)
-					end	
+					end
                 end
             end
         end
@@ -3939,6 +3975,9 @@ function TFl4AIR() -- Air Spawn
         local rspawn = nil
         --local enemyParagonsCount = totalEnemyParagons
         --local isAirUnit = false
+		--local MapCheck = false
+		local Chance
+		--local count = 0
 		local posX
 		local posZ
         if land4 == 1 then
@@ -3995,70 +4034,87 @@ function TFl4AIR() -- Air Spawn
                 if rspawn ~= nil then
                     local oldposX = posX
                     local oldposZ = posZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(20, 35)
-                        posZ = posZ + Random(20, 35)
-                    else
-                        posX = posX - Random(20, 35)
-                        posZ = posZ + Random(20, 35)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(20, 35)
-                        posZ = posZ - Random(20, 35)
-                    else
-                        posX = posX - Random(20, 35)
-                        posZ = posZ - Random(20, 35)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(20, 35)
-                        posX = posX + Random(20, 35)
-                    else
-                        posZ = posZ - Random(20, 35)
-                        posX = posX + Random(20, 35)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(20, 35)
-                        posX = posX - Random(20, 35)
-                    else
-                        posZ = posZ - Random(20, 35)
-                        posX = posX - Random(20, 35)
-                    end
+                    --repeat
+						--count = count + 1
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 80)
+							posZ = posZ + Random(1, 80)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 80)
+							posZ = posZ + Random(1, 80)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 80)
+							posZ = posZ - Random(1, 80)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 80)
+							posZ = posZ - Random(1, 80)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 80)
+							posX = posX + Random(1, 80)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 80)
+							posX = posX + Random(1, 80)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 80)
+							posX = posX - Random(1, 80)
+						else
+							posZ = posZ - Random(1, 80)
+							posX = posX - Random(1, 80)
+						end
+
+						--[[if posX > 0 and posX < sizeX and posZ > 0 and posZ < sizeZ then
+							MapCheck = true
+						end
+						if count == 10 then
+							KillThread(self)
+						end]]--
+					--until MapCheck == true
                     unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
                     if unit == nil then
                         local posX = oldposX
                         local posZ = oldposZ
-                        if Random(1, 2) == 2 then
-                            posX = posX + Random(20, 35)
-                            posZ = posZ + Random(20, 35)
-                        else
-                            posX = posX - Random(20, 35)
-                            posZ = posZ + Random(20, 35)
-                        end
-                        if Random(1, 2) == 2 then
-                            posX = posX + Random(20, 35)
-                            posZ = posZ - Random(20, 35)
-                        else
-                            posX = posX - Random(20, 35)
-                            posZ = posZ - Random(20, 35)
-                        end
-                        if Random(1, 2) == 2 then
-                            posZ = posZ + Random(20, 35)
-                            posX = posX + Random(20, 35)
-                        else
-                            posZ = posZ - Random(20, 35)
-                            posX = posX + Random(20, 35)
-                        end
-                        if Random(1, 2) == 2 then
-                            posZ = posZ + Random(20, 35)
-                            posX = posX - Random(20, 35)
-                        else
-                            posZ = posZ - Random(20, 35)
-                            posX = posX - Random(20, 35)
-                        end
-                        local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
+						--MapCheck = false
+                        --repeat
+							--count = count + 1
+							Chance = Random(1, 8)
+							if Chance == 1 then
+								posX = posX + Random(1, 80)
+								posZ = posZ + Random(1, 80)
+							elseif Chance == 2 then
+								posX = posX - Random(1, 80)
+								posZ = posZ + Random(1, 80)
+							elseif Chance == 3 then
+								posX = posX + Random(1, 80)
+								posZ = posZ - Random(1, 80)
+							elseif Chance == 4 then
+								posX = posX - Random(1, 80)
+								posZ = posZ - Random(1, 80)
+							elseif Chance == 5 then
+								posZ = posZ + Random(1, 80)
+								posX = posX + Random(1, 80)
+							elseif Chance == 6 then
+								posZ = posZ - Random(1, 80)
+								posX = posX + Random(1, 80)
+							elseif Chance == 7 then
+								posZ = posZ + Random(1, 80)
+								posX = posX - Random(1, 80)
+							else
+								posZ = posZ - Random(1, 80)
+								posX = posX - Random(1, 80)
+							end
+
+							--[[if posX > 0 and posX < sizeX and posZ > 0 and posZ < sizeZ then
+								MapCheck = true
+							end
+							if count == 20 then
+								KillThread(self)
+							end	]]--
+						--until MapCheck == true
+                        local terrainAltitude = GetTerrainHeight(posX, posZ)
                         unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                         if unit and unit ~= nil and not unit.Dead then
-                            LOG("sa: HPR T4 (unit) = " .. rspawn)
+                            LOG("sa: Air (unit) = " .. rspawn)
                         end
                     end
                     if unit and unit ~= nil and not unit.Dead and (HPBonusAI > 0 or ParagonCycle ~= "Off") then
@@ -4110,6 +4166,7 @@ function SpawnExtraASF() -- ASF Spawn
         local rspawn = nil
         --local enemyParagonsCount = totalEnemyParagons
         --local isAirUnit = false
+		local Chance
 		local posX
 		local posZ
         if land4 == 1 then
@@ -4151,70 +4208,66 @@ function SpawnExtraASF() -- ASF Spawn
                 if rspawn ~= nil then
                     local oldposX = posX
                     local oldposZ = posZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(20, 35)
-                        posZ = posZ + Random(20, 35)
-                    else
-                        posX = posX - Random(20, 35)
-                        posZ = posZ + Random(20, 35)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(20, 35)
-                        posZ = posZ - Random(20, 35)
-                    else
-                        posX = posX - Random(20, 35)
-                        posZ = posZ - Random(20, 35)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(20, 35)
-                        posX = posX + Random(20, 35)
-                    else
-                        posZ = posZ - Random(20, 35)
-                        posX = posX + Random(20, 35)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(20, 35)
-                        posX = posX - Random(20, 35)
-                    else
-                        posZ = posZ - Random(20, 35)
-                        posX = posX - Random(20, 35)
-                    end
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 80)
+							posZ = posZ + Random(1, 80)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 80)
+							posZ = posZ + Random(1, 80)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 80)
+							posZ = posZ - Random(1, 80)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 80)
+							posZ = posZ - Random(1, 80)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 80)
+							posX = posX + Random(1, 80)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 80)
+							posX = posX + Random(1, 80)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 80)
+							posX = posX - Random(1, 80)
+						else
+							posZ = posZ - Random(1, 80)
+							posX = posX - Random(1, 80)
+						end
                     unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
                     if unit == nil then
                         local posX = oldposX
                         local posZ = oldposZ
-                        if Random(1, 2) == 2 then
-                            posX = posX + Random(20, 35)
-                            posZ = posZ + Random(20, 35)
-                        else
-                            posX = posX - Random(20, 35)
-                            posZ = posZ + Random(20, 35)
-                        end
-                        if Random(1, 2) == 2 then
-                            posX = posX + Random(20, 35)
-                            posZ = posZ - Random(20, 35)
-                        else
-                            posX = posX - Random(20, 35)
-                            posZ = posZ - Random(20, 35)
-                        end
-                        if Random(1, 2) == 2 then
-                            posZ = posZ + Random(20, 35)
-                            posX = posX + Random(20, 35)
-                        else
-                            posZ = posZ - Random(20, 35)
-                            posX = posX + Random(20, 35)
-                        end
-                        if Random(1, 2) == 2 then
-                            posZ = posZ + Random(20, 35)
-                            posX = posX - Random(20, 35)
-                        else
-                            posZ = posZ - Random(20, 35)
-                            posX = posX - Random(20, 35)
-                        end
-                        local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
+							Chance = Random(1, 8)
+							if Chance == 1 then
+								posX = posX + Random(1, 80)
+								posZ = posZ + Random(1, 80)
+							elseif Chance == 2 then
+								posX = posX - Random(1, 80)
+								posZ = posZ + Random(1, 80)
+							elseif Chance == 3 then
+								posX = posX + Random(1, 80)
+								posZ = posZ - Random(1, 80)
+							elseif Chance == 4 then
+								posX = posX - Random(1, 80)
+								posZ = posZ - Random(1, 80)
+							elseif Chance == 5 then
+								posZ = posZ + Random(1, 80)
+								posX = posX + Random(1, 80)
+							elseif Chance == 6 then
+								posZ = posZ - Random(1, 80)
+								posX = posX + Random(1, 80)
+							elseif Chance == 7 then
+								posZ = posZ + Random(1, 80)
+								posX = posX - Random(1, 80)
+							else
+								posZ = posZ - Random(1, 80)
+								posX = posX - Random(1, 80)
+							end
+                        local terrainAltitude = GetTerrainHeight(posX, posZ)
                         unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                         if unit and unit ~= nil and not unit.Dead then
-                            LOG("sa: HPR T4 (unit) = " .. rspawn)
+                            LOG("sa: ASF Wave (unit) = " .. rspawn)
                         end
                     end
                     if unit and unit ~= nil and not unit.Dead and (HPBonusAI > 0 or ParagonCycle ~= "Off") then
@@ -4366,10 +4419,10 @@ function ANTIAIRResponseWave() -- AntiAir Spawn
                             posZ = posZ - Random(20, 35)
                             posX = posX - Random(20, 35)
                         end
-                        local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
+                        local terrainAltitude = GetTerrainHeight(posX, posZ)
                         unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                         if unit and unit ~= nil and not unit.Dead then
-                            LOG("sa: HPR T4 (unit) = " .. rspawn)
+                            LOG("sa: AntiAir (unit) = " .. rspawn)
                         end
                     end
                     if unit and unit ~= nil and not unit.Dead and (HPBonusAI > 0 or ParagonCycle ~= "Off") then
@@ -4514,10 +4567,10 @@ function SpawnAIAirUnit() --Minor Air Boss Spawn
                             posZ = posZ - Random(20, 35)
                             posX = posX - Random(20, 35)
                         end
-                        local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
+                        local terrainAltitude = GetTerrainHeight(posX, posZ)
                         unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                         if unit and unit ~= nil and not unit.Dead then
-                            LOG("sa: HPR T4 (unit) = " .. rspawn)
+                            LOG("sa: MinorAirBoss (unit) = " .. rspawn)
                         end
                     end
                     if unit and unit ~= nil and not unit.Dead then
@@ -4998,6 +5051,7 @@ function GetTargetforArtillery(aaUnit)
 end
 function RedirectDoomCrawler(aaUnit)
     local circle = ForkThread(function(self)
+		local count
 		local aUnit = aaUnit
 		if aUnit ~= nil then
 		--PrintText("Doom Attack Script", 30, 'ffCBFFFF', 4, 'center')
@@ -5011,7 +5065,7 @@ function RedirectDoomCrawler(aaUnit)
 				IssueMove({ aUnit }, pUnitPos)
 				--PrintText("Doom Move Command", 30, 'ffCBFFFF', 4, 'center')
             end
-			WaitSeconds(10)
+			WaitSeconds(2)
 			repeat	
 				if aUnit:BeenDestroyed() then
 					break
@@ -5020,7 +5074,14 @@ function RedirectDoomCrawler(aaUnit)
 					IssueClearCommands({ aUnit })
 					IssueMove({ aUnit }, pUnitPos)
 					--PrintText("Doom RepeatMove", 30, 'ffCBFFFF', 4, 'center')
-					WaitSeconds(Random(35, 45))
+					count = Random(35, 45)
+					repeat
+						WaitSeconds(1)
+						if pUnit:BeenDestroyed() then
+							break
+						end	
+						count = count - 1
+					until count < 1
 				end	
 				if aUnit:BeenDestroyed() then
 					break
@@ -5029,7 +5090,14 @@ function RedirectDoomCrawler(aaUnit)
 					IssueClearCommands({ aUnit })
 					IssueAggressiveMove({ aUnit }, pUnitPos)
 					--PrintText("Doom AggressiveMove", 30, 'ffCBFFFF', 4, 'center')
-					WaitSeconds(Random(5, 10))
+					count = Random(5, 10)
+					repeat
+						WaitSeconds(1)
+						if pUnit:BeenDestroyed() then
+							break
+						end	
+						count = count - 1
+					until count < 1
 				end
 			until pUnit:BeenDestroyed() or pUnit == nil
 			if aUnit and not aUnit:BeenDestroyed() then
@@ -5043,6 +5111,7 @@ end
 function RedirectDoomWalker(aaUnit)
     local circle = ForkThread(function(self)
 		local aUnit = aaUnit
+		local count
 		if aUnit ~= nil then
 		--PrintText("Doom Attack Script", 30, 'ffCBFFFF', 4, 'center')
 			local pUnit = nil
@@ -5055,7 +5124,7 @@ function RedirectDoomWalker(aaUnit)
 				IssueMove({ aUnit }, pUnitPos)
 				--PrintText("Doom Move Command", 30, 'ffCBFFFF', 4, 'center')
             end
-			WaitSeconds(10)
+			WaitSeconds(2)
 			repeat	
 				if aUnit:BeenDestroyed() then
 					break
@@ -5064,7 +5133,14 @@ function RedirectDoomWalker(aaUnit)
 					IssueClearCommands({ aUnit })
 					IssueMove({ aUnit }, pUnitPos)
 					--PrintText("Doom RepeatMove", 30, 'ffCBFFFF', 4, 'center')
-					WaitSeconds(5)
+					count = 10
+					repeat
+						WaitSeconds(1)
+						if pUnit:BeenDestroyed() then
+							break
+						end	
+						count = count - 1
+					until count < 1
 				end	
 			until pUnit:BeenDestroyed() or pUnit == nil
 			if aUnit and not aUnit:BeenDestroyed() then
@@ -6450,7 +6526,7 @@ GetAllEnemyUnitsAirList = function(self)
     for i, brain in humanBrains.HBrains do
         enemyUnitList = brain:GetListOfUnits((categories.MOBILE * categories.AIR * categories.TECH3) + (categories.MOBILE * categories.AIR * categories.EXPERIMENTAL), false)
 		if table.getn(enemyUnitList) < 1 then
-			enemyUnitList = brain:GetListOfUnits((categories.MOBILE * categories.AIR), false)
+			enemyUnitList = brain:GetListOfUnits((categories.MOBILE * categories.AIR) - (categories.MOBILE * categories.AIR * categories.SATELLITE), false)
 		end
 		for i = 1, table.getn(enemyUnitList) do
 			AllEnemyUnitsAir[table.getn(AllEnemyUnitsAir) + 1] = enemyUnitList[i]
@@ -7776,7 +7852,7 @@ end
 function MonitoringTeamElimination()
     local circle = ForkThread(function(self)
 		WaitSeconds(10)
-		PrintText("Versus Survival is ON. Requires 3+ Teams or 3+ FFA.", 28, 'ffCBFFFF', 2, 'center')
+		PrintText("==Versus Survival is ON. Requires 3+ Teams or 3+ FFA.==", 28, 'ffCC0000', 6, 'center')
         repeat
 			WaitSeconds(10)
 			local HQEnemies = 0
@@ -7790,6 +7866,13 @@ function MonitoringTeamElimination()
 					end	
 				end
 			end
+			if GetGameTimeSeconds() < WavesStartTimeAI and HQEnemies == 0 then
+				PrintText("==ERROR: Versus Survival requires a minimum of 3 Teams or 3 FFA==", 28, 'ffCC0000', 180, 'center')
+				PrintText("In Versus Survival, HQ Team suicides when only one other Team is left standing.", 28, 'ffCC0000', 180, 'center')
+				PrintText("Turn Off Versus Survival under WIN/LOSE/VERSUS or set 3 or more Teams.", 28, 'ffCC0000', 180, 'center')
+				PrintText("NOTE: Multi-Team Survival can be played with Versus Survival Off.", 26, 'ffff9393', 180, 'center')
+				PrintText("Requires last Team standing to Kill HQ to win.", 26, 'ffff9393', 180, 'center')
+			end	
 			--PrintText("Enemy in Game " .. HQEnemies .. " Total", 28, 'ffCBFFFF', 2, 'center')
 			if HQEnemies == 0 then
 				ClearAIAllUnits()
@@ -8166,6 +8249,7 @@ CalculateEnemyMass = function(self)
     return currentmassproduction
 end
 function MonitoringFunctionTwo()
+	local Army
 	local circle = ForkThread(function(self)
 		repeat
 			WaitSeconds(60)
@@ -8195,7 +8279,8 @@ function MonitoringFunctionTwo()
 			end
 			if GetGameTimeSeconds() > (WavesStartTimeAI - 20 + HoldTimeAI * 0.5) and SpecWeapFlag01 == false and
 			(SpecialWeapons == "T4 AA Enabled" or SpecialWeapons == "T4AA + EmpTacs Enabled") then
-				for i, Army in ListArmies() do
+				for i, brain in humanBrains.HBrains do
+					Army = brain:GetArmyIndex()
 					RemoveBuildRestriction(Army, categories.raa2304)	--AA
 				end
 				PrintText("Experimental AA Available", 30, 'ffCBFFFF', 4, 'center')
@@ -8203,7 +8288,8 @@ function MonitoringFunctionTwo()
 			end
 			if GetGameTimeSeconds() > (WavesStartTimeAI - 20 + HoldTimeAI * 0.6) and SpecWeapFlag02 == false and 
 			(SpecialWeapons == "EmpTacs Enabled" or SpecialWeapons == "T4AA + EmpTacs Enabled") then
-				for i, Army in ListArmies() do
+				for i, brain in humanBrains.HBrains do
+					Army = brain:GetArmyIndex()
 					RemoveBuildRestriction(Army, categories.ram2108)    --Tac
 				end
 				PrintText("Experimental EMP Tacticle Missiles Available", 30, 'ffCBFFFF', 4, 'center')
@@ -8274,7 +8360,7 @@ function MonitoringFunctionFive() -- Damage Bonus
 		repeat
 			WaitSeconds(60)
 			--PrintText("Total Mass is  " .. totalEnemyMass .. " !", 28, 'ffCBFFFF', 4, 'center') 
-			totalEnemyMass = CalculateEnemyMass()
+			local totalEnemyMass = CalculateEnemyMass()
 			if totalEnemyMass > (250 * humans) then
 				if damageamplificationflag == false then
 					PrintText("Damage Amplification x" .. DamageBoostMulti .. "! Bringing the Pain!", 28, 'ffCBFFFF', 4, 'center') 
@@ -8329,7 +8415,866 @@ function DeployAntiAir() --Spawns NOMANDERS Counter
 			end
 		until GetGameTimeSeconds() > 20000 or won == true
 	end)
-end	
+end
+function CreateRiftTables()
+	for id, bp in pairs(__blueprints) do
+		if (bp.Categories and string.len(id) >= 5) then
+			if table.find(bp.Categories, 'MOBILE') and not table.find(bp.Categories, 'ENGINEER') and not table.find(bp.Categories, 'SCOUT') and not table.find(bp.Categories, 'SATELLITE')
+			and not table.find(bp.Categories, 'INSIGNIFICANTUNIT') and not table.find(bp.Categories, 'ANTIAIR') and not table.find(bp.Categories, 'SHIELD')
+			and not table.find(bp.Categories, 'INVULNERABLE') and not table.find(bp.Categories, 'UNTARGETABLE') and not table.find(bp.Categories, 'UNSELECTABLE')
+			and not table.find(bp.Categories, 'LIGHTDROPCAPSULE') and not table.find(bp.Categories, 'MEDIUMDROPCAPSULE') and not table.find(bp.Categories, 'HEAVYDROPCAPSULE')
+			and not table.find(bp.Categories, 'CANTRANSPORTCOMMANDER') then
+				if TotalMayhemWaves == "Adjustable T1/T2/T3 Experimentals" then
+					if table.find(bp.Categories, 'LAND') then
+						--Tech1
+						if (bp.Economy.BuildCostMass and bp.Economy.BuildCostMass <= 400) then
+							if (bp.Economy.BuildCostMass and bp.Economy.BuildCostMass >= 30) and table.find(bp.Categories, 'TECH1') 
+							and (table.find(bp.Categories, 'AMPHIBIOUS') or table.find(bp.Categories, 'HOVER')) and id ~= "uec0001" and id ~= "opc2002" then
+								RiftLland = RiftLland + 1
+								table.insert(RiftUnitsL.Tech4, id) --Tech1 Units + Garbage
+							end	
+						end	
+						if (bp.Economy.BuildCostMass and bp.Economy.BuildCostMass > 400) then
+							if table.find(bp.Categories, 'TECH1') and (table.find(bp.Categories, 'AMPHIBIOUS') or table.find(bp.Categories, 'HOVER')) and id ~= "uec0001" and id ~= "opc2002" then
+								BigRiftLland = BigRiftLland + 1
+								table.insert(BigRiftUnitsL.Tech4, id) --Tech1 Units + Garbage
+							end	
+						end	
+						--Tech2
+						if (bp.Economy.BuildCostMass and bp.Economy.BuildCostMass <= 1000) then
+							if (bp.Economy.BuildCostMass and bp.Economy.BuildCostMass >= 30) and table.find(bp.Categories, 'TECH2') 
+							and (table.find(bp.Categories, 'AMPHIBIOUS') or table.find(bp.Categories, 'HOVER')) and id ~= "uec0001" and id ~= "opc2002" then
+								RiftMland = RiftMland + 1
+								table.insert(RiftUnitsM.Tech4, id) --TECH2 Units + Garbage
+							end	
+						end
+						if (bp.Economy.BuildCostMass and bp.Economy.BuildCostMass > 1000) then
+							if (bp.Economy.BuildCostMass and bp.Economy.BuildCostMass >= 30) and table.find(bp.Categories, 'TECH2') 
+							and (table.find(bp.Categories, 'AMPHIBIOUS') or table.find(bp.Categories, 'HOVER')) and id ~= "uec0001" and id ~= "opc2002" then
+								BigRiftMland = BigRiftMland + 1
+								table.insert(BigRiftUnitsM.Tech4, id) --TECH2 Units + Garbage
+							end	
+						end
+						--Tech3
+						if (bp.Economy.BuildCostMass and bp.Economy.BuildCostMass <= 3000) then
+							if (bp.Economy.BuildCostMass and bp.Economy.BuildCostMass >= 30) and table.find(bp.Categories, 'TECH3') 
+							and (table.find(bp.Categories, 'AMPHIBIOUS') or table.find(bp.Categories, 'HOVER')) and id ~= "uec0001" and id ~= "opc2002" then
+								RiftHland = RiftHland + 1
+								table.insert(RiftUnitsH.Tech4, id) --TECH3 Units + Garbage
+							end
+						end
+						if (bp.Economy.BuildCostMass and bp.Economy.BuildCostMass > 3000) then
+							if (bp.Economy.BuildCostMass and bp.Economy.BuildCostMass >= 30) and table.find(bp.Categories, 'TECH3') 
+							and (table.find(bp.Categories, 'AMPHIBIOUS') or table.find(bp.Categories, 'HOVER')) and id ~= "uec0001" and id ~= "opc2002" then
+								BigRiftHland = BigRiftHland + 1
+								table.insert(BigRiftUnitsH.Tech4, id) --TECH3 Units + Garbage
+							end
+						end	
+					end
+				else
+					if table.find(bp.Categories, 'LAND') then
+					--Tech1
+						if (bp.Economy.BuildCostMass and bp.Economy.BuildCostMass >= 30) and table.find(bp.Categories, 'TECH1') 
+						and (table.find(bp.Categories, 'AMPHIBIOUS') or table.find(bp.Categories, 'HOVER')) and id ~= "uec0001" and id ~= "opc2002" then
+							RiftLland = RiftLland + 1
+							table.insert(RiftUnitsL.Tech4, id) --Tech1 Units + Garbage
+						end	
+					--Tech2
+						if (bp.Economy.BuildCostMass and bp.Economy.BuildCostMass >= 30) and table.find(bp.Categories, 'TECH2') 
+						and (table.find(bp.Categories, 'AMPHIBIOUS') or table.find(bp.Categories, 'HOVER')) and id ~= "uec0001" and id ~= "opc2002" then
+							RiftMland = RiftMland + 1
+							table.insert(RiftUnitsM.Tech4, id) --TECH2 Units + Garbage
+						end	
+					--Tech3
+						if (bp.Economy.BuildCostMass and bp.Economy.BuildCostMass >= 30) and table.find(bp.Categories, 'TECH3') 
+						and (table.find(bp.Categories, 'AMPHIBIOUS') or table.find(bp.Categories, 'HOVER')) and id ~= "uec0001" and id ~= "opc2002" then
+							RiftHland = RiftHland + 1
+							table.insert(RiftUnitsH.Tech4, id) --TECH3 Units + Garbage
+						end	
+					end
+				end	
+			end
+		end
+	end					
+end
+GetRandomizedRiftUnitID = function(self)
+    local rspawn = nil
+	--local x = nil
+	--GameTime = math.floor(GetGameTimeSeconds() - WavesStartTimeAI) / HoldTimeAI
+
+		if RiftLland > 0 and GameTime < (0.1 * WaveProgression) then
+			rspawn = (RiftUnitsL.Tech4)[Random(1, RiftLland)]
+				if RiftMland > 0 and (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Land+Navy" or JumpTech2 == "Land") then
+					rspawn = (RiftUnitsM.Tech4)[Random(1, RiftMland)]
+				end	
+			elseif RiftMland > 0 and GameTime >= (0.1 * WaveProgression) and GameTime < (0.25 * WaveProgression) then
+				rspawn = (RiftUnitsM.Tech4)[Random(1, RiftMland)]
+				if RiftLland > 0 and Random(1, 3) == 1 and GameTime < (0.15 * WaveProgression) and not (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Land+Navy" or JumpTech2 == "Land") then
+					rspawn = (RiftUnitsL.Tech4)[Random(1, RiftLland)]
+				end	
+			elseif RiftHland > 0 and GameTime >= (0.25 * WaveProgression) and GameTime < (0.35 * WaveProgression) then
+				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				if RiftMland > 0 and Random(1, 3) == 1 and GameTime < (0.3 * WaveProgression) then
+					rspawn = (RiftUnitsM.Tech4)[Random(1, RiftMland)]
+				end	
+			elseif RiftHland > 0 and GameTime >= (0.35 * WaveProgression) and GameTime < (0.45 * WaveProgression) then
+				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				if Eland > 0 and Random(0, 250) <= 10 * ExpMulti --1% 4.4% 8.3% 1.5x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+			elseif RiftHland > 0 and GameTime >= (0.45 * WaveProgression) and GameTime < (0.55 * WaveProgression) then --15.75 to 22.75
+				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				--x = math.floor(7 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 180) <= 10 * ExpMulti --2% 6% 11.6% 1.8x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+			elseif RiftHland > 0 and GameTime >= (0.55 * WaveProgression) and GameTime < (0.65 * WaveProgression) then --15.75 to 22.75
+				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				--x = math.floor(7 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 130) <= 10 * ExpMulti --2.8% 15.4% 29.6% 1.8x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end	
+			elseif RiftHland > 0 and GameTime >= (0.65 * WaveProgression) and GameTime < (0.77 * WaveProgression) then --22.75 to 29.75
+				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				--x = math.floor(3 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 70) <= 10 * ExpMulti --5% 24% 52% 1.8x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+			elseif RiftHland > 0 and GameTime >= (0.77 * WaveProgression) and GameTime < (0.9 * WaveProgression) then --22.75 to 29.75
+				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				--x = math.floor(3 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 60) <= 10 * ExpMulti --6.5% 34% 65% 2x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
+				and Random(0, 200) <= 10 * ExpMulti then --1.1% 6.1% 11.6% +20
+					CreateACombinedLandBossUnitAroundMainBuildingForAI()
+				end
+			elseif RiftHland > 0 and GameTime >= (0.90 * WaveProgression) and GameTime < (1.05 * WaveProgression) then --29.75
+				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 40) <= 10 * ExpMulti --9.1% 50% 95% 2x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
+				and Random(0, 120) <= 10 * ExpMulti then --2% 10.9% 20.8% +20
+					CreateACombinedLandBossUnitAroundMainBuildingForAI()
+				end
+			elseif RiftHland > 0 and GameTime >= (1.05 * WaveProgression) and GameTime < (1.2 * WaveProgression) then --29.75
+				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 36) <= 10 * ExpMulti --10% 55% 100% 1.89x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
+				and Random(0, 95) <= 10 * ExpMulti then --2.3% 12.8% 24.4% +10
+					CreateACombinedLandBossUnitAroundMainBuildingForAI()
+				end
+			elseif RiftHland > 0 and GameTime >= (1.2 * WaveProgression) and GameTime < (1.35 * WaveProgression) then --29.75
+				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 25) <= 10 * ExpMulti --11.1% 61% 100% 1.47x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
+				and Random(0, 80) <= 10 * ExpMulti then --2.8% 15.5% 29.6% +10
+					CreateACombinedLandBossUnitAroundMainBuildingForAI()
+				end
+			elseif RiftHland > 0 and GameTime >= (1.35 * WaveProgression) then --29.75
+				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 20) <= 10 * ExpMulti --12.5% 68.8% 100% 1.3x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
+				and Random(0, 60) <= 10 * ExpMulti then --3.6% 19.6% 37.5% +5
+					CreateACombinedLandBossUnitAroundMainBuildingForAI()
+				end
+		end
+    return rspawn
+end
+GetRandomizedTotMayRiftID = function(self)
+    local rspawn = nil
+	--local x = nil
+	--GameTime = math.floor(GetGameTimeSeconds() - WavesStartTimeAI) / HoldTimeAI
+
+		if RiftLland > 0 and GameTime < (0.1 * WaveProgression) then
+			if BigRiftLland > 0 and  Random(1, 40) <= TotalMayhemLand then
+				rspawn = (BigRiftUnitsL.Tech4)[Random(1, BigRiftLland)]
+			else
+				rspawn = (RiftUnitsL.Tech4)[Random(1, RiftLland)]
+			end	
+				if RiftMland > 0 and (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Land+Navy" or JumpTech2 == "Land") then
+					if BigRiftMland > 0 and  Random(1, 40) <= TotalMayhemLand then
+						rspawn = (BigRiftUnitsM.Tech4)[Random(1, BigRiftMland)]
+					else
+						rspawn = (RiftUnitsM.Tech4)[Random(1, RiftMland)]
+					end	
+				end	
+			elseif RiftMland > 0 and GameTime >= (0.1 * WaveProgression) and GameTime < (0.25 * WaveProgression) then
+				if BigRiftMland > 0 and  Random(1, 40) <= TotalMayhemLand then
+					rspawn = (BigRiftUnitsM.Tech4)[Random(1, BigRiftMland)]
+				else
+					rspawn = (RiftUnitsM.Tech4)[Random(1, RiftMland)]
+				end	
+				if RiftLland > 0 and Random(1, 3) == 1 and GameTime < (0.15 * WaveProgression) and not (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Land+Navy" or JumpTech2 == "Land") then
+					if BigRiftLland > 0 and  Random(1, 30) <= TotalMayhemLand then
+						rspawn = (BigRiftUnitsL.Tech4)[Random(1, BigRiftLland)]
+					else
+						rspawn = (RiftUnitsL.Tech4)[Random(1, RiftLland)]
+					end	
+				end	
+			elseif RiftHland > 0 and GameTime >= (0.25 * WaveProgression) and GameTime < (0.35 * WaveProgression) then
+				if BigRiftHland > 0 and  Random(1, 40) <= TotalMayhemLand then
+					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
+				else
+					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				end
+				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				if RiftMland > 0 and Random(1, 3) == 1 and GameTime < (0.3 * WaveProgression) then
+					if BigRiftMland > 0 and  Random(1, 30) <= TotalMayhemLand then
+						rspawn = (BigRiftUnitsM.Tech4)[Random(1, BigRiftMland)]
+					else
+						rspawn = (RiftUnitsM.Tech4)[Random(1, RiftMland)]
+					end	
+				end	
+			elseif RiftHland > 0 and GameTime >= (0.35 * WaveProgression) and GameTime < (0.45 * WaveProgression) then
+				if BigRiftHland > 0 and  Random(1, 39) <= TotalMayhemLand then
+					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
+				else
+					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				end
+				if Eland > 0 and Random(0, 250) <= 10 * ExpMulti --1% 4.4% 8.3% 1.5x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+			elseif RiftHland > 0 and GameTime >= (0.45 * WaveProgression) and GameTime < (0.55 * WaveProgression) then --15.75 to 22.75
+				if BigRiftHland > 0 and  Random(1, 38) <= TotalMayhemLand then
+					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
+				else
+					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				end
+				--x = math.floor(7 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 180) <= 10 * ExpMulti --2% 6% 11.6% 1.8x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+			elseif RiftHland > 0 and GameTime >= (0.55 * WaveProgression) and GameTime < (0.65 * WaveProgression) then --15.75 to 22.75
+				if BigRiftHland > 0 and  Random(1, 37) <= TotalMayhemLand then
+					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
+				else
+					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				end
+				--x = math.floor(7 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 130) <= 10 * ExpMulti --2.8% 15.4% 29.6% 1.8x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end	
+			elseif RiftHland > 0 and GameTime >= (0.65 * WaveProgression) and GameTime < (0.77 * WaveProgression) then --22.75 to 29.75
+				if BigRiftHland > 0 and  Random(1, 36) <= TotalMayhemLand then
+					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
+				else
+					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				end
+				--x = math.floor(3 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 70) <= 10 * ExpMulti --5% 24% 52% 1.8x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+			elseif RiftHland > 0 and GameTime >= (0.77 * WaveProgression) and GameTime < (0.9 * WaveProgression) then --22.75 to 29.75
+				if BigRiftHland > 0 and  Random(1, 35) <= TotalMayhemLand then
+					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
+				else
+					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				end
+				--x = math.floor(3 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 60) <= 10 * ExpMulti --6.5% 34% 65% 2x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
+				and Random(0, 200) <= 10 * ExpMulti then --1.1% 6.1% 11.6% +20
+					CreateACombinedLandBossUnitAroundMainBuildingForAI()
+				end
+			elseif RiftHland > 0 and GameTime >= (0.90 * WaveProgression) and GameTime < (1.05 * WaveProgression) then --29.75
+				if BigRiftHland > 0 and  Random(1, 34) <= TotalMayhemLand then
+					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
+				else
+					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				end
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 40) <= 10 * ExpMulti --9.1% 50% 95% 2x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
+				and Random(0, 120) <= 10 * ExpMulti then --2% 10.9% 20.8% +20
+					CreateACombinedLandBossUnitAroundMainBuildingForAI()
+				end
+			elseif RiftHland > 0 and GameTime >= (1.05 * WaveProgression) and GameTime < (1.2 * WaveProgression) then --29.75
+				if BigRiftHland > 0 and  Random(1, 33) <= TotalMayhemLand then
+					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
+				else
+					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				end
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 36) <= 10 * ExpMulti --10% 55% 100% 1.89x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
+				and Random(0, 95) <= 10 * ExpMulti then --2.3% 12.8% 24.4% +10
+					CreateACombinedLandBossUnitAroundMainBuildingForAI()
+				end
+			elseif RiftHland > 0 and GameTime >= (1.2 * WaveProgression) and GameTime < (1.35 * WaveProgression) then --29.75
+				if BigRiftHland > 0 and  Random(1, 32) <= TotalMayhemLand then
+					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
+				else
+					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				end
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 25) <= 10 * ExpMulti --11.1% 61% 100% 1.47x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
+				and Random(0, 80) <= 10 * ExpMulti then --2.8% 15.5% 29.6% +10
+					CreateACombinedLandBossUnitAroundMainBuildingForAI()
+				end
+			elseif RiftHland > 0 and GameTime >= (1.35 * WaveProgression) then --29.75
+				if BigRiftHland > 0 and  Random(1, 31) <= TotalMayhemLand then
+					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
+				else
+					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				end
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 20) <= 10 * ExpMulti --12.5% 68.8% 100% 1.3x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
+				and Random(0, 60) <= 10 * ExpMulti then --3.6% 19.6% 37.5% +5
+					CreateACombinedLandBossUnitAroundMainBuildingForAI()
+				end
+		end
+    return rspawn
+end
+function CheckIfLandCanPass()
+    local circle = ForkThread(function(self)
+		if LandAmphibious == 'All On' and LandPerWave > 0 then
+			local brain
+			local LandCanPath = 0
+			local LandCantPath = 0
+			local braincount = 0
+			local AmphibiousPath = 0
+			local posX
+			local posZ
+			local terrainAttitude
+			local surfaceAttitude
+			local height
+			local unit
+			local pos2X
+			local pos2Z
+			local terrainAttitude2
+			local targetPos
+			local startPos
+			posX, posZ = aiBrain:GetArmyStartPos()
+			terrainAttitude = GetTerrainHeight(posX, posZ)
+			--surfaceAttitude = GetSurfaceHeight(posX, posZ)
+			--height = surfaceAttitude - terrainAttitude
+			startPos = {posX, terrainAttitude, posZ}
+			local iStartLabel = NavUtils.GetLabel('Land', startPos)
+			local StartAmphibious = NavUtils.GetLabel('Amphibious', startPos)
+			--unit = aiBrain:CreateUnitNearSpot("UEC0001", posX, posZ)
+			--unit = CreateUnitHPR("UEC0001", aiBrain:GetArmyIndex(), posX, terrainAttitude, posZ, 0, 0, 0)
+			for i, brain in humanBrains.HBrains do
+				if brain and not brain:IsDefeated() then
+					braincount = braincount + 1
+					pos2X, pos2Z = brain:GetArmyStartPos()
+					terrainAttitude2 = GetTerrainHeight(pos2X, pos2Z)
+					targetPos = {pos2X, terrainAttitude2, pos2Z}
+					--[[unit = nil
+					unit = aiBrain:CreateUnitNearSpot("UEC0001", posX, posZ)
+					if unit == nil then
+						unit = CreateUnitHPR("UEC0001", aiBrain:GetArmyIndex(), posX, terrainAttitude, posZ, 0, 0, 0)
+						--URL0101
+						--UEC0001
+					end]]--
+					local iEndLabel = NavUtils.GetLabel('Land', targetPos)
+					local EndAmphibious = NavUtils.GetLabel('Amphibious', targetPos)
+					if iStartLabel == iEndLabel then
+						--you can path from start to end by land
+						LandCanPath = LandCanPath + 1
+					else
+						LandCantPath = LandCantPath + 1
+					end
+					if StartAmphibious == EndAmphibious then
+						--you can path from start to end by land
+						AmphibiousPath = AmphibiousPath + 1
+					end
+					--[[if unit and unit ~= nil and not unit.Dead then
+						if unit:CanPathTo(targetPos) then
+							CanPath = CanPath + 1
+						else
+							CantPath = CantPath + 1
+						end				
+					end
+					unit:Destroy()]]--
+				end
+			end
+			--PrintText("braincount =  " .. braincount .. " Total", 28, 'ffCBFFFF', 6, 'center')
+			--PrintText("LandCanPath =  " .. LandCanPath .. " Total", 28, 'ffCBFFFF', 6, 'center')
+			--PrintText("LandCantPath =  " .. LandCantPath .. " Total", 28, 'ffCBFFFF', 6, 'center')
+			--PrintText("AmphibiousPath =  " .. AmphibiousPath .. " Total", 28, 'ffCBFFFF', 6, 'center')
+			--PrintText("Height =  " .. height .. " Total", 28, 'ffCBFFFF', 6, 'center')
+			if AmphibiousPath > 0 then
+				if LandCantPath == braincount then
+					PrintText("==NOTICE: Land unable to Path to ANY Enemies. Land Waves set to Amphibious/Hover Units.==", 28, 'ffff9595', 20, 'center')
+					PrintText("--This Override can be Disabled in Map Options, under setting 6c.--", 28, 'ffff9595', 20, 'center')
+					LandAmphibious = 'Amphibious'
+				elseif LandCantPath > LandCanPath then
+					PrintText("==NOTICE: Land unable to Path to majority of Enemies. Land Waves set to Amphibious/Hover Units.==", 28, 'ffff9595', 20, 'center')
+					PrintText("--This Override can be Disabled in Map Options, under setting 6c.--", 28, 'ffff9595', 20, 'center')
+					LandAmphibious = 'Amphibious'
+				end	
+			else 
+				PrintText("==NOTICE: Land unable to Path to Enemies. All Players on Plateaus.==", 28, 'ffff9595', 20, 'center')
+			end	
+		end
+		KillThread(self)
+	end)
+end
+function CreateRiftSpawnPoints()
+    local circle = ForkThread(function(self)
+		local mapX, mapZ = GetMapSize()
+		local sizeX = mapX
+		local sizeZ = mapZ
+		if sizeX > 1024 or sizeZ > 1024 then
+			sizeX = 1024
+			sizeZ = 1024
+		end
+		local huBrain
+		local posX
+		local posZ
+		local randX
+        local randZ
+		local startPos
+		local armyPos
+		local terrainAttitude
+		local terrainAttitude2
+		local unit
+		local newPos
+		local sizeEdgeX = sizeX - 10
+		local sizeEdgeZ = sizeZ - 10
+		local validPosCount
+		--local NotvalidPosCount
+		WaitSeconds(30)
+		repeat
+			unit = nil
+			huBrain = nil
+			huBrain = GetRandomCloseAliveEnemyBrain(self)
+			LOG("sa: Running CreateRiftSpawnPoints")
+			if huBrain and not huBrain:IsDefeated() then
+				posX, posZ = huBrain:GetArmyStartPos()
+				terrainAttitude2 = GetTerrainHeight(posX, posZ)
+				startPos = {posX, terrainAttitude2, posZ}
+				--local StartAmphibious = NavUtils.GetLabel('Amphibious', startPos)
+				if posX <= (mapX * 0.25) then
+					if mapX > sizeX then
+						randX = Random((posX - sizeX * 0.26), (posX + sizeX * 0.26))
+						if randX < 10 then
+							randX = Random(10, (posX + sizeX * 0.33))
+						end	
+					else
+						randX = Random(10, (posX + sizeX * 0.33))
+					end
+				elseif posX <= (mapX * 0.5) then
+					randX = Random((posX - sizeX * 0.26), (posX + sizeX * 0.26))
+					if randX < 10 then
+						randX = 10
+					end
+				elseif posX >= (mapX * 0.75) then
+					if mapX > sizeX then
+						randX = Random((posX - sizeX * 0.26), (posX + sizeX * 0.26))
+						if randX > (mapX - 10) then
+							randX = Random((posX - sizeX * 0.33), (mapX - 10))
+						end	
+					else
+						randX = Random((posX - sizeX * 0.33), sizeEdgeX)
+					end	
+				else
+					if mapX > sizeX then
+						randX = Random((posX - sizeX * 0.26), (posX + sizeX * 0.26))
+					else
+						randX = Random((posX - sizeX * 0.26), (posX + sizeX * 0.26))
+						if randX > (sizeX - 10) then
+							randX = sizeX - 10
+						end
+					end	
+				end
+				if posZ <= (mapZ * 0.25) then
+					if mapZ > sizeZ then
+						randZ = Random((posZ - sizeZ * 0.26), (posZ + sizeZ * 0.26))
+						if randZ < 10 then
+							randZ = Random(10, (posZ + sizeZ * 0.33))
+						end	
+					else
+						randZ = Random(10, (posZ + sizeZ * 0.33))
+					end
+				elseif posZ <= (mapZ * 0.5) then
+					randZ = Random((posZ - sizeZ * 0.26), (posZ + sizeZ * 0.26))
+					if randZ < 10 then
+						randZ = 10
+					end
+				elseif posZ >= (mapZ * 0.75) then
+					if mapZ > sizeZ then
+						randZ = Random((posZ - sizeZ * 0.26), (posZ + sizeZ * 0.26))
+						if randZ > (mapZ - 10) then
+							randZ = Random((posZ - sizeZ * 0.33), (mapZ - 10))
+						end	
+					else
+						randZ = Random((posZ - sizeZ * 0.33), sizeEdgeZ)
+					end	
+				else
+					if mapZ > sizeZ then
+						randZ = Random((posZ - sizeZ * 0.26), (posZ + sizeZ * 0.26))
+					else
+						randZ = Random((posZ - sizeZ * 0.26), (posZ + sizeZ * 0.26))
+						if randZ > (sizeZ - 10) then
+							randZ = sizeZ - 10
+						end
+					end	
+				end
+				terrainAttitude = GetTerrainHeight(randX, randZ)
+				--local EndAmphibious = NavUtils.GetLabel('Amphibious', {randX, terrainAttitude, randZ})
+				--if StartAmphibious == EndAmphibious then
+					local AccurateTest = NavUtils.CanPathTo('Amphibious', startPos, {randX, terrainAttitude, randZ})
+					if AccurateTest == true then
+						newPos = { randX, terrainAttitude, randZ, type = "VECTOR3" }
+						table.insert(validRiftPositions.positions, newPos)
+					--[[else
+						newPos = { randX, terrainAttitude, randZ, type = "VECTOR3" }
+						table.insert(validNotRiftPositions.positions, newPos)]]--
+					end
+					LOG("sa: RiftSpawnPoint Found")
+				--else
+					--newPos = { randX, terrainAttitude, randZ, type = "VECTOR3" }
+					--table.insert(validNotRiftPositions.positions, newPos)
+				--end
+				--unit = CreateUnitHPR("RIFTPT", aiBrain:GetArmyIndex(), randX, terrainAttitude, randZ, 0, 0, 0)
+				--terrainAttitude = GetTerrainHeight(randX, randZ)
+				--locPos = {randX, terrainAttitude, randZ}
+				--RIFTPT URL0203
+				--PrintText("Rift Spawns 2", 28, 'ffCBFFFF', 6, 'center')
+				--unit:CanPathTo(startPos)
+				--PrintText("Rift Spawns 3", 28, 'ffCBFFFF', 6, 'center')
+				--[[WaitTicks(2)
+				if unit and unit ~= nil and not unit.Dead then
+					unit:SetImmobile(true)
+					if unit:CanPathTo(startPos) then
+						terrainAttitude = GetTerrainHeight(randX, randZ)
+						newPos = { randX, terrainAttitude, randZ, type = "VECTOR3" }
+						table.insert(validRiftPositions.positions, newPos)
+						unit:Destroy()
+					else
+						terrainAttitude = GetTerrainHeight(randX, randZ)
+						newPos = { randX, terrainAttitude, randZ, type = "VECTOR3" }
+						table.insert(validNotRiftPositions.positions, newPos)
+						unit:Destroy()
+					end
+				end]]--
+				validPosCount = table.getn(validRiftPositions.positions)
+				--NotvalidPosCount = table.getn(validNotRiftPositions.positions)
+				--PrintText("Rift Spawns " .. validPosCount .. " Total", 28, 'ffCBFFFF', 6, 'center')
+				--PrintText("Non-Spawns " .. NotvalidPosCount .. " Total", 28, 'ffCBFFFF', 6, 'center')
+				if mapX >= 1024 or mapZ >= 1024 then
+					if validPosCount > 300 then
+						break
+					end
+				else
+					if validPosCount > 150 then
+						break
+					end
+				end
+			end	
+			WaitSeconds(1)
+		until GetGameTimeSeconds() > 20000 or won == true
+		KillThread(self)
+	end)
+end
+function MonitorRiftBuildingCount()
+    local circle = ForkThread(function(self)
+		local riftBuildingList
+		local SupportBaseList
+		local SupportBase
+		local riftBuildingCount
+		local SupportBaseCount
+		local count
+		WaitSeconds(WavesStartTimeAI + 5)
+		repeat
+			--LOG("sa: Running MonitorRiftBuildingCount")
+			riftBuildingList = {}
+			SupportBaseList = {}
+			SupportBase = nil
+			riftBuildingList = aiBrain:GetListOfUnits(categories.riftorb2, false)
+			riftBuildingCount = table.getn(riftBuildingList)
+			SupportBaseList = aiBrain:GetListOfUnits(categories.b_obj1301, false)
+			SupportBaseCount = table.getn(SupportBaseList)
+			--PrintText("Support Buildings " .. SupportBaseCount .. " Total", 28, 'ffCBFFFF', 6, 'center')
+			if GetGameTimeSeconds() < (WavesStartTimeAI + HoldTimeAI) then
+				if riftBuildingCount < SupportBaseCount then
+					SupportBase = SupportBaseList[Random(1, SupportBaseCount)]
+					CreateARiftNuke(SupportBase)
+				end
+			else
+				if riftBuildingCount < SupportBaseCount then
+					count = SupportBaseCount - riftBuildingCount
+					repeat	
+						SupportBase = SupportBaseList[Random(1, SupportBaseCount)]
+						CreateARiftNuke(SupportBase)
+						count = count - 1
+					until count < 1
+				end
+			end
+			WaitSeconds(120)
+			if GetGameTimeSeconds() <= ((WavesStartTimeAI + HoldTimeAI) * 0.5) then
+				WaitSeconds(120)
+			end
+		until GetGameTimeSeconds() > 20000 or won == true
+	end)
+end
+function CreateARiftNuke(SupportBase)
+    local circle = ForkThread(function(self)
+		--LOG("sa: Running CreateARiftNuke")
+        if SupportBase and not SupportBase:BeenDestroyed() then
+			local unit = nil
+			--local MapCheck = false
+			local Chance
+			--local count = 0
+			local posX, posY, posZ = SupportBase:GetPositionXYZ()
+			local rspawn = "RIFTNUKE"
+			if rspawn ~= nil then
+				local oldposX = posX
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(5, 15)
+						posZ = posZ + Random(5, 15)
+					elseif Chance == 2 then
+						posX = posX - Random(5, 15)
+						posZ = posZ + Random(5, 15)
+					elseif Chance == 3 then
+						posX = posX + Random(5, 15)
+						posZ = posZ - Random(5, 15)
+					elseif Chance == 4 then
+						posX = posX - Random(5, 15)
+						posZ = posZ - Random(5, 15)
+					elseif Chance == 5 then
+						posZ = posZ + Random(5, 15)
+						posX = posX + Random(5, 15)
+					elseif Chance == 6 then
+						posZ = posZ - Random(5, 15)
+						posX = posX + Random(5, 15)
+					elseif Chance == 7 then
+						posZ = posZ + Random(5, 15)
+						posX = posX - Random(5, 15)
+					else
+						posZ = posZ - Random(5, 15)
+						posX = posX - Random(5, 15)
+					end
+
+					if posX <= 0 then
+						posX = Random(1, 15)
+					end
+					if posX >= sizeX then
+						posX = sizeX - Random(1, 15)
+					end
+					if posZ <= 0 then
+						posZ = Random(1, 15)
+					end
+					if posZ >= sizeZ then
+						posZ = sizeZ - Random(1, 15)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(5, 15)
+							posZ = posZ + Random(5, 15)
+						elseif Chance == 2 then
+							posX = posX - Random(5, 15)
+							posZ = posZ + Random(5, 15)
+						elseif Chance == 3 then
+							posX = posX + Random(5, 15)
+							posZ = posZ - Random(5, 15)
+						elseif Chance == 4 then
+							posX = posX - Random(5, 15)
+							posZ = posZ - Random(5, 15)
+						elseif Chance == 5 then
+							posZ = posZ + Random(5, 15)
+							posX = posX + Random(5, 15)
+						elseif Chance == 6 then
+							posZ = posZ - Random(5, 15)
+							posX = posX + Random(5, 15)
+						elseif Chance == 7 then
+							posZ = posZ + Random(5, 15)
+							posX = posX - Random(5, 15)
+						else
+							posZ = posZ - Random(5, 15)
+							posX = posX - Random(5, 15)
+						end
+
+						if posX <= 0 then
+							posX = Random(1, 15)
+						end
+						if posX >= sizeX then
+							posX = sizeX - Random(1, 15)
+						end
+						if posZ <= 0 then
+							posZ = Random(1, 15)
+						end
+						if posZ >= sizeZ then
+							posZ = sizeZ - Random(1, 15)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				end
+				if unit ~= nil then
+					local Position = Random(1, table.getn(validRiftPositions.positions))
+					local nukePos = (validRiftPositions.positions)[Position]
+					WaitTicks(20)
+					if nukePos then
+						IssueNuke({ unit }, nukePos)
+					end
+					WaitTicks(750)
+					if unit ~= nil and not unit:BeenDestroyed() then
+						unit:Destroy()
+					end
+				end	
+			end
+        end
+        KillThread(self)
+    end)
+end
+function DetectAndSpawnOrbRiftWaves()
+    local circle = ForkThread(function(self)
+	local orb
+	local wavesize
+	local totalEnemyMass
+	local UnitsFromMass
+	local riftBuildingList2
+		WaitSeconds(WavesStartTimeAI + 60)
+		repeat
+			--LOG("sa: Running DetectAndSpawnOrbRiftWaves")
+			riftBuildingList2 = {}
+			riftBuildingList2 = aiBrain:GetListOfUnits(categories.riftorb2, false)
+			totalEnemyMass = CalculateEnemyMass()
+			UnitsFromMass = math.floor((totalEnemyMass * 0.00134) + 0.5)
+			wavesize = RiftUnits + totalEnemyParagons + totalEnemyYolonas + UnitsFromMass
+			if wavesize > 50 then
+				wavesize = 50
+			end
+			for i, orb in riftBuildingList2 do
+				if orb and not orb:BeenDestroyed() then
+					CreateWavesForOrbRift(orb, wavesize)
+				end
+			end	
+			WaitSeconds(120)	
+		until GetGameTimeSeconds() > 20000 or won == true
+	end)
+end
+function CreateWavesForOrbRift(orb, wavesize)
+	local circle = ForkThread(function(self)
+		--LOG("sa: Running CreateWavesForOrbRift Size " .. wavesize)
+		local riftorb = orb
+		local posX, posY, posZ = riftorb:GetPositionXYZ()
+		local unitcount = wavesize
+		repeat
+			SpawnLandUnitsForOrb(posX, posZ)
+			unitcount = unitcount - 1
+			WaitTicks(3)
+		until unitcount < 1 or won == true
+		KillThread(self)
+	end)
+end
+function SpawnLandUnitsForOrb(RposX, RposZ)
+	local circle = ForkThread(function(self)
+		local unit = nil
+		local rspawn = nil
+		local posX = RposX
+		local posZ = RposZ
+		--if GetGameTimeSeconds() > WavesStartTimeAI then
+			if TotalMayhemWaves == "Adjustable T1/T2/T3 Experimentals" then
+				rspawn = GetRandomizedTotMayRiftID()
+			else	
+				rspawn = GetRandomizedRiftUnitID()
+			end	
+			if rspawn ~= nil then
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				end
+				if unit and unit ~= nil and not unit.Dead and (HPBonusAI > 0 or ParagonCycle ~= "Off") then
+					if GameTime < 0.33 then
+						totalIncrease = HealthBonus * 0.5
+						maxhp = unit:GetMaxHealth()
+						unit:SetMaxHealth(maxhp + totalIncrease)
+					elseif GameTime >= 0.33 and GameTime < 0.66 then
+						totalIncrease = HealthBonus
+						maxhp = unit:GetMaxHealth()
+						unit:SetMaxHealth(maxhp + totalIncrease)
+					elseif GameTime >= 0.66 and GameTime < 1 then
+						totalIncrease = HealthBonus * 1.5 + Random(1400, 1800) * totalEnemyEndgamers
+						maxhp = unit:GetMaxHealth()
+						unit:SetMaxHealth(maxhp + totalIncrease)
+					elseif GameTime >= 1 then
+						totalIncrease = HealthBonus * 2 + Random(1800, 2800) * totalEnemyEndgamers
+						maxhp = unit:GetMaxHealth()
+						unit:SetMaxHealth(maxhp + totalIncrease)
+					end
+					hp = unit:GetMaxHealth()
+					unit:SetHealth(self, hp)
+					unit:SetReclaimable(false)
+				end
+				if unit and not unit.Dead then
+					if DamageBoost ~= 'Off - 0' then
+						ModifyWeaponDamageBuffAndRange(unit)
+					end	
+					unit:SetSpeedMult(1 + waveNum * SpeedBonus + SpeedBonusOnce)
+					if WaveStyle == "Even Attack Waves" then	
+						RedirectUnit(unit)
+					elseif WaveStyle == "Dynamic Attack Waves" or WaveStyle == "Human with AI Assist" then
+						RedirectUnitLand(unit)	
+					end	
+				end
+				if KillPlayerUnit > 0 then
+					SuicideLandNavyUnit(unit)
+				end	
+			end
+			KillThread(self)
+		--end
+	end)
+end
 function MonitoringFunction()
     local circle = ForkThread(function(self)
         repeat
@@ -8359,16 +9304,15 @@ function MonitoringFunction()
 					RedirectRAMBOS()
 				end	
 			end
-			WaitTicks(20)
-            CheckMainGoal()
+			WaitTicks(2)
+            CheckFinalEndgame()
 			if KillAllNonHQPlayers == "Assassinate All ACUs Defeat" then	
 				MonitoringAllHQEnemyACUs()
 			end
-			WaitTicks(20)
+			WaitTicks(2)
 			if KillHQPlayerAllies == "HQ Allies Kill All ACUs Defeat" then	
 				MonitoringHQAlliesAllACUsAssassin()
 			end	
-			WaitTicks(20)
             if GetGameTimeSeconds() > WavesStartTimeAI and lastWarning == false then
                 lastWarning = true
                 LastWarning()
@@ -8397,13 +9341,13 @@ function MonitoringFunctionHQEnemyEcoBoosts()
 			if HumanEcoBoost > 0 and EndGameEcoBoostflag == false then
 				MonitoringPlayersACU()
 				if EcoBoostFlag == false then	
-					PrintText("EcoBoost Active!", 30, 'ffCBFFFF', 4, 'center')
+					PrintText("EcoBoost Active!", 28, 'ffCBFFFF', 4, 'center')
 					EcoBoostFlag = true
 				end	
 			end	
 			if EndGameEcoBoost > 0 and GetGameTimeSeconds() > (WavesStartTimeAI + HoldTimeAI - EndEcoBoostTime) then
 				if EndGameEcoMessage == false then	
-					PrintText("EndGame EcoBoost Active!", 30, 'ffCBFFFF', 4, 'center')
+					PrintText("EndGame EcoBoost Active!", 28, 'ffCBFFFF', 4, 'center')
 					EndGameEcoMessage = true
 				end	
 				PlayersACUEndGameEcoBoost()
@@ -8504,7 +9448,7 @@ function NuclearStrikeFrequency()
 		Nukex2 = tonumber(NukeStrikeX[3]) * 60
 	end)
 end
-function CheckMainGoal()
+function CheckFinalEndgame()
     if (GetGameTimeSeconds() - WavesStartTimeAI) > HoldTimeAI and HoldTimeOver == false then
 		HoldTimeOver = true
 		HQMass = 10000
@@ -8556,25 +9500,34 @@ function CheckMainGoal()
 			DeployDooms()
 		end
     end
-	--Ends game if HQ dead
-    if (GetGameTimeSeconds() > WavesStartTimeAI and AIMainBuilding ~= nil and AIMainBuilding:BeenDestroyed() and won == false) or
-		EndGameCondition == true and won == false and GetGameTimeSeconds() > (WavesStartTimeAI + HoldTimeAI + EndGameHoldTime) then
-        won = true
-        if aiSecondaryBuildings and aiSecondaryBuildings.secondaryBuildings then
-            for aindex, sBuilding in aiSecondaryBuildings.secondaryBuildings do
-                if sBuilding and not sBuilding:BeenDestroyed() then
-                    sBuilding:Kill()
-                end
-            end
-        end
-        if aiBrain and aiBrain:GetListOfUnits(categories.COMMAND, false)[1] then
-            aiBrain:GetListOfUnits(categories.COMMAND, false)[1]:Kill()
-        end
-        ClearAIAllUnits()
-    end
 end
+function CheckMainGoal()
+	local circle = ForkThread(function(self)
+		--PrintText("CHECK MAIN GOAL!", 30, 'c71c1c', 4, 'center')
+		repeat
+			WaitSeconds(2)
+			local unitlist = aiBrain:GetListOfUnits(categories.mai2201, false)
+			if (GetGameTimeSeconds() > 60 and (table.getn(unitlist) == 0 or (AIMainBuilding ~= nil and AIMainBuilding:BeenDestroyed()))) or
+			(EndGameCondition == true and GetGameTimeSeconds() > (WavesStartTimeAI + HoldTimeAI + EndGameHoldTime)) then
+				won = true
+				if aiSecondaryBuildings and aiSecondaryBuildings.secondaryBuildings then
+					for aindex, sBuilding in aiSecondaryBuildings.secondaryBuildings do
+						if sBuilding and not sBuilding:BeenDestroyed() then
+							sBuilding:Kill()
+						end
+					end
+				end
+				if aiBrain and aiBrain:GetListOfUnits(categories.COMMAND, false)[1] then
+					aiBrain:GetListOfUnits(categories.COMMAND, false)[1]:Kill()
+				end
+				ClearAIAllUnits()
+			end
+		until GetGameTimeSeconds() > 20000	
+	end)
+end	
 function EndgameArtyEvents()
 	local circle = ForkThread(function(self)
+		local ArtyCount
 		MavCount = Random(2, 3) + math.floor(totalEnemyEndgamers * 0.5 + 0.5) + math.floor(humans * 0.5 + 0.5)
 		if MavCount > 12 then
 			MavCount = 12
@@ -8601,19 +9554,43 @@ function EndgameArtyEvents()
 				AACount = AACount - 1
 			until AACount < 1
 		end	
-		if ArtyOn == "On" then
+		if ArtyOn == "On" or ArtyOn == "On, Repeats Spawn" then
 			if ArtyType == "UEB2302" or ArtyType == "UAB2302" or ArtyType == "URB2302" or ArtyType == "XSB2302" or ArtyType == "ARU2401" then
-				MavCount = MavCount + 2
+				ArtyCount = MavCount + 2
+			else
+				ArtyCount = MavCount
+			end	
+			GameOver()
+			WaitSeconds(ArtySpawnTime)
+			repeat
+				WaitTicks(2)
+				CreateArtilleryAroundMainBuilding(ArtyType)
+				ArtyCount = ArtyCount - 1
+			until ArtyCount < 1
+			PrintText("EndGame Artillery Deployed!", 30, 'c71c1c', 4, 'center')
+			if ArtyOn == "On, Repeats Spawn" then
+				RepeatEndgameArtillery()
+			end	
+		end
+	end)
+end
+function RepeatEndgameArtillery()
+	local circle = ForkThread(function(self)
+		local ArtyCount
+		repeat
+			WaitSeconds(30)
+			if ArtyType == "UEB2302" or ArtyType == "UAB2302" or ArtyType == "URB2302" or ArtyType == "XSB2302" or ArtyType == "ARU2401" then
+				ArtyCount = Random(2, 3) + math.floor(totalEnemyEndgamers * 0.5 + 0.5) + math.floor(humans * 0.5 + 0.5)
 			end
 			GameOver()
 			WaitSeconds(ArtySpawnTime)
 			repeat
 				WaitTicks(2)
 				CreateArtilleryAroundMainBuilding(ArtyType)
-				MavCount = MavCount - 1
-			until MavCount < 1
+				ArtyCount = ArtyCount - 1
+			until ArtyCount < 1
 			PrintText("EndGame Artillery Deployed!", 30, 'c71c1c', 4, 'center')
-		end
+		until GetGameTimeSeconds() > 20000 or won == true
 	end)
 end
 function EndlessBossWaves()
@@ -8738,8 +9715,8 @@ function ArtilleryResponse()
 					WaitSeconds(360)
 				else
 					PrintText("Artillery response inbound. ETA 4 Minutes.", 30, 'c71c1c', 4, 'center')
+					WaitSeconds(240)
 				end	
-				WaitSeconds(240)
 				c = 1
 				if totalEnemyExpArty > 0 then
 					c = 0
@@ -8752,7 +9729,11 @@ function ArtilleryResponse()
 					CreateArtilleryAroundMainBuilding("ARU2401")
 					x = x - 1
 				until x < 1	
-				if Random(1, 5) <= 4 then
+				CreateShieldDefenceForAI("GAS4302")
+				if secondaryspawn ~= "Off" then
+					CreateDefenceFor2ndSpawn("GAS4302")
+				end	
+				if Random(1, 5) <= 3 then
 					CreateShieldDefenceForAI("GAS4302")
 					if secondaryspawn ~= "Off" then
 						CreateDefenceFor2ndSpawn("GAS4302")
@@ -8833,7 +9814,7 @@ function MonitoringNearbyEnemyUnitsFunctionTwo()  -- Defensive
         repeat
             WaitSeconds(Random(Nukex1, Nukex2))
             if AIMainBuilding ~= nil and not AIMainBuilding:BeenDestroyed() then
-                local nearbyUnit = GetClosestEnemyUnitToHQ(AIMainBuilding, 39000)
+                local nearbyUnit = GetClosestEnemyUnitToHQ(AIMainBuilding, 35000)
                 if nearbyUnit ~= nil and (NukesOn == "All On" or NukesOn == "Defensive") then
                     local x = Random(1, 2)
                     repeat
@@ -9224,74 +10205,99 @@ function ValidWaterPositionsMonitoring2ndSpawn()
 end
 function SpawnEnemyUnitAtPosition(unitId, posX, posZ, minOffset, maxOffset) --Navy Spawn
     local circle = ForkThread(function(self)
+		--local MapCheck = false
+		local Chance
+		--local count = 0
         local unit = nil
         if GetGameTimeSeconds() > WavesStartTimeAI then
             rspawn = unitId
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(minOffset, maxOffset)
-                    posZ = posZ + Random(minOffset, maxOffset)
-                else
-                    posX = posX - Random(minOffset, maxOffset)
-                    posZ = posZ + Random(minOffset, maxOffset)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(minOffset, maxOffset)
-                    posZ = posZ - Random(minOffset, maxOffset)
-                else
-                    posX = posX - Random(minOffset, maxOffset)
-                    posZ = posZ - Random(minOffset, maxOffset)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(minOffset, maxOffset)
-                    posX = posX + Random(minOffset, maxOffset)
-                else
-                    posZ = posZ - Random(minOffset, maxOffset)
-                    posX = posX + Random(minOffset, maxOffset)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(minOffset, maxOffset)
-                    posX = posX - Random(minOffset, maxOffset)
-                else
-                    posZ = posZ - Random(minOffset, maxOffset)
-                    posX = posX - Random(minOffset, maxOffset)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(minOffset, maxOffset)
-                        posZ = posZ + Random(minOffset, maxOffset)
-                    else
-                        posX = posX - Random(minOffset, maxOffset)
-                        posZ = posZ + Random(minOffset, maxOffset)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(minOffset, maxOffset)
-                        posZ = posZ - Random(minOffset, maxOffset)
-                    else
-                        posX = posX - Random(minOffset, maxOffset)
-                        posZ = posZ - Random(minOffset, maxOffset)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(minOffset, maxOffset)
-                        posX = posX + Random(minOffset, maxOffset)
-                    else
-                        posZ = posZ - Random(minOffset, maxOffset)
-                        posX = posX + Random(minOffset, maxOffset)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(minOffset, maxOffset)
-                        posX = posX - Random(minOffset, maxOffset)
-                    else
-                        posZ = posZ - Random(minOffset, maxOffset)
-                        posX = posX - Random(minOffset, maxOffset)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 5)
+						posZ = posZ + Random(1, 5)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 5)
+						posZ = posZ + Random(1, 5)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 5)
+						posZ = posZ - Random(1, 5)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 5)
+						posZ = posZ - Random(1, 5)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 5)
+						posX = posX + Random(1, 5)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 5)
+						posX = posX + Random(1, 5)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 5)
+						posX = posX - Random(1, 5)
+					else
+						posZ = posZ - Random(1, 5)
+						posX = posX - Random(1, 5)
+					end
+
+					if posX <= 0 then
+						posX = Random(1, 5)
+					end
+					if posX >= sizeX then
+						posX = sizeX - Random(1, 5)
+					end
+					if posZ <= 0 then
+						posZ = Random(1, 5)
+					end
+					if posZ >= sizeZ then
+						posZ = sizeZ - Random(1, 5)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 5)
+							posZ = posZ + Random(1, 5)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 5)
+							posZ = posZ + Random(1, 5)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 5)
+							posZ = posZ - Random(1, 5)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 5)
+							posZ = posZ - Random(1, 5)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 5)
+							posX = posX + Random(1, 5)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 5)
+							posX = posX + Random(1, 5)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 5)
+							posX = posX - Random(1, 5)
+						else
+							posZ = posZ - Random(1, 5)
+							posX = posX - Random(1, 5)
+						end
+
+						if posX <= 0 then
+						posX = Random(1, 5)
+						end
+						if posX >= sizeX then
+							posX = sizeX - Random(1, 5)
+						end
+						if posZ <= 0 then
+							posZ = Random(1, 5)
+						end
+						if posZ >= sizeZ then
+							posZ = sizeZ - Random(1, 5)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -9365,6 +10371,9 @@ end
 function SpawnElectronStormAt(unitId, posX, posZ, minOffset, maxOffset) --Electron Storm Spawn
     local circle = ForkThread(function(self)
         local unit = nil
+		--local MapCheck = false
+		local Chance
+		--local count = 0
         if GetGameTimeSeconds() > WavesStartTimeAI then
             rspawn = unitId
             if rspawn ~= nil then
@@ -9374,35 +10383,46 @@ function SpawnElectronStormAt(unitId, posX, posZ, minOffset, maxOffset) --Electr
                 if unit == nil then
                     local posX = oldposX
                     local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(minOffset, maxOffset)
-                        posZ = posZ + Random(minOffset, maxOffset)
-                    else
-                        posX = posX - Random(minOffset, maxOffset)
-                        posZ = posZ + Random(minOffset, maxOffset)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(minOffset, maxOffset)
-                        posZ = posZ - Random(minOffset, maxOffset)
-                    else
-                        posX = posX - Random(minOffset, maxOffset)
-                        posZ = posZ - Random(minOffset, maxOffset)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(minOffset, maxOffset)
-                        posX = posX + Random(minOffset, maxOffset)
-                    else
-                        posZ = posZ - Random(minOffset, maxOffset)
-                        posX = posX + Random(minOffset, maxOffset)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(minOffset, maxOffset)
-                        posX = posX - Random(minOffset, maxOffset)
-                    else
-                        posZ = posZ - Random(minOffset, maxOffset)
-                        posX = posX - Random(minOffset, maxOffset)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 5)
+							posZ = posZ + Random(1, 5)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 5)
+							posZ = posZ + Random(1, 5)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 5)
+							posZ = posZ - Random(1, 5)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 5)
+							posZ = posZ - Random(1, 5)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 5)
+							posX = posX + Random(1, 5)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 5)
+							posX = posX + Random(1, 5)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 5)
+							posX = posX - Random(1, 5)
+						else
+							posZ = posZ - Random(1, 5)
+							posX = posX - Random(1, 5)
+						end
+
+						if posX <= 0 then
+						posX = Random(1, 5)
+						end
+						if posX >= sizeX then
+							posX = sizeX - Random(1, 5)
+						end
+						if posZ <= 0 then
+							posZ = Random(1, 5)
+						end
+						if posZ >= sizeZ then
+							posZ = sizeZ - Random(1, 5)
+						end
+                    local terrainAltitude = GetTerrainHeight(posX, posZ)
                     unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
@@ -9758,13 +10778,21 @@ function MonitoringSalvationPlayer()
         until GetGameTimeSeconds() > 20000 or won == true
     end)
 end
-function MonitoringAISecondaryBuildings()
+function MonitoringAISecondaryBuildings() --Monitors Support Bases Count
 	if SecondaryBuildingFlag ~= "Off" then
 		local circle = ForkThread(function(self)
-			local TotalCountSupportBases = 1 + math.floor(humans * 0.5 + 0.5)
+			local TotalCountSupportBases = math.floor((1 + math.floor(humans * 0.5 + 0.5)) * SupportBaseMulti + 0.5)
+			if TotalCountSupportBases < 3 then
+				TotalCountSupportBases = 3
+			elseif TotalCountSupportBases > 16 then
+				TotalCountSupportBases = 16
+			end	
 			WaitSeconds(60)
 			repeat
 				WaitTicks(40)
+				if won == true then
+					break
+				end
 				local BuildingCount = 0
 				if aiSecondaryBuildings and aiSecondaryBuildings.secondaryBuildings then
 					for aindex, sBuilding in aiSecondaryBuildings.secondaryBuildings do
@@ -9772,13 +10800,16 @@ function MonitoringAISecondaryBuildings()
 							BuildingCount = BuildingCount + 1
 						end
 					end
-				end	
+				end
 				if BuildingCount < TotalCountSupportBases and BuildingCount ~= 0 then
 					SideObjsDestroyed = SideObjsDestroyed + 1
 					RandomEffectBuildingDestroyed()
 					TotalCountSupportBases = TotalCountSupportBases - 1
 				end	
 				WaitTicks(10)
+				if won == true then
+					break
+				end
 				--PrintText("Remaining Buildings " .. BuildingCount .. " Total", 28, 'ffCBFFFF', 6, 'center')
 				--PrintText("Total Count Buildings After " .. TotalCountSupportBases .. " Total", 28, 'ffCBFFFF', 6, 'center')
 				if BuildingCount == 0 and SecondaryBuildingsDead == false and GetGameTimeSeconds() > 60 then
@@ -9888,15 +10919,19 @@ function RandomEffectBuildingDestroyed()
 	local circle = ForkThread(function(self)
 	local count = 1 + SideObjsDestroyed
 	local count2 = 2 + math.floor(SideObjsDestroyed * 1.5 + 0.5)
+	local gurantee = math.floor((1 + math.floor(humans * 0.5 + 0.5)) * SupportBaseMulti + 0.5) * 0.5
+		if gurantee < 1 then
+			gurantee = 1
+		elseif gurantee > 8 then
+			gurantee = 8
+		end		
 	local chance
 			if Random(1, 10) <= 8 then
 				StunHQUnits()
 				if Random(1, 3) == 2 then
 					ReinforcementsForTeam(count)
 				end
-				if Random(1, 4) == 3 then
-					DamageHQEffect()
-				end
+				DamageHQEffect()
 				GrantResources()
 			else	
 				PrintText("Coms Jammed Failed!", 28, 'ffDD1313', 6, 'center')
@@ -9906,22 +10941,30 @@ function RandomEffectBuildingDestroyed()
 				end
 				GrantResources()
 			end
-			if Random(1, 10) <= 6 then
-				chance = Random(1, 6)
-				if chance == 1 or chance == 3 then
-					BossRetaliation(count)
-				elseif chance == 2 or chance == 4 then
-					if SideObjsDestroyed > 1 then
-						NukeRetaliation(count)
+			if Random(1, 10) <= 6 or SideObjsDestroyed > gurantee then
+				if SupportBaseNukes == 'SB Nuke Retaliation - On' then
+					chance = Random(1, 6)
+					if chance == 1 or chance == 3 then
+						BossRetaliation(count)
+					elseif chance == 2 or chance == 4 then
+						if SideObjsDestroyed > 1 then
+							NukeRetaliation(count)
+						else
+							if Random(1, 2) == 1 then
+								BossRetaliation(count)
+							else
+								ArtilleryRetaliation(count)
+							end
+						end	
 					else
-						if Random(1, 2) == 1 then
+						ArtilleryRetaliation(count)
+					end	
+				else
+					if Random(1, 2) == 1 then
 							BossRetaliation(count)
 						else
 							ArtilleryRetaliation(count)
-						end
-					end	
-				else
-					ArtilleryRetaliation(count)
+					end
 				end	
 			end
 			repeat
@@ -10164,74 +11207,99 @@ end
 function SpawnArtilleryForRetaliation()
     local circle = ForkThread(function(self)
         local unit = nil
+		--local MapCheck = false
+		local Chance
+		--local count = 0
         local posX, posZ = aiBrain:GetArmyStartPos()
         if GetGameTimeSeconds() > 60 then
             rspawn = "ARU2401"
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(15, 30)
-                    posZ = posZ + Random(15, 30)
-                else
-                    posX = posX - Random(15, 30)
-                    posZ = posZ + Random(15, 30)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(15, 30)
-                    posZ = posZ - Random(15, 30)
-                else
-                    posX = posX - Random(15, 30)
-                    posZ = posZ - Random(15, 30)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(15, 30)
-                    posX = posX + Random(15, 30)
-                else
-                    posZ = posZ - Random(15, 30)
-                    posX = posX + Random(15, 30)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(15, 30)
-                    posX = posX - Random(15, 30)
-                else
-                    posZ = posZ - Random(15, 30)
-                    posX = posX - Random(15, 30)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(15, 30)
-                        posZ = posZ + Random(15, 30)
-                    else
-                        posX = posX - Random(15, 30)
-                        posZ = posZ + Random(15, 30)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(15, 30)
-                        posZ = posZ - Random(15, 30)
-                    else
-                        posX = posX - Random(15, 30)
-                        posZ = posZ - Random(15, 30)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(15, 30)
-                        posX = posX + Random(15, 30)
-                    else
-                        posZ = posZ - Random(15, 30)
-                        posX = posX + Random(15, 30)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(15, 30)
-                        posX = posX - Random(15, 30)
-                    else
-                        posZ = posZ - Random(15, 30)
-                        posX = posX - Random(15, 30)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 60)
+						posZ = posZ + Random(1, 60)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 60)
+						posZ = posZ + Random(1, 60)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 60)
+						posZ = posZ - Random(1, 60)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 60)
+						posZ = posZ - Random(1, 60)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 60)
+						posX = posX + Random(1, 60)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 60)
+						posX = posX + Random(1, 60)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 60)
+						posX = posX - Random(1, 60)
+					else
+						posZ = posZ - Random(1, 60)
+						posX = posX - Random(1, 60)
+					end
+
+					if posX < 5 then
+						posX = Random(5, 60)
+					end
+					if posX > (sizeX - 5) then
+						posX = sizeX - Random(5, 60)
+					end
+					if posZ < 5 then
+						posZ = Random(5, 60)
+					end
+					if posZ > (sizeZ - 5) then
+						posZ = sizeZ - Random(5, 60)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 60)
+							posZ = posZ + Random(1, 60)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 60)
+							posZ = posZ + Random(1, 60)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 60)
+							posZ = posZ - Random(1, 60)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 60)
+							posZ = posZ - Random(1, 60)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 60)
+							posX = posX + Random(1, 60)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 60)
+							posX = posX + Random(1, 60)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 60)
+							posX = posX - Random(1, 60)
+						else
+							posZ = posZ - Random(1, 60)
+							posX = posX - Random(1, 60)
+						end
+
+						if posX < 5 then
+							posX = Random(5, 60)
+						end
+						if posX > (sizeX - 5) then
+							posX = sizeX - Random(5, 60)
+						end
+						if posZ < 5 then
+							posZ = Random(5, 60)
+						end
+						if posZ > (sizeZ - 5) then
+							posZ = sizeZ - Random(5, 60)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -10268,6 +11336,9 @@ function SpawnInReinforcements()
         local isAirUnit = false
         local aliveBrain = GetRandomCloseAliveEnemyBrain(self)
 		local posX, posZ = aliveBrain:GetArmyStartPos()
+		--local MapCheck = false
+		local Chance
+		--local count = 0
         if aliveBrain then
             WaitTicks(1)
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
@@ -10276,69 +11347,93 @@ function SpawnInReinforcements()
 					end	
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX + Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX - Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX - Random(5, 20)
-                end
-                unit = aliveBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(20, 35)
-                        posZ = posZ + Random(20, 35)
-                    else
-                        posX = posX - Random(20, 35)
-                        posZ = posZ + Random(20, 35)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(20, 35)
-                        posZ = posZ - Random(20, 35)
-                    else
-                        posX = posX - Random(20, 35)
-                        posZ = posZ - Random(20, 35)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(20, 35)
-                        posX = posX + Random(20, 35)
-                    else
-                        posZ = posZ - Random(20, 35)
-                        posX = posX + Random(20, 35)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(20, 35)
-                        posX = posX - Random(20, 35)
-                    else
-                        posZ = posZ - Random(20, 35)
-                        posX = posX - Random(20, 35)
-                    end
-                    local terrainAltitude = GetTerrainHeight(posX, posZ)
-                    unit = CreateUnitHPR(rspawn, aliveBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 40)
+						posZ = posZ + Random(1, 40)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 40)
+						posZ = posZ + Random(1, 40)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 40)
+						posZ = posZ - Random(1, 40)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 40)
+						posZ = posZ - Random(1, 40)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 40)
+						posX = posX + Random(1, 40)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 40)
+						posX = posX + Random(1, 40)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 40)
+						posX = posX - Random(1, 40)
+					else
+						posZ = posZ - Random(1, 40)
+						posX = posX - Random(1, 40)
+					end
+
+					if posX < 5 then
+						posX = Random(5, 40)
+					end
+					if posX > (sizeX - 5) then
+						posX = sizeX - Random(5, 40)
+					end
+					if posZ < 5 then
+						posZ = Random(5, 40)
+					end
+					if posZ > (sizeZ - 5) then
+						posZ = sizeZ - Random(5, 40)
+					end
+				unit = aliveBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 40)
+							posZ = posZ + Random(1, 40)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 40)
+							posZ = posZ + Random(1, 40)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 40)
+							posZ = posZ - Random(1, 40)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 40)
+							posZ = posZ - Random(1, 40)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 40)
+							posX = posX + Random(1, 40)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 40)
+							posX = posX + Random(1, 40)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 40)
+							posX = posX - Random(1, 40)
+						else
+							posZ = posZ - Random(1, 40)
+							posX = posX - Random(1, 40)
+						end
+
+						if posX < 5 then
+							posX = Random(5, 40)
+						end
+						if posX > (sizeX - 5) then
+							posX = sizeX - Random(5, 40)
+						end
+						if posZ < 5 then
+							posZ = Random(5, 40)
+						end
+						if posZ > (sizeZ - 5) then
+							posZ = sizeZ - Random(5, 40)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aliveBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                     if unit and unit ~= nil and not unit.Dead then
-                        LOG("sa: HPR T4 (unit) = " .. rspawn)
+                        LOG("sa: AllyForcesSPKill (unit) = " .. rspawn)
                     end
                 end
                 if unit and unit ~= nil and not unit.Dead and HPBonusAI > 0 then
@@ -10378,6 +11473,9 @@ function SpawnAlliedForce()
         local isAirUnit = false
         local aliveBrain = GetRandomCloseAliveEnemyBrain(self)
 		local posX, posZ = aliveBrain:GetArmyStartPos()
+		--local MapCheck = false
+		local Chance
+		--local count = 0
         if aliveBrain then
             WaitTicks(1)
 				if SpawnAlliesForceFlag == 'On - Land + Air' then
@@ -10398,69 +11496,93 @@ function SpawnAlliedForce()
 				end	
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX + Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX - Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX - Random(5, 20)
-                end
-                unit = aliveBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(20, 35)
-                        posZ = posZ + Random(20, 35)
-                    else
-                        posX = posX - Random(20, 35)
-                        posZ = posZ + Random(20, 35)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(20, 35)
-                        posZ = posZ - Random(20, 35)
-                    else
-                        posX = posX - Random(20, 35)
-                        posZ = posZ - Random(20, 35)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(20, 35)
-                        posX = posX + Random(20, 35)
-                    else
-                        posZ = posZ - Random(20, 35)
-                        posX = posX + Random(20, 35)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(20, 35)
-                        posX = posX - Random(20, 35)
-                    else
-                        posZ = posZ - Random(20, 35)
-                        posX = posX - Random(20, 35)
-                    end
-                    local terrainAltitude = GetTerrainHeight(posX, posZ)
-                    unit = CreateUnitHPR(rspawn, aliveBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 40)
+						posZ = posZ + Random(1, 40)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 40)
+						posZ = posZ + Random(1, 40)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 40)
+						posZ = posZ - Random(1, 40)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 40)
+						posZ = posZ - Random(1, 40)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 40)
+						posX = posX + Random(1, 40)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 40)
+						posX = posX + Random(1, 40)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 40)
+						posX = posX - Random(1, 40)
+					else
+						posZ = posZ - Random(1, 40)
+						posX = posX - Random(1, 40)
+					end
+
+					if posX < 5 then
+						posX = Random(5, 40)
+					end
+					if posX > (sizeX - 5) then
+						posX = sizeX - Random(5, 40)
+					end
+					if posZ < 5 then
+						posZ = Random(5, 40)
+					end
+					if posZ > (sizeZ - 5) then
+						posZ = sizeZ - Random(5, 40)
+					end
+				unit = aliveBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 40)
+							posZ = posZ + Random(1, 40)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 40)
+							posZ = posZ + Random(1, 40)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 40)
+							posZ = posZ - Random(1, 40)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 40)
+							posZ = posZ - Random(1, 40)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 40)
+							posX = posX + Random(1, 40)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 40)
+							posX = posX + Random(1, 40)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 40)
+							posX = posX - Random(1, 40)
+						else
+							posZ = posZ - Random(1, 40)
+							posX = posX - Random(1, 40)
+						end
+
+						if posX < 5 then
+							posX = Random(5, 40)
+						end
+						if posX > (sizeX - 5) then
+							posX = sizeX - Random(5, 40)
+						end
+						if posZ < 5 then
+							posZ = Random(5, 40)
+						end
+						if posZ > (sizeZ - 5) then
+							posZ = sizeZ - Random(5, 40)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aliveBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                     if unit and unit ~= nil and not unit.Dead then
-                        LOG("sa: HPR T4 (unit) = " .. rspawn)
+                        LOG("sa: AllyForcesEndgame (unit) = " .. rspawn)
                     end
                 end
                 if unit and unit ~= nil and not unit.Dead and HPBonusAI > 0 then
@@ -10495,73 +11617,98 @@ function CreateAndLoadSMDForAI(unitId)
     local circle = ForkThread(function(self)
         local unit = nil
         local posX, posZ = aiBrain:GetArmyStartPos()
+		--local MapCheck = false
+		local Chance
+		--local count = 0
         if GetGameTimeSeconds() > 0 then
             rspawn = unitId
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX + Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX - Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX - Random(5, 20)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 30)
+						posZ = posZ + Random(1, 30)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 30)
+						posZ = posZ + Random(1, 30)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 30)
+						posZ = posZ - Random(1, 30)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 30)
+						posZ = posZ - Random(1, 30)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 30)
+						posX = posX + Random(1, 30)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 30)
+						posX = posX + Random(1, 30)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 30)
+						posX = posX - Random(1, 30)
+					else
+						posZ = posZ - Random(1, 30)
+						posX = posX - Random(1, 30)
+					end
+
+					if posX < 5 then
+						posX = Random(5, 30)
+					end
+					if posX > (sizeX - 5) then
+						posX = sizeX - Random(5, 30)
+					end
+					if posZ < 5 then
+						posZ = Random(5, 30)
+					end
+					if posZ > (sizeZ - 5) then
+						posZ = sizeZ - Random(5, 30)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 30)
+							posZ = posZ + Random(1, 30)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 30)
+							posZ = posZ + Random(1, 30)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 30)
+							posZ = posZ - Random(1, 30)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 30)
+							posZ = posZ - Random(1, 30)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 30)
+							posX = posX + Random(1, 30)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 30)
+							posX = posX + Random(1, 30)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 30)
+							posX = posX - Random(1, 30)
+						else
+							posZ = posZ - Random(1, 30)
+							posX = posX - Random(1, 30)
+						end
+
+						if posX < 5 then
+							posX = Random(5, 30)
+						end
+						if posX > (sizeX - 5) then
+							posX = sizeX - Random(5, 30)
+						end
+						if posZ < 5 then
+							posZ = Random(5, 30)
+						end
+						if posZ > (sizeZ - 5) then
+							posZ = sizeZ - Random(5, 30)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -10581,73 +11728,98 @@ function CreateAndLoadSMDFor2ndSpawn(unitId)
     local circle = ForkThread(function(self)
         local unit = nil
         local posX, posZ = SecBrain:GetArmyStartPos()
+		--local MapCheck = false
+		local Chance
+		--local count = 0
         if GetGameTimeSeconds() > 0 then
             rspawn = unitId
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 15)
-                    posZ = posZ + Random(5, 15)
-                else
-                    posX = posX - Random(5, 15)
-                    posZ = posZ + Random(5, 15)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 15)
-                    posZ = posZ - Random(5, 15)
-                else
-                    posX = posX - Random(5, 15)
-                    posZ = posZ - Random(5, 15)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 15)
-                    posX = posX + Random(5, 15)
-                else
-                    posZ = posZ - Random(5, 15)
-                    posX = posX + Random(5, 15)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 15)
-                    posX = posX - Random(5, 15)
-                else
-                    posZ = posZ - Random(5, 15)
-                    posX = posX - Random(5, 15)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 15)
-                        posZ = posZ + Random(5, 15)
-                    else
-                        posX = posX - Random(5, 15)
-                        posZ = posZ + Random(5, 15)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 15)
-                        posZ = posZ - Random(5, 15)
-                    else
-                        posX = posX - Random(5, 15)
-                        posZ = posZ - Random(5, 15)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 15)
-                        posX = posX + Random(5, 15)
-                    else
-                        posZ = posZ - Random(5, 15)
-                        posX = posX + Random(5, 15)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 15)
-                        posX = posX - Random(5, 15)
-                    else
-                        posZ = posZ - Random(5, 15)
-                        posX = posX - Random(5, 15)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 30)
+						posZ = posZ + Random(1, 30)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 30)
+						posZ = posZ + Random(1, 30)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 30)
+						posZ = posZ - Random(1, 30)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 30)
+						posZ = posZ - Random(1, 30)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 30)
+						posX = posX + Random(1, 30)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 30)
+						posX = posX + Random(1, 30)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 30)
+						posX = posX - Random(1, 30)
+					else
+						posZ = posZ - Random(1, 30)
+						posX = posX - Random(1, 30)
+					end
+
+					if posX < 5 then
+						posX = Random(5, 30)
+					end
+					if posX > (sizeX - 5) then
+						posX = sizeX - Random(5, 30)
+					end
+					if posZ < 5 then
+						posZ = Random(5, 30)
+					end
+					if posZ > (sizeZ - 5) then
+						posZ = sizeZ - Random(5, 30)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 30)
+							posZ = posZ + Random(1, 30)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 30)
+							posZ = posZ + Random(1, 30)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 30)
+							posZ = posZ - Random(1, 30)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 30)
+							posZ = posZ - Random(1, 30)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 30)
+							posX = posX + Random(1, 30)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 30)
+							posX = posX + Random(1, 30)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 30)
+							posX = posX - Random(1, 30)
+						else
+							posZ = posZ - Random(1, 30)
+							posX = posX - Random(1, 30)
+						end
+
+						if posX < 5 then
+							posX = Random(5, 30)
+						end
+						if posX > (sizeX - 5) then
+							posX = sizeX - Random(5, 30)
+						end
+						if posZ < 5 then
+							posZ = Random(5, 30)
+						end
+						if posZ > (sizeZ - 5) then
+							posZ = sizeZ - Random(5, 30)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -10667,73 +11839,98 @@ function CreateAntiAirDefenceForAI(unitId)
     local circle = ForkThread(function(self)
         local unit = nil
         local posX, posZ = aiBrain:GetArmyStartPos()
+		--local MapCheck = false
+		local Chance
+		--local count = 0
         if GetGameTimeSeconds() > 0 then
             rspawn = unitId
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX + Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX - Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX - Random(5, 20)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 50)
+						posZ = posZ + Random(1, 50)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 50)
+						posZ = posZ + Random(1, 50)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 50)
+						posZ = posZ - Random(1, 50)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 50)
+						posZ = posZ - Random(1, 50)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 50)
+						posX = posX + Random(1, 50)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 50)
+						posX = posX + Random(1, 50)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 50)
+						posX = posX - Random(1, 50)
+					else
+						posZ = posZ - Random(1, 50)
+						posX = posX - Random(1, 50)
+					end
+
+					if posX < 5 then
+						posX = Random(5, 50)
+					end
+					if posX > (sizeX - 5) then
+						posX = sizeX - Random(5, 50)
+					end
+					if posZ < 5 then
+						posZ = Random(5, 50)
+					end
+					if posZ > (sizeZ - 5) then
+						posZ = sizeZ - Random(5, 50)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 50)
+							posZ = posZ + Random(1, 50)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 50)
+							posZ = posZ + Random(1, 50)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 50)
+							posZ = posZ - Random(1, 50)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 50)
+							posZ = posZ - Random(1, 50)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 50)
+							posX = posX + Random(1, 50)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 50)
+							posX = posX + Random(1, 50)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 50)
+							posX = posX - Random(1, 50)
+						else
+							posZ = posZ - Random(1, 50)
+							posX = posX - Random(1, 50)
+						end
+
+						if posX < 5 then
+							posX = Random(5, 50)
+						end
+						if posX > (sizeX - 5) then
+							posX = sizeX - Random(5, 50)
+						end
+						if posZ < 5 then
+							posZ = Random(5, 50)
+						end
+						if posZ > (sizeZ - 5) then
+							posZ = sizeZ - Random(5, 50)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -10750,73 +11947,98 @@ function CreateAUnitAroundMainBuildingForAI(unitId)
     local circle = ForkThread(function(self)
         local unit = nil
         local posX, posZ = aiBrain:GetArmyStartPos()
+		--local MapCheck = false
+		local Chance
+		--local count = 0
         if GetGameTimeSeconds() > 0 then
             rspawn = unitId
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(15, 30)
-                    posZ = posZ + Random(15, 30)
-                else
-                    posX = posX - Random(15, 30)
-                    posZ = posZ + Random(15, 30)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(15, 30)
-                    posZ = posZ - Random(15, 30)
-                else
-                    posX = posX - Random(15, 30)
-                    posZ = posZ - Random(15, 30)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(15, 30)
-                    posX = posX + Random(15, 30)
-                else
-                    posZ = posZ - Random(15, 30)
-                    posX = posX + Random(15, 30)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(15, 30)
-                    posX = posX - Random(15, 30)
-                else
-                    posZ = posZ - Random(15, 30)
-                    posX = posX - Random(15, 30)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(15, 30)
-                        posZ = posZ + Random(15, 30)
-                    else
-                        posX = posX - Random(15, 30)
-                        posZ = posZ + Random(15, 30)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(15, 30)
-                        posZ = posZ - Random(15, 30)
-                    else
-                        posX = posX - Random(15, 30)
-                        posZ = posZ - Random(15, 30)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(15, 30)
-                        posX = posX + Random(15, 30)
-                    else
-                        posZ = posZ - Random(15, 30)
-                        posX = posX + Random(15, 30)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(15, 30)
-                        posX = posX - Random(15, 30)
-                    else
-                        posZ = posZ - Random(15, 30)
-                        posX = posX - Random(15, 30)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 60)
+						posZ = posZ + Random(1, 60)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 60)
+						posZ = posZ + Random(1, 60)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 60)
+						posZ = posZ - Random(1, 60)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 60)
+						posZ = posZ - Random(1, 60)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 60)
+						posX = posX + Random(1, 60)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 60)
+						posX = posX + Random(1, 60)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 60)
+						posX = posX - Random(1, 60)
+					else
+						posZ = posZ - Random(1, 60)
+						posX = posX - Random(1, 60)
+					end
+
+					if posX < 5 then
+						posX = Random(5, 60)
+					end
+					if posX > (sizeX - 5) then
+						posX = sizeX - Random(5, 60)
+					end
+					if posZ < 5 then
+						posZ = Random(5, 60)
+					end
+					if posZ > (sizeZ - 5) then
+						posZ = sizeZ - Random(5, 60)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 60)
+							posZ = posZ + Random(1, 60)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 60)
+							posZ = posZ + Random(1, 60)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 60)
+							posZ = posZ - Random(1, 60)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 60)
+							posZ = posZ - Random(1, 60)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 60)
+							posX = posX + Random(1, 60)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 60)
+							posX = posX + Random(1, 60)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 60)
+							posX = posX - Random(1, 60)
+						else
+							posZ = posZ - Random(1, 60)
+							posX = posX - Random(1, 60)
+						end
+
+						if posX < 5 then
+							posX = Random(5, 60)
+						end
+						if posX > (sizeX - 5) then
+							posX = sizeX - Random(5, 60)
+						end
+						if posZ < 5 then
+							posZ = Random(5, 60)
+						end
+						if posZ > (sizeZ - 5) then
+							posZ = sizeZ - Random(5, 60)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -10833,73 +12055,98 @@ function CreateArtilleryAroundMainBuilding(unitId)
     local circle = ForkThread(function(self)
         local unit = nil
         local posX, posZ = aiBrain:GetArmyStartPos()
+		--local MapCheck = false
+		local Chance
+		--local count = 0
         if GetGameTimeSeconds() > 0 then
             rspawn = unitId
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(15, 30)
-                    posZ = posZ + Random(15, 30)
-                else
-                    posX = posX - Random(15, 30)
-                    posZ = posZ + Random(15, 30)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(15, 30)
-                    posZ = posZ - Random(15, 30)
-                else
-                    posX = posX - Random(15, 30)
-                    posZ = posZ - Random(15, 30)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(15, 30)
-                    posX = posX + Random(15, 30)
-                else
-                    posZ = posZ - Random(15, 30)
-                    posX = posX + Random(15, 30)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(15, 30)
-                    posX = posX - Random(15, 30)
-                else
-                    posZ = posZ - Random(15, 30)
-                    posX = posX - Random(15, 30)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(15, 30)
-                        posZ = posZ + Random(15, 30)
-                    else
-                        posX = posX - Random(15, 30)
-                        posZ = posZ + Random(15, 30)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(15, 30)
-                        posZ = posZ - Random(15, 30)
-                    else
-                        posX = posX - Random(15, 30)
-                        posZ = posZ - Random(15, 30)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(15, 30)
-                        posX = posX + Random(15, 30)
-                    else
-                        posZ = posZ - Random(15, 30)
-                        posX = posX + Random(15, 30)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(15, 30)
-                        posX = posX - Random(15, 30)
-                    else
-                        posZ = posZ - Random(15, 30)
-                        posX = posX - Random(15, 30)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 60)
+						posZ = posZ + Random(1, 60)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 60)
+						posZ = posZ + Random(1, 60)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 60)
+						posZ = posZ - Random(1, 60)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 60)
+						posZ = posZ - Random(1, 60)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 60)
+						posX = posX + Random(1, 60)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 60)
+						posX = posX + Random(1, 60)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 60)
+						posX = posX - Random(1, 60)
+					else
+						posZ = posZ - Random(1, 60)
+						posX = posX - Random(1, 60)
+					end
+
+					if posX < 5 then
+						posX = Random(5, 60)
+					end
+					if posX > (sizeX - 5) then
+						posX = sizeX - Random(5, 60)
+					end
+					if posZ < 5 then
+						posZ = Random(5, 60)
+					end
+					if posZ > (sizeZ - 5) then
+						posZ = sizeZ - Random(5, 60)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 60)
+							posZ = posZ + Random(1, 60)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 60)
+							posZ = posZ + Random(1, 60)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 60)
+							posZ = posZ - Random(1, 60)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 60)
+							posZ = posZ - Random(1, 60)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 60)
+							posX = posX + Random(1, 60)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 60)
+							posX = posX + Random(1, 60)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 60)
+							posX = posX - Random(1, 60)
+						else
+							posZ = posZ - Random(1, 60)
+							posX = posX - Random(1, 60)
+						end
+
+						if posX < 5 then
+							posX = Random(5, 60)
+						end
+						if posX > (sizeX - 5) then
+							posX = sizeX - Random(5, 60)
+						end
+						if posZ < 5 then
+							posZ = Random(5, 60)
+						end
+						if posZ > (sizeZ - 5) then
+							posZ = sizeZ - Random(5, 60)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -10988,7 +12235,7 @@ function CreateABomberAroundMainBuildingForAI(unitId)
                         posZ = posZ - Random(15, 30)
                         posX = posX - Random(15, 30)
                     end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
+                    local terrainAltitude = GetTerrainHeight(posX, posZ)
                     unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
@@ -11010,6 +12257,9 @@ function CreatACUHunterUnit(unitId)
         local unit = nil
         local posX
 		local posZ
+		--local MapCheck = false
+		local Chance
+		--local count = 0
 		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
 			posX, posZ = AltHQBrain:GetArmyStartPos()
 		else
@@ -11019,69 +12269,91 @@ function CreatACUHunterUnit(unitId)
             rspawn = unitId
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(15, 30)
-                    posZ = posZ + Random(15, 30)
-                else
-                    posX = posX - Random(15, 30)
-                    posZ = posZ + Random(15, 30)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(15, 30)
-                    posZ = posZ - Random(15, 30)
-                else
-                    posX = posX - Random(15, 30)
-                    posZ = posZ - Random(15, 30)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(15, 30)
-                    posX = posX + Random(15, 30)
-                else
-                    posZ = posZ - Random(15, 30)
-                    posX = posX + Random(15, 30)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(15, 30)
-                    posX = posX - Random(15, 30)
-                else
-                    posZ = posZ - Random(15, 30)
-                    posX = posX - Random(15, 30)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(15, 30)
-                        posZ = posZ + Random(15, 30)
-                    else
-                        posX = posX - Random(15, 30)
-                        posZ = posZ + Random(15, 30)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(15, 30)
-                        posZ = posZ - Random(15, 30)
-                    else
-                        posX = posX - Random(15, 30)
-                        posZ = posZ - Random(15, 30)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(15, 30)
-                        posX = posX + Random(15, 30)
-                    else
-                        posZ = posZ - Random(15, 30)
-                        posX = posX + Random(15, 30)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(15, 30)
-                        posX = posX - Random(15, 30)
-                    else
-                        posZ = posZ - Random(15, 30)
-                        posX = posX - Random(15, 30)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 55)
+						posZ = posZ + Random(1, 55)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 55)
+						posZ = posZ + Random(1, 55)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 55)
+						posZ = posZ - Random(1, 55)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 55)
+						posZ = posZ - Random(1, 55)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 55)
+						posX = posX + Random(1, 55)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 55)
+						posX = posX + Random(1, 55)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 55)
+						posX = posX - Random(1, 55)
+					else
+						posZ = posZ - Random(1, 55)
+						posX = posX - Random(1, 55)
+					end
+
+					if posX < 5 then
+						posX = Random(5, 55)
+					end
+					if posX > (sizeX - 5) then
+						posX = sizeX - Random(5, 55)
+					end
+					if posZ < 5 then
+						posZ = Random(5, 55)
+					end
+					if posZ > (sizeZ - 5) then
+						posZ = sizeZ - Random(5, 55)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 55)
+							posZ = posZ + Random(1, 55)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 55)
+							posZ = posZ + Random(1, 55)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 55)
+							posZ = posZ - Random(1, 55)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 55)
+							posZ = posZ - Random(1, 55)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 55)
+							posX = posX + Random(1, 55)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 55)
+							posX = posX + Random(1, 55)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 55)
+							posX = posX - Random(1, 55)
+						else
+							posZ = posZ - Random(1, 55)
+							posX = posX - Random(1, 55)
+						end
+
+						if posX < 5 then
+							posX = Random(5, 55)
+						end
+						if posX > (sizeX - 5) then
+							posX = sizeX - Random(5, 55)
+						end
+						if posZ < 5 then
+							posZ = Random(5, 55)
+						end
+						if posZ > (sizeZ - 5) then
+							posZ = sizeZ - Random(5, 55)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -11121,73 +12393,98 @@ function CreateAUnitAroundMainBuildingForAITwo(unitId)
     local circle = ForkThread(function(self)
         local unit = nil
         local posX, posZ = aiBrain:GetArmyStartPos()
+		--local MapCheck = false
+		local Chance
+		--local count = 0
         if GetGameTimeSeconds() > 0 then
             rspawn = unitId
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 25)
-                    posZ = posZ + Random(5, 25)
-                else
-                    posX = posX - Random(5, 25)
-                    posZ = posZ + Random(5, 25)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 25)
-                    posZ = posZ - Random(5, 25)
-                else
-                    posX = posX - Random(5, 25)
-                    posZ = posZ - Random(5, 25)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 25)
-                    posX = posX + Random(5, 25)
-                else
-                    posZ = posZ - Random(5, 25)
-                    posX = posX + Random(5, 25)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 25)
-                    posX = posX - Random(5, 25)
-                else
-                    posZ = posZ - Random(5, 25)
-                    posX = posX - Random(5, 25)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 25)
-                        posZ = posZ + Random(5, 25)
-                    else
-                        posX = posX - Random(5, 25)
-                        posZ = posZ + Random(5, 25)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 25)
-                        posZ = posZ - Random(5, 25)
-                    else
-                        posX = posX - Random(5, 25)
-                        posZ = posZ - Random(5, 25)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 25)
-                        posX = posX + Random(5, 25)
-                    else
-                        posZ = posZ - Random(5, 25)
-                        posX = posX + Random(5, 25)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 25)
-                        posX = posX - Random(5, 25)
-                    else
-                        posZ = posZ - Random(5, 25)
-                        posX = posX - Random(5, 25)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 50)
+						posZ = posZ + Random(1, 50)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 50)
+						posZ = posZ + Random(1, 50)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 50)
+						posZ = posZ - Random(1, 50)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 50)
+						posZ = posZ - Random(1, 50)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 50)
+						posX = posX + Random(1, 50)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 50)
+						posX = posX + Random(1, 50)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 50)
+						posX = posX - Random(1, 50)
+					else
+						posZ = posZ - Random(1, 50)
+						posX = posX - Random(1, 50)
+					end
+
+					if posX < 5 then
+						posX = Random(5, 50)
+					end
+					if posX > (sizeX - 5) then
+						posX = sizeX - Random(5, 50)
+					end
+					if posZ < 5 then
+						posZ = Random(5, 50)
+					end
+					if posZ > (sizeZ - 5) then
+						posZ = sizeZ - Random(5, 50)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 50)
+							posZ = posZ + Random(1, 50)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 50)
+							posZ = posZ + Random(1, 50)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 50)
+							posZ = posZ - Random(1, 50)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 50)
+							posZ = posZ - Random(1, 50)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 50)
+							posX = posX + Random(1, 50)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 50)
+							posX = posX + Random(1, 50)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 50)
+							posX = posX - Random(1, 50)
+						else
+							posZ = posZ - Random(1, 50)
+							posX = posX - Random(1, 50)
+						end
+
+						if posX < 5 then
+							posX = Random(5, 50)
+						end
+						if posX > (sizeX - 5) then
+							posX = sizeX - Random(5, 50)
+						end
+						if posZ < 5 then
+							posZ = Random(5, 50)
+						end
+						if posZ > (sizeZ - 5) then
+							posZ = sizeZ - Random(5, 50)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -11205,6 +12502,9 @@ function CreateACombinedLandBossUnitAroundMainBuildingForAI() --Minor Boss Land
         WaitTicks(100)
         local rspawn
         local unit = nil
+		--local MapCheck = false
+		local Chance
+		--local count = 0
 			if secondaryspawn ~= "Off" and spawnrateair > 0 and SecondarySpawnDead == false then
 					if Alt2ndSpawn ~= "Off" and Alt2ndBuildingDead == false and Random(1, 2) == 1 then
 						posX, posZ = Alt2ndBrain:GetArmyStartPos()
@@ -11238,69 +12538,91 @@ function CreateACombinedLandBossUnitAroundMainBuildingForAI() --Minor Boss Land
             end
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX + Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX - Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX - Random(5, 20)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 45)
+						posZ = posZ + Random(1, 45)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 45)
+						posZ = posZ + Random(1, 45)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 45)
+						posZ = posZ - Random(1, 45)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 45)
+						posZ = posZ - Random(1, 45)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 45)
+						posX = posX + Random(1, 45)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 45)
+						posX = posX + Random(1, 45)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 45)
+						posX = posX - Random(1, 45)
+					else
+						posZ = posZ - Random(1, 45)
+						posX = posX - Random(1, 45)
+					end
+
+					if posX < 5 then
+						posX = Random(5, 45)
+					end
+					if posX > (sizeX - 5) then
+						posX = sizeX - Random(5, 45)
+					end
+					if posZ < 5 then
+						posZ = Random(5, 45)
+					end
+					if posZ > (sizeZ - 5) then
+						posZ = sizeZ - Random(5, 45)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 45)
+							posZ = posZ + Random(1, 45)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 45)
+							posZ = posZ + Random(1, 45)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 45)
+							posZ = posZ - Random(1, 45)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 45)
+							posZ = posZ - Random(1, 45)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 45)
+							posX = posX + Random(1, 45)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 45)
+							posX = posX + Random(1, 45)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 45)
+							posX = posX - Random(1, 45)
+						else
+							posZ = posZ - Random(1, 45)
+							posX = posX - Random(1, 45)
+						end
+
+						if posX < 5 then
+						posX = Random(5, 45)
+						end
+						if posX > (sizeX - 5) then
+							posX = sizeX - Random(5, 45)
+						end
+						if posZ < 5 then
+							posZ = Random(5, 45)
+						end
+						if posZ > (sizeZ - 5) then
+							posZ = sizeZ - Random(5, 45)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -11313,6 +12635,7 @@ function CreateACombinedLandBossUnitAroundMainBuildingForAI() --Minor Boss Land
             end
             hp = unit:GetMaxHealth()
             unit:SetHealth(self, hp)
+			local Pos1x, Pos1y, Pos1z = unit:GetPositionXYZ()
             local attachedUnitsCount = Random(2, 3) + math.floor(totalEnemyYolonas * 0.33 + 0.5) + math.floor(totalEnemyParagons * 0.5 + 0.5)
             if attachedUnitsCount > 6 then
                 attachedUnitsCount = 6
@@ -11347,7 +12670,15 @@ function CreateACombinedLandBossUnitAroundMainBuildingForAI() --Minor Boss Land
 			end
 			if KillPlayerUnit > 0 then
 				SuicideBoss(unit)
-			end	
+			end
+			WaitSeconds(20)
+			if not unit:BeenDestroyed() then
+				local Pos2x, Pos2y, Pos2z = unit:GetPositionXYZ()
+				if Pos1x == Pos2x and Pos1z == Pos2z then
+					unit:Destroy()
+					CreateACombinedLandBossUnitAroundMainBuildingForAI()
+				end	
+			end
         end
         KillThread(self)
     end)
@@ -11431,7 +12762,7 @@ function CreateACombinedAirBossUnitAroundMainBuildingForAI()  --Endgame Boss Air
                         posZ = posZ - Random(5, 20)
                         posX = posX - Random(5, 20)
                     end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
+                    local terrainAltitude = GetTerrainHeight(posX, posZ)
                     unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
@@ -11551,7 +12882,7 @@ function CreateAirBossUnitForYolonas()  --Endgame Boss for Yolo Script Air
                         posZ = posZ - Random(5, 20)
                         posX = posX - Random(5, 20)
                     end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
+                    local terrainAltitude = GetTerrainHeight(posX, posZ)
                     unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
@@ -11596,6 +12927,9 @@ function CreateHugeBossUnitAroundMainBuildingForAI() --EndGame Boss Land
         local unit = nil
         local posX
 		local posZ
+		--local MapCheck = false
+		local Chance
+		--local count = 0
 		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
 			posX, posZ = AltHQBrain:GetArmyStartPos()
 		else
@@ -11611,69 +12945,91 @@ function CreateHugeBossUnitAroundMainBuildingForAI() --EndGame Boss Land
             end
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX + Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX - Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX - Random(5, 20)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 45)
+						posZ = posZ + Random(1, 45)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 45)
+						posZ = posZ + Random(1, 45)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 45)
+						posZ = posZ - Random(1, 45)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 45)
+						posZ = posZ - Random(1, 45)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 45)
+						posX = posX + Random(1, 45)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 45)
+						posX = posX + Random(1, 45)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 45)
+						posX = posX - Random(1, 45)
+					else
+						posZ = posZ - Random(1, 45)
+						posX = posX - Random(1, 45)
+					end
+
+					if posX < 5 then
+						posX = Random(5, 45)
+					end
+					if posX > (sizeX - 5) then
+						posX = sizeX - Random(5, 45)
+					end
+					if posZ < 5 then
+						posZ = Random(5, 45)
+					end
+					if posZ > (sizeZ - 5) then
+						posZ = sizeZ - Random(5, 45)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 45)
+							posZ = posZ + Random(1, 45)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 45)
+							posZ = posZ + Random(1, 45)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 45)
+							posZ = posZ - Random(1, 45)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 45)
+							posZ = posZ - Random(1, 45)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 45)
+							posX = posX + Random(1, 45)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 45)
+							posX = posX + Random(1, 45)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 45)
+							posX = posX - Random(1, 45)
+						else
+							posZ = posZ - Random(1, 45)
+							posX = posX - Random(1, 45)
+						end
+
+						if posX < 5 then
+							posX = Random(5, 45)
+						end
+						if posX > (sizeX - 5) then
+							posX = sizeX - Random(5, 45)
+						end
+						if posZ < 5 then
+							posZ = Random(5, 45)
+						end
+						if posZ > (sizeZ - 5) then
+							posZ = sizeZ - Random(5, 45)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -11682,6 +13038,7 @@ function CreateHugeBossUnitAroundMainBuildingForAI() --EndGame Boss Land
             unit:SetMaxHealth(maxhp + 18 * (GetGameTimeSeconds() - WavesStartTimeAI) + Random(250, 500) * totalEnemyT3LandDefences + Random(1000, 2000) * totalEnemyExpDefences + Random(50000, 75000) * totalEnemyEndgamers + HealthBonus + totalExpUnits * Random(2000, 3000))
             hp = unit:GetMaxHealth()
             unit:SetHealth(self, hp)
+			local Pos1x, Pos1y, Pos1z = unit:GetPositionXYZ()
             local attachedUnitsCount = Random(3, 5) + math.floor(totalEnemyYolonas * 0.33 + 0.5) + math.floor(totalEnemyParagons * 0.5 + 0.5)
             if attachedUnitsCount > 12 then
                 attachedUnitsCount = 12
@@ -11719,7 +13076,15 @@ function CreateHugeBossUnitAroundMainBuildingForAI() --EndGame Boss Land
 			end
 			if KillPlayerUnit > 0 then
 				SuicideBoss(unit)
-			end	
+			end
+			WaitSeconds(20)
+			if not unit:BeenDestroyed() then
+				local Pos2x, Pos2y, Pos2z = unit:GetPositionXYZ()
+				if Pos1x == Pos2x and Pos1z == Pos2z then
+					unit:Destroy()
+					CreateHugeBossUnitAroundMainBuildingForAI()
+				end	
+			end
         end
         KillThread(self)
     end)
@@ -11731,6 +13096,9 @@ function CreateHugeBossForYolonas() -- Endgame Boss for Yolos Land
         local unit = nil
         local posX
 		local posZ
+		--local MapCheck = false
+		local Chance
+		--local count = 0
 		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
 			posX, posZ = AltHQBrain:GetArmyStartPos()
 		else
@@ -11746,69 +13114,91 @@ function CreateHugeBossForYolonas() -- Endgame Boss for Yolos Land
             end
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX + Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX - Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX - Random(5, 20)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 45)
+						posZ = posZ + Random(1, 45)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 45)
+						posZ = posZ + Random(1, 45)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 45)
+						posZ = posZ - Random(1, 45)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 45)
+						posZ = posZ - Random(1, 45)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 45)
+						posX = posX + Random(1, 45)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 45)
+						posX = posX + Random(1, 45)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 45)
+						posX = posX - Random(1, 45)
+					else
+						posZ = posZ - Random(1, 45)
+						posX = posX - Random(1, 45)
+					end
+
+					if posX < 5 then
+						posX = Random(5, 45)
+					end
+					if posX > (sizeX - 5) then
+						posX = sizeX - Random(5, 45)
+					end
+					if posZ < 5 then
+						posZ = Random(5, 45)
+					end
+					if posZ > (sizeZ - 5) then
+						posZ = sizeZ - Random(5, 45)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 45)
+							posZ = posZ + Random(1, 45)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 45)
+							posZ = posZ + Random(1, 45)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 45)
+							posZ = posZ - Random(1, 45)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 45)
+							posZ = posZ - Random(1, 45)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 45)
+							posX = posX + Random(1, 45)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 45)
+							posX = posX + Random(1, 45)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 45)
+							posX = posX - Random(1, 45)
+						else
+							posZ = posZ - Random(1, 45)
+							posX = posX - Random(1, 45)
+						end
+
+						if posX < 5 then
+							posX = Random(5, 45)
+						end
+						if posX > (sizeX - 5) then
+							posX = sizeX - Random(5, 45)
+						end
+						if posZ < 5 then
+							posZ = Random(5, 45)
+						end
+						if posZ > (sizeZ - 5) then
+							posZ = sizeZ - Random(5, 45)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -11817,6 +13207,7 @@ function CreateHugeBossForYolonas() -- Endgame Boss for Yolos Land
             unit:SetMaxHealth(maxhp + 100000 + 20 * (GetGameTimeSeconds() - WavesStartTimeAI) + Random(300, 550) * totalEnemyT3LandDefences + Random(1000, 2000) * totalEnemyExpDefences + Random(50000, 75000) * totalEnemyEndgamers + HealthBonus + totalExpUnits * Random(2000, 3000))
             hp = unit:GetMaxHealth()
             unit:SetHealth(self, hp)
+			local Pos1x, Pos1y, Pos1z = unit:GetPositionXYZ()
             local attachedUnitsCount = Random(3, 5) + math.floor(totalEnemyYolonas * 0.33 + 0.5) + math.floor(totalEnemyParagons * 0.5 + 0.5)
             if attachedUnitsCount > 12 then
                 attachedUnitsCount = 12
@@ -11852,6 +13243,14 @@ function CreateHugeBossForYolonas() -- Endgame Boss for Yolos Land
 			elseif WaveStyle == "Dynamic Attack Waves" or WaveStyle == "Human with AI Assist" then
 				RedirectDoomWalker(unit)
 			end
+			WaitSeconds(20)
+			if not unit:BeenDestroyed() then
+				local Pos2x, Pos2y, Pos2z = unit:GetPositionXYZ()
+				if Pos1x == Pos2x and Pos1z == Pos2z then
+					unit:Destroy()
+					CreateHugeBossForYolonas()
+				end	
+			end
         end
         KillThread(self)
     end)
@@ -11864,6 +13263,9 @@ function CreateDoomBoss() --Endgame Doom Boss
         local unit = nil
         local posX
 		local posZ
+		--local MapCheck = false
+		local Chance
+		--local count = 0
 		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
 			posX, posZ = AltHQBrain:GetArmyStartPos()
 		else
@@ -11874,69 +13276,91 @@ function CreateDoomBoss() --Endgame Doom Boss
 
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX + Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX - Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX - Random(5, 20)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 45)
+						posZ = posZ + Random(1, 45)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 45)
+						posZ = posZ + Random(1, 45)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 45)
+						posZ = posZ - Random(1, 45)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 45)
+						posZ = posZ - Random(1, 45)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 45)
+						posX = posX + Random(1, 45)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 45)
+						posX = posX + Random(1, 45)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 45)
+						posX = posX - Random(1, 45)
+					else
+						posZ = posZ - Random(1, 45)
+						posX = posX - Random(1, 45)
+					end
+
+					if posX < 5 then
+						posX = Random(5, 45)
+					end
+					if posX > (sizeX - 5) then
+						posX = sizeX - Random(5, 45)
+					end
+					if posZ < 5 then
+						posZ = Random(5, 45)
+					end
+					if posZ > (sizeZ - 5) then
+						posZ = sizeZ - Random(5, 45)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 45)
+							posZ = posZ + Random(1, 45)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 45)
+							posZ = posZ + Random(1, 45)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 45)
+							posZ = posZ - Random(1, 45)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 45)
+							posZ = posZ - Random(1, 45)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 45)
+							posX = posX + Random(1, 45)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 45)
+							posX = posX + Random(1, 45)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 45)
+							posX = posX - Random(1, 45)
+						else
+							posZ = posZ - Random(1, 45)
+							posX = posX - Random(1, 45)
+						end
+
+						if posX < 5 then
+							posX = Random(5, 45)
+						end
+						if posX > (sizeX - 5) then
+							posX = sizeX - Random(5, 45)
+						end
+						if posZ < 5 then
+							posZ = Random(5, 45)
+						end
+						if posZ > (sizeZ - 5) then
+							posZ = sizeZ - Random(5, 45)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -11947,6 +13371,7 @@ function CreateDoomBoss() --Endgame Doom Boss
             unit:SetMaxHealth(maxhp + DoomHPBonus + Random(250, 500) * totalEnemyT3LandDefences + Random(1000, 2000) * totalEnemyExpDefences + Random(50000, 75000) * totalEnemyEndgamers + HealthBonus * 17 + totalExpUnits * Random(3000, 5000))
             hp = unit:GetMaxHealth()
             unit:SetHealth(self, hp)
+			local Pos1x, Pos1y, Pos1z = unit:GetPositionXYZ()
 			--unit:AlterArmor("Nuke", 0.33)
             local attachedUnitsCount = 4 + math.floor(totalEnemyYolonas * 0.33 + 0.5) + math.floor(totalEnemyParagons * 0.5 + 0.5)
             if attachedUnitsCount > 6 then
@@ -11985,7 +13410,15 @@ function CreateDoomBoss() --Endgame Doom Boss
 			end
 			if KillPlayerUnit > 0 then
 				SuicideBoss(unit)
-			end	
+			end
+			WaitSeconds(20)
+			if not unit:BeenDestroyed() then
+				local Pos2x, Pos2y, Pos2z = unit:GetPositionXYZ()
+				if Pos1x == Pos2x and Pos1z == Pos2z then
+					unit:Destroy()
+					CreateDoomBoss()
+				end	
+			end
         end
         KillThread(self)
     end)
@@ -12037,6 +13470,13 @@ end
 function DeployDooms() --Begin Doom Wave
 	local circle = ForkThread(function(self)
 		local count = DoomCount
+		if HQAlert == true then
+			local totalEnemyMass = CalculateEnemyMass()
+			if totalEnemyMass >= 5000 then
+				local ExtraDooms = math.floor(totalEnemyMass * 0.0002 + 0.1)
+				count = count + ExtraDooms
+			end
+		end
 		repeat
 			CreateDoomBoss()
 			count = count - 1
@@ -12066,8 +13506,9 @@ function MonitorDoomWave() --Monitor Dooms
 		local HQCurrentHP
 		local HQDamage
 		local HQhp
+		local HQAlmostDead
 		repeat
-			WaitSeconds(10)
+			WaitSeconds(5)
 			AliveDooms = aiBrain:GetListOfUnits(categories.OPERATION * categories.MOBILE * categories.MASSIVE * categories.STRATEGIC * categories.BOT - categories.STRUCTURE, false)
 			TotalDooms = table.getn(AliveDooms)
 			--PrintText("Total Dooms " .. TotalDooms .. " !", 28, 'ffCBFFFF', 6, 'center')
@@ -12080,6 +13521,7 @@ function MonitorDoomWave() --Monitor Dooms
 			HQMaxHP = AIMainBuilding:GetMaxHealth()
 			HQCurrentHP = AIMainBuilding:GetHealth()
 			HQDamage = MainBuildingHPAI * DoomDamageHQ
+			HQAlmostDead = HQCurrentHP - (HQDamage * 2)
 			HQhp = HQCurrentHP - HQDamage
 			if HQhp > 0 and DoomDamageHQ > 0 then
 				AIMainBuilding:SetHealth(self, HQhp)
@@ -12087,14 +13529,25 @@ function MonitorDoomWave() --Monitor Dooms
 			else
 				AIMainBuilding:Kill()
 			end	
+			if HQAlmostDead <= 0 and DoomDamageHQ > 0 and HQAlert == false then
+				PrintText("===HQ near Defeat! Final Doom Wave!===", 28, 'ffEC3F35', 6, 'center')
+				HQAlert = true
+			end	
 		end
 		WaitSeconds(50)
-		DeployDooms()
+		if won ~= true then
+			DeployDooms()
+		end	
 	end)
 end	
 function CreateAUnitAroundSecondaryBuildingsForAI(unitIda)
     local circle = ForkThread(function(self)
         if aiSecondaryBuildings and aiSecondaryBuildings.secondaryBuildings then
+			--local MapCheck = false
+			local Chance
+			local terrainAltitude
+			local surfaceAltitude
+			--local count = 0
             local buildingcount = 0
 			for aindex, sBuilding in aiSecondaryBuildings.secondaryBuildings do
                 if sBuilding and not sBuilding:BeenDestroyed() then
@@ -12127,69 +13580,113 @@ function CreateAUnitAroundSecondaryBuildingsForAI(unitIda)
                         rspawn = unitIda
                         if rspawn ~= nil then
                             local oldposX = posX
-                            local oldposZ = posZ
-                            if Random(1, 2) == 2 then
-                                posX = posX + Random(5, 12)
-                                posZ = posZ + Random(5, 12)
-                            else
-                                posX = posX - Random(5, 12)
-                                posZ = posZ + Random(5, 12)
-                            end
-                            if Random(1, 2) == 2 then
-                                posX = posX + Random(5, 12)
-                                posZ = posZ - Random(5, 12)
-                            else
-                                posX = posX - Random(5, 12)
-                                posZ = posZ - Random(5, 12)
-                            end
-                            if Random(1, 2) == 2 then
-                                posZ = posZ + Random(5, 12)
-                                posX = posX + Random(5, 12)
-                            else
-                                posZ = posZ - Random(5, 12)
-                                posX = posX + Random(5, 12)
-                            end
-                            if Random(1, 2) == 2 then
-                                posZ = posZ + Random(5, 12)
-                                posX = posX - Random(5, 12)
-                            else
-                                posZ = posZ - Random(5, 12)
-                                posX = posX - Random(5, 12)
-                            end
-                            unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                            if unit == nil then
-                                local posX = oldposX
-                                local posZ = oldposZ
-                                if Random(1, 2) == 2 then
-                                    posX = posX + Random(5, 15)
-                                    posZ = posZ + Random(5, 15)
-                                else
-                                    posX = posX - Random(5, 15)
-                                    posZ = posZ + Random(5, 15)
-                                end
-                                if Random(1, 2) == 2 then
-                                    posX = posX + Random(5, 15)
-                                    posZ = posZ - Random(5, 15)
-                                else
-                                    posX = posX - Random(5, 15)
-                                    posZ = posZ - Random(5, 15)
-                                end
-                                if Random(1, 2) == 2 then
-                                    posZ = posZ + Random(5, 15)
-                                    posX = posX + Random(5, 15)
-                                else
-                                    posZ = posZ - Random(5, 15)
-                                    posX = posX + Random(5, 15)
-                                end
-                                if Random(1, 2) == 2 then
-                                    posZ = posZ + Random(5, 15)
-                                    posX = posX - Random(5, 15)
-                                else
-                                    posZ = posZ - Random(5, 15)
-                                    posX = posX - Random(5, 15)
-                                end
-                                local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                                unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+							local oldposZ = posZ
+								Chance = Random(1, 8)
+								if Chance == 1 then
+									posX = posX + Random(5, 15)
+									posZ = posZ + Random(5, 15)
+								elseif Chance == 2 then
+									posX = posX - Random(5, 15)
+									posZ = posZ + Random(5, 15)
+								elseif Chance == 3 then
+									posX = posX + Random(5, 15)
+									posZ = posZ - Random(5, 15)
+								elseif Chance == 4 then
+									posX = posX - Random(5, 15)
+									posZ = posZ - Random(5, 15)
+								elseif Chance == 5 then
+									posZ = posZ + Random(5, 15)
+									posX = posX + Random(5, 15)
+								elseif Chance == 6 then
+									posZ = posZ - Random(5, 15)
+									posX = posX + Random(5, 15)
+								elseif Chance == 7 then
+									posZ = posZ + Random(5, 15)
+									posX = posX - Random(5, 15)
+								else
+									posZ = posZ - Random(5, 15)
+									posX = posX - Random(5, 15)
+								end
+
+								if posX <= 0 then
+									posX = Random(1, 15)
+								end
+								if posX >= sizeX then
+									posX = sizeX - Random(1, 15)
+								end
+								if posZ <= 0 then
+									posZ = Random(1, 15)
+								end
+								if posZ >= sizeZ then
+									posZ = sizeZ - Random(1, 15)
+								end
+								if rspawn == "XRB2308" then
+									terrainAltitude = GetTerrainHeight(posX, posZ)
+									surfaceAltitude = GetSurfaceHeight(posX, posZ)
+									if surfaceAltitude == terrainAltitude then
+										if Random(1, 3) <= 2 then
+											rspawn = "UPD2304"
+										else
+											rspawn = "URB4201"
+										end
+									end
+								end
+							unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+							if unit == nil then
+								local posX = oldposX
+								local posZ = oldposZ
+									Chance = Random(1, 8)
+									if Chance == 1 then
+										posX = posX + Random(5, 15)
+										posZ = posZ + Random(5, 15)
+									elseif Chance == 2 then
+										posX = posX - Random(5, 15)
+										posZ = posZ + Random(5, 15)
+									elseif Chance == 3 then
+										posX = posX + Random(5, 15)
+										posZ = posZ - Random(5, 15)
+									elseif Chance == 4 then
+										posX = posX - Random(5, 15)
+										posZ = posZ - Random(5, 15)
+									elseif Chance == 5 then
+										posZ = posZ + Random(5, 15)
+										posX = posX + Random(5, 15)
+									elseif Chance == 6 then
+										posZ = posZ - Random(5, 15)
+										posX = posX + Random(5, 15)
+									elseif Chance == 7 then
+										posZ = posZ + Random(5, 15)
+										posX = posX - Random(5, 15)
+									else
+										posZ = posZ - Random(5, 15)
+										posX = posX - Random(5, 15)
+									end
+
+									if posX <= 0 then
+									posX = Random(1, 15)
+									end
+									if posX >= sizeX then
+										posX = sizeX - Random(1, 15)
+									end
+									if posZ <= 0 then
+										posZ = Random(1, 15)
+									end
+									if posZ >= sizeZ then
+										posZ = sizeZ - Random(1, 15)
+									end
+									if rspawn == "XRB2308" then
+									terrainAltitude = GetTerrainHeight(posX, posZ)
+									surfaceAltitude = GetSurfaceHeight(posX, posZ)
+									if surfaceAltitude == terrainAltitude then
+										if Random(1, 3) <= 2 then
+											rspawn = "UPD2304"
+										else
+											rspawn = "URB4201"
+										end
+									end
+								end
+								terrainAltitude = GetTerrainHeight(posX, posZ)
+								unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                             end
                         end
                         if unit ~= nil then
@@ -12210,6 +13707,9 @@ function CreateAndLaunchNukeAtEnemy()
         local unit = nil
         local posX 
 		local posZ
+		--local MapCheck = false
+		local Chance
+		--local count = 0
 		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
 			posX, posZ = AltHQBrain:GetArmyStartPos()
 		else
@@ -12219,69 +13719,91 @@ function CreateAndLaunchNukeAtEnemy()
             rspawn = "NML2305"
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX + Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX - Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX - Random(5, 20)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 50)
+						posZ = posZ + Random(1, 50)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 50)
+						posZ = posZ + Random(1, 50)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 50)
+						posZ = posZ - Random(1, 50)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 50)
+						posZ = posZ - Random(1, 50)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 50)
+						posX = posX + Random(1, 50)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 50)
+						posX = posX + Random(1, 50)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 50)
+						posX = posX - Random(1, 50)
+					else
+						posZ = posZ - Random(1, 50)
+						posX = posX - Random(1, 50)
+					end
+
+					if posX <= 0 then
+						posX = Random(1, 50)
+					end
+					if posX >= sizeX then
+						posX = sizeX - Random(1, 50)
+					end
+					if posZ <= 0 then
+						posZ = Random(1, 50)
+					end
+					if posZ >= sizeZ then
+						posZ = sizeZ - Random(1, 50)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 50)
+							posZ = posZ + Random(1, 50)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 50)
+							posZ = posZ + Random(1, 50)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 50)
+							posZ = posZ - Random(1, 50)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 50)
+							posZ = posZ - Random(1, 50)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 50)
+							posX = posX + Random(1, 50)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 50)
+							posX = posX + Random(1, 50)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 50)
+							posX = posX - Random(1, 50)
+						else
+							posZ = posZ - Random(1, 50)
+							posX = posX - Random(1, 50)
+						end
+
+						if posX <= 0 then
+							posX = Random(1, 50)
+						end
+						if posX >= sizeX then
+							posX = sizeX - Random(1, 50)
+						end
+						if posZ <= 0 then
+							posZ = Random(1, 50)
+						end
+						if posZ >= sizeZ then
+							posZ = sizeZ - Random(1, 50)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -12308,73 +13830,98 @@ function CreateAndLaunchNukeAtEnemyUnit(hUnit)
     local circle = ForkThread(function(self)
         local unit = nil
         local posX, posZ = aiBrain:GetArmyStartPos()
+		--local MapCheck = false
+		local Chance
+		--local count = 0
         if GetGameTimeSeconds() > WavesStartTimeAI and (NukesOn == "All On" or NukesOn == "Defensive" or NukesOn == "Offensive") then
             rspawn = "NML2305"
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX + Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX - Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX - Random(5, 20)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 50)
+						posZ = posZ + Random(1, 50)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 50)
+						posZ = posZ + Random(1, 50)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 50)
+						posZ = posZ - Random(1, 50)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 50)
+						posZ = posZ - Random(1, 50)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 50)
+						posX = posX + Random(1, 50)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 50)
+						posX = posX + Random(1, 50)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 50)
+						posX = posX - Random(1, 50)
+					else
+						posZ = posZ - Random(1, 50)
+						posX = posX - Random(1, 50)
+					end
+
+					if posX <= 0 then
+						posX = Random(1, 50)
+					end
+					if posX >= sizeX then
+						posX = sizeX - Random(1, 50)
+					end
+					if posZ <= 0 then
+						posZ = Random(1, 50)
+					end
+					if posZ >= sizeZ then
+						posZ = sizeZ - Random(1, 50)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 50)
+							posZ = posZ + Random(1, 50)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 50)
+							posZ = posZ + Random(1, 50)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 50)
+							posZ = posZ - Random(1, 50)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 50)
+							posZ = posZ - Random(1, 50)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 50)
+							posX = posX + Random(1, 50)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 50)
+							posX = posX + Random(1, 50)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 50)
+							posX = posX - Random(1, 50)
+						else
+							posZ = posZ - Random(1, 50)
+							posX = posX - Random(1, 50)
+						end
+
+						if posX <= 0 then
+							posX = Random(1, 50)
+						end
+						if posX >= sizeX then
+							posX = sizeX - Random(1, 50)
+						end
+						if posZ <= 0 then
+							posZ = Random(1, 50)
+						end
+						if posZ >= sizeZ then
+							posZ = sizeZ - Random(1, 50)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -12416,7 +13963,7 @@ function CreateAndLaunchNukeAtEnemyUnit(hUnit)
             unit:SetMaxHealth(maxhp + 5000000)
             hp = unit:GetMaxHealth()
             unit:SetHealth(self, hp)
-            unit:GiveNukeSiloAmmo(2)
+            unit:GiveNukeSiloAmmo(1)
             local targetedUnit = hUnit
             WaitTicks(20)
             if targetedUnit then
@@ -12462,7 +14009,7 @@ function PositioningSpawnedUnit(unit)
         posZ = posZ - Random(5, 20)
         posX = posX - Random(5, 20)
     end
-    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
+    local terrainAltitude = GetTerrainHeight(posX, posZ)
     unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
 end
 GetRandomEnemyDefenseUnit = function(self)
@@ -12858,9 +14405,8 @@ function ClearAITrashUnits()
     end)
 end
 function ClearAIAllUnits()
-	local aiUnit
-	local count = 3
-	repeat
+	local circle = ForkThread(function(self)
+		local aiUnit
 		local unitList = aiBrain:GetListOfUnits(categories.ALLUNITS, false)
 		for i, aiUnit in unitList do
 			if aiUnit and not aiUnit:BeenDestroyed() then
@@ -12877,9 +14423,7 @@ function ClearAIAllUnits()
 				end
 			end	
 		end
-		WaitSeconds(2)
-		count = count - 1
-	until count == 0
+	end)	
 end
 function ClearAllNonHQTeamUnits()
 	local aiUnit
@@ -13215,9 +14759,9 @@ function HQSpawnedWarning()
         local alignment = 'center';
         local color = '00FF00';
         WaitTicks(5)
-        local buildingHPInMillion = MainBuildingHPAI / 1000000
+        local buildingHPInMillion = MainBuildingHPAI
         WaitTicks(5)
-        local message = ("Mandatory Mission: Enemy HQ Spawned With " .. buildingHPInMillion .. " Million HP, Destroy it!")
+        local message = ("Mandatory Mission: Enemy HQ Spawned With " .. buildingHPInMillion .. " HP, Destroy it!")
         BroadcastMSG(message, size, color, fade, alignment)
         WaitTicks(Random(25))
     end
@@ -13280,14 +14824,18 @@ function AlliedForcesSpawnWarning()
 end
 function SecondaryBuildingsWarning()
     local size = 20;
-    local fade = 5;
+    local fade = 10;
     local alignment = 'center';
     local color = 'FFFF00';
-    local message = ("Secondary Mission: Destroy Control Centers To Get Allied Forces Help and Power Stall the HQ!")
-    BroadcastMSG(message, size, color, fade, alignment)
-    WaitTicks(Random(25))
-    WaitTicks(80)
-    --EarlyParagonsWillSpeedDifficultyInitialWarning()
+    local message = ("Secondary Mission: Destroy Support Bases To Damage HQ and Get Support!")
+	local message2 = ("Warning: Support Bases can launch EMP Nukes that deploy Rift Orbs.")
+	local message3 = ("Eliminate Support Bases to Reduce # of Rifts that can be Deployed.")
+    WaitSeconds(30)
+	BroadcastMSG(message, size, color, fade, alignment)
+	if RiftUnits ~= "Off --" then
+		BroadcastMSG(message2, size, color, fade, alignment)
+		BroadcastMSG(message3, size, color, fade, alignment)
+	end	
 end
 function HQPowerStallMessage()
     local size = 25;
@@ -13394,7 +14942,7 @@ function AIMessageTo(message, brain)
     end
     table.insert(Sync.AIChat, { group = 'all', text = tmpMessage, sender = aiBrain.Nickname })
 end
-function ScanMapToSpawnAI(numOfBuildings)
+function ScanMapToSpawnAI(numOfBuildings) --Scans Map to Spawn Support Bases
 	local circle = ForkThread(function(self)
 		local sizeX, sizeZ = GetMapSize()
 		local PosX
@@ -13405,42 +14953,42 @@ function ScanMapToSpawnAI(numOfBuildings)
 		local Distance = 28000
 			repeat
 				if SecondaryBuildingFlag == "On - Random Map Spawn" then
-					PosX = Random(15, (sizeX - 15))
-					PosZ = Random(15, (sizeZ - 15))
+					PosX = Random(20, (sizeX - 20))
+					PosZ = Random(20, (sizeZ - 20))
 				elseif SecondaryBuildingFlag == "On - North Half" then
-					PosX = Random(15, (sizeX - 15))
-					PosZ = Random(15, (sizeZ * 0.55))
+					PosX = Random(20, (sizeX - 20))
+					PosZ = Random(20, (sizeZ * 0.55))
 				elseif SecondaryBuildingFlag == "On - South Half" then
-					PosX = Random(15, (sizeX - 15))
-					PosZ = Random((sizeZ * 0.45), (sizeZ - 15))
+					PosX = Random(20, (sizeX - 20))
+					PosZ = Random((sizeZ * 0.45), (sizeZ - 20))
 				elseif SecondaryBuildingFlag == "On - East Half" then
-					PosX = Random((sizeX * 0.45), (sizeX - 15))
-					PosZ = Random(15, (sizeZ - 15))
+					PosX = Random((sizeX * 0.45), (sizeX - 20))
+					PosZ = Random(20, (sizeZ - 20))
 				elseif SecondaryBuildingFlag == "On - West Half" then
-					PosX = Random(15, (sizeX * 0.55))
-					PosZ = Random(15, (sizeZ - 15))
+					PosX = Random(20, (sizeX * 0.55))
+					PosZ = Random(20, (sizeZ - 20))
 				elseif SecondaryBuildingFlag == "On - NE to SW Diagonal" then
 					if Random(1, 2) == 1 then	
-						PosX = Random((sizeX * 0.45), (sizeX - 15))
-						PosZ = Random(15, (sizeZ * 0.55))
+						PosX = Random((sizeX * 0.45), (sizeX - 20))
+						PosZ = Random(20, (sizeZ * 0.55))
 					else
-						PosX = Random(15, (sizeX * 0.55))
-						PosZ = Random((sizeZ * 0.45), (sizeZ - 15))
+						PosX = Random(20, (sizeX * 0.55))
+						PosZ = Random((sizeZ * 0.45), (sizeZ - 20))
 					end	
 				elseif SecondaryBuildingFlag == "On - NW to SE Diagonal" then
 					if Random(1, 2) == 2 then	
-						PosX = Random(15, (sizeX * 0.55))
-						PosZ = Random(15, (sizeZ * 0.55))
+						PosX = Random(20, (sizeX * 0.55))
+						PosZ = Random(20, (sizeZ * 0.55))
 					else
-						PosX = Random((sizeX * 0.45), (sizeX - 15))
-						PosZ = Random((sizeZ * 0.45), (sizeZ - 15))
+						PosX = Random((sizeX * 0.45), (sizeX - 20))
+						PosZ = Random((sizeZ * 0.45), (sizeZ - 20))
 					end
 				elseif SecondaryBuildingFlag == "On - Center E to W" then
-					PosX = Random(15, (sizeX - 15))
+					PosX = Random(20, (sizeX - 20))
 					PosZ = Random((sizeZ * 0.33), (sizeZ * 0.67))
 				elseif SecondaryBuildingFlag == "On - Center N to S" then
-					PosX = Random((PosX * 0.33), (PosX * 0.67))
-					PosZ = Random(15, (sizeZ - 15))
+					PosX = Random((sizeX * 0.33), (sizeX * 0.67))
+					PosZ = Random(20, (sizeZ - 20))
 				end
 				SpawnBuilding = CheckForCloseEnemyStart(PosX, PosZ, Distance)
 				cycles = cycles + 1
@@ -13448,7 +14996,7 @@ function ScanMapToSpawnAI(numOfBuildings)
 					CreateSecondaryObjectives(PosX, PosZ, numOfBuildings)
 					counter = counter - 1
 				end
-				if cycles == 20 then
+				if cycles == 20 then --Adjust Spawn distances if can't find spawn locations.
 					Distance = Distance - 2000
 				elseif cycles == 40 then
 					Distance = Distance - 2000
@@ -13463,7 +15011,7 @@ function ScanMapToSpawnAI(numOfBuildings)
 				elseif cycles >= 180 then
 					MessageFlag = "Off"
 					PrintText("== Inadequate Locations for Support Bases. Spawning near HQ. ==", 28, 'ffCBFFFF', 10, 'center')
-					CreateSecondaryAIBuildings(counter)
+					CreateSecondaryAIBuildings(counter) --Fallback if unable to find locations for Support Bases
 					break
 				end	
 				WaitTicks(2)
@@ -13473,7 +15021,7 @@ function ScanMapToSpawnAI(numOfBuildings)
 	KillThread(self)
     end)
 end
-function CheckForCloseEnemyStart(PosX, PosZ, Distance)
+function CheckForCloseEnemyStart(PosX, PosZ, Distance) --Checks if Support Base spawn too close to Players Spawns
     local closestDistance = Distance 
 	local GoodSpawn = true
 	local BuildPosX = PosX
@@ -13508,7 +15056,7 @@ function CheckForCloseEnemyStart(PosX, PosZ, Distance)
 	end	
     return SpawnCheck
 end
-function CreateSecondaryObjectives(aPosX, aPosZ, numOfBuildings)
+function CreateSecondaryObjectives(aPosX, aPosZ, numOfBuildings) --Spawns a Support Base
     local circle = ForkThread(function(self)
         LOG("Creating AI secondary buildings.")
         local rspawn = "B_OBJ1301"
@@ -13521,14 +15069,14 @@ function CreateSecondaryObjectives(aPosX, aPosZ, numOfBuildings)
             if unit == nil then
                 LOG("sa: T4 rspawn CreateUnitNearSpot failed, Trying CreateUnitHPR")
                 if Random(1, 2) == 2 then
-                    posX = posX + Random(1, 4)
+                    posX = posX + Random(1, 2)
                 else
-                    posX = posX - Random(1, 4)
+                    posX = posX - Random(1, 2)
                 end
                 if Random(1, 2) == 2 then
-                    posZ = posZ + Random(1, 4)
+                    posZ = posZ + Random(1, 2)
                 else
-                    posZ = posZ - Random(1, 4)
+                    posZ = posZ - Random(1, 2)
                 end
                 local terrainAltitude = GetTerrainHeight(posX, posZ)
                 unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
@@ -13538,14 +15086,14 @@ function CreateSecondaryObjectives(aPosX, aPosZ, numOfBuildings)
 				posX = aPosX
 				posZ = aPosZ
 				if Random(1, 2) == 2 then
-                    posX = posX + Random(4, 8)
+                    posX = posX + Random(1, 2)
                 else
-                    posX = posX - Random(4, 8)
+                    posX = posX - Random(1, 2)
                 end
                 if Random(1, 2) == 2 then
-                    posZ = posZ + Random(4, 8)
+                    posZ = posZ + Random(1, 2)
                 else
-                    posZ = posZ - Random(4, 8)
+                    posZ = posZ - Random(1, 2)
                 end
 				local terrainAltitude = GetTerrainHeight(posX, posZ)
 				nukedef = CreateUnitHPR("BSD4302", aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
@@ -13575,7 +15123,7 @@ function CreateSecondaryObjectives(aPosX, aPosZ, numOfBuildings)
         KillThread(self)
     end)
 end
-function CreateSecondaryAIBuildings(numOfBuildings)
+function CreateSecondaryAIBuildings(numOfBuildings) --Spawns a Support Base (Fallback)
     local circle = ForkThread(function(self)
         LOG("Creating AI secondary buildings.")
         local rspawn = "B_OBJ1301"
@@ -13606,28 +15154,28 @@ function CreateSecondaryAIBuildings(numOfBuildings)
             WaitTicks(2)
             local unit = nil
             if Random(1, 2) == 2 then
-                posX = posX + Random(5, 15)
+                posX = posX + Random(1, 5)
             else
-                posX = posX - Random(5, 15)
+                posX = posX - Random(1, 5)
             end
             if Random(1, 2) == 2 then
-                posZ = posZ + Random(5, 15)
+                posZ = posZ + Random(1, 5)
             else
-                posZ = posZ - Random(5, 15)
+                posZ = posZ - Random(1, 5)
             end
             LOG("sa: T4 rspawn(XSB1301) = " .. rspawn)
             unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
             if unit == nil then
                 LOG("sa: T4 rspawn CreateUnitNearSpot failed, Trying CreateUnitHPR")
                 if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 15)
+                    posX = posX + Random(1, 5)
                 else
-                    posX = posX - Random(5, 15)
+                    posX = posX - Random(1, 5)
                 end
                 if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 15)
+                    posZ = posZ + Random(1, 5)
                 else
-                    posZ = posZ - Random(5, 15)
+                    posZ = posZ - Random(1, 5)
                 end
                 local terrainAltitude = GetTerrainHeight(posX, posZ)
                 unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
@@ -13637,14 +15185,14 @@ function CreateSecondaryAIBuildings(numOfBuildings)
 				posX = aPosX
 				posZ = aPosZ
 				if Random(1, 2) == 2 then
-                    posX = posX + Random(4, 8)
+                    posX = posX + Random(1, 5)
                 else
-                    posX = posX - Random(4, 8)
+                    posX = posX - Random(1, 5)
                 end
                 if Random(1, 2) == 2 then
-                    posZ = posZ + Random(4, 8)
+                    posZ = posZ + Random(1, 5)
                 else
-                    posZ = posZ - Random(4, 8)
+                    posZ = posZ - Random(1, 5)
                 end
 				local terrainAltitude = GetTerrainHeight(posX, posZ)
 				nukedef = CreateUnitHPR("BSD4302", aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
@@ -13687,28 +15235,28 @@ function CreateMainAIBuilding()
         local rspawn = "MAI2201"
         local unit = nil
         if Random(1, 2) == 2 then
-            posX = posX + Random(15, 20)
+            posX = posX + Random(1, 5)
         else
-            posX = posX - Random(15, 20)
+            posX = posX - Random(1, 5)
         end
         if Random(1, 2) == 2 then
-            posZ = posZ + Random(15, 20)
+            posZ = posZ + Random(1, 5)
         else
-            posZ = posZ - Random(15, 20)
+            posZ = posZ - Random(1, 5)
         end
         LOG("sa: T4 rspawn(XRB3301) = " .. rspawn)
         unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
         if unit == nil then
             LOG("sa: T4 rspawn CreateUnitNearSpot failed, Trying CreateUnitHPR")
             if Random(1, 2) == 2 then
-                posX = posX + Random(15, 20)
+                posX = posX + Random(5, 10)
             else
-                posX = posX - Random(15, 20)
+                posX = posX - Random(5, 10)
             end
             if Random(1, 2) == 2 then
-                posZ = posZ + Random(15, 20)
+                posZ = posZ + Random(5, 10)
             else
-                posZ = posZ - Random(15, 20)
+                posZ = posZ - Random(5, 10)
             end
             local terrainAltitude = GetTerrainHeight(posX, posZ)
             unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
@@ -13815,9 +15363,11 @@ function CreateMainAIBuilding()
 			until w < 1
 		end	
         WaitTicks(70)
-		local buildingcount = 1 + math.floor(humans * 0.5 + 0.5)
+		local buildingcount = math.floor((1 + math.floor(humans * 0.5 + 0.5)) * SupportBaseMulti + 0.5)
 		if buildingcount < 3 then
 			buildingcount = 3
+		elseif buildingcount > 16 then
+			buildingcount = 16
 		end	
 		if SecondaryBuildingFlag == "On - Spawn Around HQ" then
 			CreateSecondaryAIBuildings(buildingcount)
@@ -13834,28 +15384,28 @@ function CreateSecondarySpawnBuilding()
         local rspawn = "B_SEC2101"
         local unit = nil
         if Random(1, 2) == 2 then
-            posX = posX + Random(15, 20)
+            posX = posX + Random(1, 5)
         else
-            posX = posX - Random(15, 20)
+            posX = posX - Random(1, 5)
         end
         if Random(1, 2) == 2 then
-            posZ = posZ + Random(15, 20)
+            posZ = posZ + Random(1, 5)
         else
-            posZ = posZ - Random(15, 20)
+            posZ = posZ - Random(1, 5)
         end
         LOG("sa: T4 rspawn(XRB3301) = " .. rspawn)
         unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
         if unit == nil then
             LOG("sa: T4 rspawn CreateUnitNearSpot failed, Trying CreateUnitHPR")
             if Random(1, 2) == 2 then
-                posX = posX + Random(15, 20)
+                posX = posX + Random(5, 10)
             else
-                posX = posX - Random(15, 20)
+                posX = posX - Random(5, 10)
             end
             if Random(1, 2) == 2 then
-                posZ = posZ + Random(15, 20)
+                posZ = posZ + Random(5, 10)
             else
-                posZ = posZ - Random(15, 20)
+                posZ = posZ - Random(5, 10)
             end
             local terrainAltitude = GetTerrainHeight(posX, posZ)
             unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
@@ -13871,7 +15421,7 @@ function CreateSecondarySpawnBuilding()
 			--unit:SetConsumptionPerSecondEnergy(0)
             AISecondBuilding = unit
             WaitTicks(10)
-            SecondarySpawnWarning()
+            --SecondarySpawnWarning()
             CreateObjectiveMarker(AISecondBuilding)	
         end
 		
@@ -13927,73 +15477,98 @@ function CreateDefenceFor2ndSpawn(unitId)
     local circle = ForkThread(function(self)
         local unit = nil
         local posX, posZ = SecBrain:GetArmyStartPos()
+		--local MapCheck = false
+		local Chance
+		--local count = 0
         if GetGameTimeSeconds() > 0 then
             rspawn = unitId
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 15)
-                    posZ = posZ + Random(5, 15)
-                else
-                    posX = posX - Random(5, 15)
-                    posZ = posZ + Random(5, 15)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 15)
-                    posZ = posZ - Random(5, 15)
-                else
-                    posX = posX - Random(5, 15)
-                    posZ = posZ - Random(5, 15)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 15)
-                    posX = posX + Random(5, 15)
-                else
-                    posZ = posZ - Random(5, 15)
-                    posX = posX + Random(5, 15)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 15)
-                    posX = posX - Random(5, 15)
-                else
-                    posZ = posZ - Random(5, 15)
-                    posX = posX - Random(5, 15)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 15)
-                        posZ = posZ + Random(5, 15)
-                    else
-                        posX = posX - Random(5, 15)
-                        posZ = posZ + Random(5, 15)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 15)
-                        posZ = posZ - Random(5, 15)
-                    else
-                        posX = posX - Random(5, 15)
-                        posZ = posZ - Random(5, 15)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 15)
-                        posX = posX + Random(5, 15)
-                    else
-                        posZ = posZ - Random(5, 15)
-                        posX = posX + Random(5, 15)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 15)
-                        posX = posX - Random(5, 15)
-                    else
-                        posZ = posZ - Random(5, 15)
-                        posX = posX - Random(5, 15)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 45)
+						posZ = posZ + Random(1, 45)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 45)
+						posZ = posZ + Random(1, 45)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 45)
+						posZ = posZ - Random(1, 45)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 45)
+						posZ = posZ - Random(1, 45)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 45)
+						posX = posX + Random(1, 45)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 45)
+						posX = posX + Random(1, 45)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 45)
+						posX = posX - Random(1, 45)
+					else
+						posZ = posZ - Random(1, 45)
+						posX = posX - Random(1, 45)
+					end
+
+					if posX <= 0 then
+						posX = Random(1, 45)
+					end
+					if posX >= sizeX then
+						posX = sizeX - Random(1, 45)
+					end
+					if posZ <= 0 then
+						posZ = Random(1, 45)
+					end
+					if posZ >= sizeZ then
+						posZ = sizeZ - Random(1, 45)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 45)
+							posZ = posZ + Random(1, 45)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 45)
+							posZ = posZ + Random(1, 45)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 45)
+							posZ = posZ - Random(1, 45)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 45)
+							posZ = posZ - Random(1, 45)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 45)
+							posX = posX + Random(1, 45)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 45)
+							posX = posX + Random(1, 45)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 45)
+							posX = posX - Random(1, 45)
+						else
+							posZ = posZ - Random(1, 45)
+							posX = posX - Random(1, 45)
+						end
+
+						if posX <= 0 then
+							posX = Random(1, 45)
+						end
+						if posX >= sizeX then
+							posX = sizeX - Random(1, 45)
+						end
+						if posZ <= 0 then
+							posZ = Random(1, 45)
+						end
+						if posZ >= sizeZ then
+							posZ = sizeZ - Random(1, 45)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -14010,73 +15585,98 @@ function CreatePDDefenceFor2ndSpawn(unitId)
     local circle = ForkThread(function(self)
         local unit = nil
         local posX, posZ = SecBrain:GetArmyStartPos()
+		--local MapCheck = false
+		local Chance
+		--local count = 0
         if GetGameTimeSeconds() > 0 then
             rspawn = unitId
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 15)
-                    posZ = posZ + Random(5, 15)
-                else
-                    posX = posX - Random(5, 15)
-                    posZ = posZ + Random(5, 15)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 15)
-                    posZ = posZ - Random(5, 15)
-                else
-                    posX = posX - Random(5, 15)
-                    posZ = posZ - Random(5, 15)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 15)
-                    posX = posX + Random(5, 15)
-                else
-                    posZ = posZ - Random(5, 15)
-                    posX = posX + Random(5, 15)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 15)
-                    posX = posX - Random(5, 15)
-                else
-                    posZ = posZ - Random(5, 15)
-                    posX = posX - Random(5, 15)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 15)
-                        posZ = posZ + Random(5, 15)
-                    else
-                        posX = posX - Random(5, 15)
-                        posZ = posZ + Random(5, 15)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 15)
-                        posZ = posZ - Random(5, 15)
-                    else
-                        posX = posX - Random(5, 15)
-                        posZ = posZ - Random(5, 15)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 15)
-                        posX = posX + Random(5, 15)
-                    else
-                        posZ = posZ - Random(5, 15)
-                        posX = posX + Random(5, 15)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 15)
-                        posX = posX - Random(5, 15)
-                    else
-                        posZ = posZ - Random(5, 15)
-                        posX = posX - Random(5, 15)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 45)
+						posZ = posZ + Random(1, 45)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 45)
+						posZ = posZ + Random(1, 45)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 45)
+						posZ = posZ - Random(1, 45)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 45)
+						posZ = posZ - Random(1, 45)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 45)
+						posX = posX + Random(1, 45)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 45)
+						posX = posX + Random(1, 45)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 45)
+						posX = posX - Random(1, 45)
+					else
+						posZ = posZ - Random(1, 45)
+						posX = posX - Random(1, 45)
+					end
+
+					if posX <= 0 then
+						posX = Random(1, 45)
+					end
+					if posX >= sizeX then
+						posX = sizeX - Random(1, 45)
+					end
+					if posZ <= 0 then
+						posZ = Random(1, 45)
+					end
+					if posZ >= sizeZ then
+						posZ = sizeZ - Random(1, 45)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 45)
+							posZ = posZ + Random(1, 45)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 45)
+							posZ = posZ + Random(1, 45)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 45)
+							posZ = posZ - Random(1, 45)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 45)
+							posZ = posZ - Random(1, 45)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 45)
+							posX = posX + Random(1, 45)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 45)
+							posX = posX + Random(1, 45)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 45)
+							posX = posX - Random(1, 45)
+						else
+							posZ = posZ - Random(1, 45)
+							posX = posX - Random(1, 45)
+						end
+
+						if posX <= 0 then
+							posX = Random(1, 45)
+						end
+						if posX >= sizeX then
+							posX = sizeX - Random(1, 45)
+						end
+						if posZ <= 0 then
+							posZ = Random(1, 45)
+						end
+						if posZ >= sizeZ then
+							posZ = sizeZ - Random(1, 45)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -14089,7 +15689,7 @@ function CreatePDDefenceFor2ndSpawn(unitId)
         KillThread(self)
     end)
 end
-function CreateDefensefor2ndSpawn(unitIda)
+function CreateDefensefor2ndSpawn(unitIda) --Spawns defenses for 2nd Spawn
     local circle = ForkThread(function(self)
         --if aiSecondaryBuildings and aiSecondaryBuildings.secondaryBuildings then
             --local buildingcount = 0
@@ -14109,6 +15709,9 @@ function CreateDefensefor2ndSpawn(unitIda)
                         end
                     end]]--
 					unitIda = nil
+					--local MapCheck = false
+					local Chance
+					--local count = 0
                     if unitIda == nil or unitIda == "" then
 						if NavyPerWave > 0 and (AISecondBuilding:GetCurrentLayer() == "Water") and Random(1, 2) == 1 then
 							unitIda = "XRB2308"
@@ -14124,69 +15727,91 @@ function CreateDefensefor2ndSpawn(unitIda)
                         rspawn = unitIda
                         if rspawn ~= nil then
                             local oldposX = posX
-                            local oldposZ = posZ
-                            if Random(1, 2) == 2 then
-                                posX = posX + Random(5, 12)
-                                posZ = posZ + Random(5, 12)
-                            else
-                                posX = posX - Random(5, 12)
-                                posZ = posZ + Random(5, 12)
-                            end
-                            if Random(1, 2) == 2 then
-                                posX = posX + Random(5, 12)
-                                posZ = posZ - Random(5, 12)
-                            else
-                                posX = posX - Random(5, 12)
-                                posZ = posZ - Random(5, 12)
-                            end
-                            if Random(1, 2) == 2 then
-                                posZ = posZ + Random(5, 12)
-                                posX = posX + Random(5, 12)
-                            else
-                                posZ = posZ - Random(5, 12)
-                                posX = posX + Random(5, 12)
-                            end
-                            if Random(1, 2) == 2 then
-                                posZ = posZ + Random(5, 12)
-                                posX = posX - Random(5, 12)
-                            else
-                                posZ = posZ - Random(5, 12)
-                                posX = posX - Random(5, 12)
-                            end
-                            unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                            if unit == nil then
-                                local posX = oldposX
-                                local posZ = oldposZ
-                                if Random(1, 2) == 2 then
-                                    posX = posX + Random(5, 15)
-                                    posZ = posZ + Random(5, 15)
-                                else
-                                    posX = posX - Random(5, 15)
-                                    posZ = posZ + Random(5, 15)
-                                end
-                                if Random(1, 2) == 2 then
-                                    posX = posX + Random(5, 15)
-                                    posZ = posZ - Random(5, 15)
-                                else
-                                    posX = posX - Random(5, 15)
-                                    posZ = posZ - Random(5, 15)
-                                end
-                                if Random(1, 2) == 2 then
-                                    posZ = posZ + Random(5, 15)
-                                    posX = posX + Random(5, 15)
-                                else
-                                    posZ = posZ - Random(5, 15)
-                                    posX = posX + Random(5, 15)
-                                end
-                                if Random(1, 2) == 2 then
-                                    posZ = posZ + Random(5, 15)
-                                    posX = posX - Random(5, 15)
-                                else
-                                    posZ = posZ - Random(5, 15)
-                                    posX = posX - Random(5, 15)
-                                end
-                                local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                                unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+							local oldposZ = posZ
+								Chance = Random(1, 8)
+								if Chance == 1 then
+									posX = posX + Random(1, 30)
+									posZ = posZ + Random(1, 30)
+								elseif Chance == 2 then
+									posX = posX - Random(1, 30)
+									posZ = posZ + Random(1, 30)
+								elseif Chance == 3 then
+									posX = posX + Random(1, 30)
+									posZ = posZ - Random(1, 30)
+								elseif Chance == 4 then
+									posX = posX - Random(1, 30)
+									posZ = posZ - Random(1, 30)
+								elseif Chance == 5 then
+									posZ = posZ + Random(1, 30)
+									posX = posX + Random(1, 30)
+								elseif Chance == 6 then
+									posZ = posZ - Random(1, 30)
+									posX = posX + Random(1, 30)
+								elseif Chance == 7 then
+									posZ = posZ + Random(1, 30)
+									posX = posX - Random(1, 30)
+								else
+									posZ = posZ - Random(1, 30)
+									posX = posX - Random(1, 30)
+								end
+
+								if posX <= 0 then
+									posX = Random(1, 30)
+								end
+								if posX >= sizeX then
+									posX = sizeX - Random(1, 30)
+								end
+								if posZ <= 0 then
+									posZ = Random(1, 30)
+								end
+								if posZ >= sizeZ then
+									posZ = sizeZ - Random(1, 30)
+								end
+							unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+							if unit == nil then
+								local posX = oldposX
+								local posZ = oldposZ
+									Chance = Random(1, 8)
+									if Chance == 1 then
+										posX = posX + Random(1, 30)
+										posZ = posZ + Random(1, 30)
+									elseif Chance == 2 then
+										posX = posX - Random(1, 30)
+										posZ = posZ + Random(1, 30)
+									elseif Chance == 3 then
+										posX = posX + Random(1, 30)
+										posZ = posZ - Random(1, 30)
+									elseif Chance == 4 then
+										posX = posX - Random(1, 30)
+										posZ = posZ - Random(1, 30)
+									elseif Chance == 5 then
+										posZ = posZ + Random(1, 30)
+										posX = posX + Random(1, 30)
+									elseif Chance == 6 then
+										posZ = posZ - Random(1, 30)
+										posX = posX + Random(1, 30)
+									elseif Chance == 7 then
+										posZ = posZ + Random(1, 30)
+										posX = posX - Random(1, 30)
+									else
+										posZ = posZ - Random(1, 30)
+										posX = posX - Random(1, 30)
+									end
+
+									if posX <= 0 then
+										posX = Random(1, 30)
+									end
+									if posX >= sizeX then
+										posX = sizeX - Random(1, 30)
+									end
+									if posZ <= 0 then
+										posZ = Random(1, 30)
+									end
+									if posZ >= sizeZ then
+										posZ = sizeZ - Random(1, 30)
+									end
+								local terrainAltitude = GetTerrainHeight(posX, posZ)
+								unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                             end
                         end
                         if unit ~= nil then
@@ -14311,7 +15936,7 @@ function CreateEngiStationsForAI()
                         posZ = posZ - Random(5, 20)
                         posX = posX - Random(5, 20)
                     end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
+                    local terrainAltitude = GetTerrainHeight(posX, posZ)
                     unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
@@ -14425,6 +16050,7 @@ function SpawnInDefenseAltHQ()
 	WaitSeconds(10)
 		CreateUnitAroundAlternateSpawns(AltHQBrain, AlternateHQBuilding, "GAA2304")
 		CreateUnitAroundAlternateSpawns(AltHQBrain, AlternateHQBuilding, "GAA2304")
+		CreateUnitAroundAlternateSpawns(AltHQBrain, AlternateHQBuilding, "GTD4201")
 		repeat
 			if HQAltBuildingDead == false then
 				local count = Random(3, 4)
@@ -14444,10 +16070,14 @@ function CreateDefenseAroundAlternateSpawns(army, building)
     local circle = ForkThread(function(self)
 	local unitIda
 	local rspawn
+	local testunit = building
+	--local MapCheck = false
+	local Chance
+	--local count = 0
                 if building and not building:BeenDestroyed() then
 						if NavyPerWave > 0 and (testunit:GetCurrentLayer() == "Water") and Random(1, 2) == 1 then
 							unitIda = "XRB2308"
-						elseif Random(1, 7) <= 10 then
+						elseif Random(1, 20) <= 17 then
                             unitIda = "UPD2304"
 						else
 							unitIda = "GTD4201"
@@ -14458,69 +16088,91 @@ function CreateDefenseAroundAlternateSpawns(army, building)
                         rspawn = unitIda
                         if rspawn ~= nil then
                             local oldposX = posX
-                            local oldposZ = posZ
-                            if Random(1, 2) == 2 then
-                                posX = posX + Random(5, 12)
-                                posZ = posZ + Random(5, 12)
-                            else
-                                posX = posX - Random(5, 12)
-                                posZ = posZ + Random(5, 12)
-                            end
-                            if Random(1, 2) == 2 then
-                                posX = posX + Random(5, 12)
-                                posZ = posZ - Random(5, 12)
-                            else
-                                posX = posX - Random(5, 12)
-                                posZ = posZ - Random(5, 12)
-                            end
-                            if Random(1, 2) == 2 then
-                                posZ = posZ + Random(5, 12)
-                                posX = posX + Random(5, 12)
-                            else
-                                posZ = posZ - Random(5, 12)
-                                posX = posX + Random(5, 12)
-                            end
-                            if Random(1, 2) == 2 then
-                                posZ = posZ + Random(5, 12)
-                                posX = posX - Random(5, 12)
-                            else
-                                posZ = posZ - Random(5, 12)
-                                posX = posX - Random(5, 12)
-                            end
-                            unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                            if unit == nil then
-                                local posX = oldposX
-                                local posZ = oldposZ
-                                if Random(1, 2) == 2 then
-                                    posX = posX + Random(5, 15)
-                                    posZ = posZ + Random(5, 15)
-                                else
-                                    posX = posX - Random(5, 15)
-                                    posZ = posZ + Random(5, 15)
-                                end
-                                if Random(1, 2) == 2 then
-                                    posX = posX + Random(5, 15)
-                                    posZ = posZ - Random(5, 15)
-                                else
-                                    posX = posX - Random(5, 15)
-                                    posZ = posZ - Random(5, 15)
-                                end
-                                if Random(1, 2) == 2 then
-                                    posZ = posZ + Random(5, 15)
-                                    posX = posX + Random(5, 15)
-                                else
-                                    posZ = posZ - Random(5, 15)
-                                    posX = posX + Random(5, 15)
-                                end
-                                if Random(1, 2) == 2 then
-                                    posZ = posZ + Random(5, 15)
-                                    posX = posX - Random(5, 15)
-                                else
-                                    posZ = posZ - Random(5, 15)
-                                    posX = posX - Random(5, 15)
-                                end
-                                local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                                unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+							local oldposZ = posZ
+								Chance = Random(1, 8)
+								if Chance == 1 then
+									posX = posX + Random(1, 30)
+									posZ = posZ + Random(1, 30)
+								elseif Chance == 2 then
+									posX = posX - Random(1, 30)
+									posZ = posZ + Random(1, 30)
+								elseif Chance == 3 then
+									posX = posX + Random(1, 30)
+									posZ = posZ - Random(1, 30)
+								elseif Chance == 4 then
+									posX = posX - Random(1, 30)
+									posZ = posZ - Random(1, 30)
+								elseif Chance == 5 then
+									posZ = posZ + Random(1, 30)
+									posX = posX + Random(1, 30)
+								elseif Chance == 6 then
+									posZ = posZ - Random(1, 30)
+									posX = posX + Random(1, 30)
+								elseif Chance == 7 then
+									posZ = posZ + Random(1, 30)
+									posX = posX - Random(1, 30)
+								else
+									posZ = posZ - Random(1, 30)
+									posX = posX - Random(1, 30)
+								end
+
+								if posX <= 0 then
+									posX = Random(1, 30)
+								end
+								if posX >= sizeX then
+									posX = sizeX - Random(1, 30)
+								end
+								if posZ <= 0 then
+									posZ = Random(1, 30)
+								end
+								if posZ >= sizeZ then
+									posZ = sizeZ - Random(1, 30)
+								end
+							unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+							if unit == nil then
+								local posX = oldposX
+								local posZ = oldposZ
+									Chance = Random(1, 8)
+									if Chance == 1 then
+										posX = posX + Random(1, 30)
+										posZ = posZ + Random(1, 30)
+									elseif Chance == 2 then
+										posX = posX - Random(1, 30)
+										posZ = posZ + Random(1, 30)
+									elseif Chance == 3 then
+										posX = posX + Random(1, 30)
+										posZ = posZ - Random(1, 30)
+									elseif Chance == 4 then
+										posX = posX - Random(1, 30)
+										posZ = posZ - Random(1, 30)
+									elseif Chance == 5 then
+										posZ = posZ + Random(1, 30)
+										posX = posX + Random(1, 30)
+									elseif Chance == 6 then
+										posZ = posZ - Random(1, 30)
+										posX = posX + Random(1, 30)
+									elseif Chance == 7 then
+										posZ = posZ + Random(1, 30)
+										posX = posX - Random(1, 30)
+									else
+										posZ = posZ - Random(1, 30)
+										posX = posX - Random(1, 30)
+									end
+
+									if posX <= 0 then
+										posX = Random(1, 30)
+									end
+									if posX >= sizeX then
+										posX = sizeX - Random(1, 30)
+									end
+									if posZ <= 0 then
+										posZ = Random(1, 30)
+									end
+									if posZ >= sizeZ then
+										posZ = sizeZ - Random(1, 30)
+									end
+								local terrainAltitude = GetTerrainHeight(posX, posZ)
+								unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                             end
                         end
                         if unit ~= nil then
@@ -14537,6 +16189,9 @@ end
 function CreateUnitAroundAlternateSpawns(army, building, AIunit)
     local circle = ForkThread(function(self)
 	local rspawn
+	--local MapCheck = false
+	local Chance
+	--local count = 0
                 if building and not building:BeenDestroyed() then
                     local unit = nil
                     local posX, posZ = army:GetArmyStartPos()
@@ -14544,69 +16199,91 @@ function CreateUnitAroundAlternateSpawns(army, building, AIunit)
                         rspawn = AIunit
                         if rspawn ~= nil then
                             local oldposX = posX
-                            local oldposZ = posZ
-                            if Random(1, 2) == 2 then
-                                posX = posX + Random(5, 12)
-                                posZ = posZ + Random(5, 12)
-                            else
-                                posX = posX - Random(5, 12)
-                                posZ = posZ + Random(5, 12)
-                            end
-                            if Random(1, 2) == 2 then
-                                posX = posX + Random(5, 12)
-                                posZ = posZ - Random(5, 12)
-                            else
-                                posX = posX - Random(5, 12)
-                                posZ = posZ - Random(5, 12)
-                            end
-                            if Random(1, 2) == 2 then
-                                posZ = posZ + Random(5, 12)
-                                posX = posX + Random(5, 12)
-                            else
-                                posZ = posZ - Random(5, 12)
-                                posX = posX + Random(5, 12)
-                            end
-                            if Random(1, 2) == 2 then
-                                posZ = posZ + Random(5, 12)
-                                posX = posX - Random(5, 12)
-                            else
-                                posZ = posZ - Random(5, 12)
-                                posX = posX - Random(5, 12)
-                            end
-                            unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                            if unit == nil then
-                                local posX = oldposX
-                                local posZ = oldposZ
-                                if Random(1, 2) == 2 then
-                                    posX = posX + Random(5, 15)
-                                    posZ = posZ + Random(5, 15)
-                                else
-                                    posX = posX - Random(5, 15)
-                                    posZ = posZ + Random(5, 15)
-                                end
-                                if Random(1, 2) == 2 then
-                                    posX = posX + Random(5, 15)
-                                    posZ = posZ - Random(5, 15)
-                                else
-                                    posX = posX - Random(5, 15)
-                                    posZ = posZ - Random(5, 15)
-                                end
-                                if Random(1, 2) == 2 then
-                                    posZ = posZ + Random(5, 15)
-                                    posX = posX + Random(5, 15)
-                                else
-                                    posZ = posZ - Random(5, 15)
-                                    posX = posX + Random(5, 15)
-                                end
-                                if Random(1, 2) == 2 then
-                                    posZ = posZ + Random(5, 15)
-                                    posX = posX - Random(5, 15)
-                                else
-                                    posZ = posZ - Random(5, 15)
-                                    posX = posX - Random(5, 15)
-                                end
-                                local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                                unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+							local oldposZ = posZ
+								Chance = Random(1, 8)
+								if Chance == 1 then
+									posX = posX + Random(1, 30)
+									posZ = posZ + Random(1, 30)
+								elseif Chance == 2 then
+									posX = posX - Random(1, 30)
+									posZ = posZ + Random(1, 30)
+								elseif Chance == 3 then
+									posX = posX + Random(1, 30)
+									posZ = posZ - Random(1, 30)
+								elseif Chance == 4 then
+									posX = posX - Random(1, 30)
+									posZ = posZ - Random(1, 30)
+								elseif Chance == 5 then
+									posZ = posZ + Random(1, 30)
+									posX = posX + Random(1, 30)
+								elseif Chance == 6 then
+									posZ = posZ - Random(1, 30)
+									posX = posX + Random(1, 30)
+								elseif Chance == 7 then
+									posZ = posZ + Random(1, 30)
+									posX = posX - Random(1, 30)
+								else
+									posZ = posZ - Random(1, 30)
+									posX = posX - Random(1, 30)
+								end
+
+								if posX <= 0 then
+									posX = Random(1, 30)
+								end
+								if posX >= sizeX then
+									posX = sizeX - Random(1, 30)
+								end
+								if posZ <= 0 then
+									posZ = Random(1, 30)
+								end
+								if posZ >= sizeZ then
+									posZ = sizeZ - Random(1, 30)
+								end
+							unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+							if unit == nil then
+								local posX = oldposX
+								local posZ = oldposZ
+									Chance = Random(1, 8)
+									if Chance == 1 then
+										posX = posX + Random(1, 30)
+										posZ = posZ + Random(1, 30)
+									elseif Chance == 2 then
+										posX = posX - Random(1, 30)
+										posZ = posZ + Random(1, 30)
+									elseif Chance == 3 then
+										posX = posX + Random(1, 30)
+										posZ = posZ - Random(1, 30)
+									elseif Chance == 4 then
+										posX = posX - Random(1, 30)
+										posZ = posZ - Random(1, 30)
+									elseif Chance == 5 then
+										posZ = posZ + Random(1, 30)
+										posX = posX + Random(1, 30)
+									elseif Chance == 6 then
+										posZ = posZ - Random(1, 30)
+										posX = posX + Random(1, 30)
+									elseif Chance == 7 then
+										posZ = posZ + Random(1, 30)
+										posX = posX - Random(1, 30)
+									else
+										posZ = posZ - Random(1, 30)
+										posX = posX - Random(1, 30)
+									end
+
+									if posX <= 0 then
+										posX = Random(1, 30)
+									end
+									if posX >= sizeX then
+										posX = sizeX - Random(1, 30)
+									end
+									if posZ <= 0 then
+										posZ = Random(1, 30)
+									end
+									if posZ >= sizeZ then
+										posZ = sizeZ - Random(1, 30)
+									end
+								local terrainAltitude = GetTerrainHeight(posX, posZ)
+								unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                             end
                         end
                         if unit ~= nil then
@@ -14720,6 +16397,7 @@ function SpawnInDefense2ndAlt()
 	WaitSeconds(10)
 		CreateUnitAroundAlternateSpawns(Alt2ndBrain, Alternate2ndBuilding, "GAA2304")
 		CreateUnitAroundAlternateSpawns(Alt2ndBrain, Alternate2ndBuilding, "GAA2304")
+		CreateUnitAroundAlternateSpawns(Alt2ndBrain, Alternate2ndBuilding, "GTD4201")
 		repeat
 			if Alt2ndBuildingDead == false and SecondarySpawnDead == false then
 				local count = Random(3, 4)
@@ -14737,13 +16415,17 @@ function SpawnInDefense2ndAlt()
 end
 function SelectHQDefenses()
 	if HQDefenses ~= "HQ Defenses Off" then
-		if HQDefenses == "HQ S-Tier Defenses" then
+		if HQDefenses == "HQ S2-Tier Defenses" then
 			TMDType = "GTD4201"
 			SMDType = "ASD4302"
 			ShieldType = "GAS4301"
-		elseif HQDefenses == "HQ AAA-Tier Defenses" then
+		elseif HQDefenses == "HQ S1-Tier Defenses" then
 			TMDType = "GTD4201"
 			SMDType = "BSD4302"
+			ShieldType = "GAS4301"
+		elseif HQDefenses == "HQ AAA-Tier Defenses" then
+			TMDType = "URB4201"
+			SMDType = "ASD4302"
 			ShieldType = "GAS4301"
 		elseif HQDefenses == "HQ AA-Tier Defenses" then
 			TMDType = "GTD4201"
@@ -14781,13 +16463,17 @@ function SelectHQDefenses()
 end
 function Select2ndSpawnDefenses()
 	if SecSpawnDefences ~= "2nd Spawn Defenses Off" then
-		if SecSpawnDefences == "2nd Spawn S-Tier Defenses" then
+		if SecSpawnDefences == "2nd Spawn S2-Tier Defenses" then
 			SecTMDType = "GTD4201"
 			SecSMDType = "ASD4302"
 			SecShieldType = "GAS4301"
-		elseif SecSpawnDefences == "2nd Spawn AAA-Tier Defenses" then
+		elseif SecSpawnDefences == "2nd Spawn S1-Tier Defenses" then
 			SecTMDType = "GTD4201"
 			SecSMDType = "BSD4302"
+			SecShieldType = "GAS4301"
+		elseif SecSpawnDefences == "2nd Spawn AAA-Tier Defenses" then
+			SecTMDType = "URB4201"
+			SecSMDType = "ASD4302"
 			SecShieldType = "GAS4301"
 		elseif SecSpawnDefences == "2nd Spawn AA-Tier Defenses" then
 			SecTMDType = "GTD4201"
@@ -15221,7 +16907,7 @@ function SpawnInPlatoon(TransportPlatoon)
                         posZ = posZ - Random(5, 20)
                         posX = posX - Random(5, 20)
                     end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
+                    local terrainAltitude = GetTerrainHeight(posX, posZ)
                     unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
@@ -15348,7 +17034,7 @@ function SpawnInExperimentalPlatoon(TransportPlatoon)
                         posZ = posZ - Random(5, 20)
                         posX = posX - Random(5, 20)
                     end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
+                    local terrainAltitude = GetTerrainHeight(posX, posZ)
                     unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
@@ -15509,12 +17195,16 @@ GetAIOrHumanEnemyBrain = function(self)
 			end
 		end
 	end]]--
+	HQPlayerNotSetWarning()
     if AIWavePlayer ~= "Random" then
 		for aindex, abrain in ArmyBrains do
 			if abrain.Name == "ARMY_" .. AIWavePlayer then
 				AIorHumanEnemyBrain = abrain
 			end
 		end
+		if AIorHumanEnemyBrain ~= nil then
+			HQSetFlag = true
+		end	
 		for aindex, abrain in ArmyBrains do
             if not ArmyIsCivilian(abrain:GetArmyIndex()) and not IsAlly(abrain:GetArmyIndex(), AIorHumanEnemyBrain:GetArmyIndex()) and abrain ~= AIorHumanEnemyBrain then
                 table.insert(humanBrains.HBrains, abrain)
@@ -15611,6 +17301,17 @@ GetAIOrHumanEnemyBrain = function(self)
     PreparePathFindingAlgorithm()
     return AIorHumanEnemyBrain
 end
+function HQPlayerNotSetWarning()
+	local circle = ForkThread(function(self)
+	WaitSeconds(5)
+	if AIWavePlayer ~= "Random" and HQSetFlag == false then
+		PrintText("==ERROR: HQ Player not Set. Make sure correct Player Slot is set in Map Options.==", 28, 'ffCC0000', 300, 'center')
+		PrintText("--Check AI Wave Survival Picture Guide on FAF Forums for Setup Help--", 28, 'ffCC0000', 300, 'center')
+		PrintText("https://forum.faforever.com/topic/5563/ai-wave-survival-mod-information", 28, 'ffCC0000', 300, 'center')
+	end
+	KillThread(self)
+    end)
+end
 function SalvationPlayerFind()
     local circle = ForkThread(function(self)
         if salvationspawn ~= "Off" and salvationspawn ~= "Half of Team" then
@@ -15688,7 +17389,7 @@ function SecondSpawn()
 				SecondSpawnCheck = true
 				WaitSeconds(2)
 				--PrintText("== Salvation Player is " .. sender .. " ==", 28, 'ff6FA8DC', 8, 'center')
-				PrintText("==2nd Spawn is Enabled==", 28, 'ffE69138', 10, 'center')
+				--PrintText("==2nd Spawn is Enabled==", 28, 'ffE69138', 10, 'center')
 			end	
 		end
         KillThread(self)
@@ -15714,9 +17415,11 @@ function PreparePathFindingAlgorithm()
     end)
 end
 function InitSurvival()
-	PrintText("AI Wave Survival Mod guide on FAForever Forums", 28, 'ffC90076', 10, 'center')
-	PrintText("forum.faforever.com/topic/5563/ai-wave-survival-mod-information", 28, 'ffC90076', 10, 'center')
-	PrintText("For best experience, set HQ Player spot in Map Settings under 'Player Slot that Spawns HQ'", 28, 'ffCBFFFF', 10, 'center')
+	PrintText("AI Wave Survival Mod setup guide on FAForever Forums at", 28, 'ff004eff', 15, 'center')
+	PrintText("forum.faforever.com/topic/5563/ai-wave-survival-mod-information", 28, 'ff004eff', 15, 'center')
+	PrintText("Set HQ Player and other Spawn Players in MAP OPTIONS:", 28, 'ffCBFFFF', 15, 'center')
+	PrintText("Under HQ SETTINGS and 2ND SPAWN SETTINGS", 28, 'ffCBFFFF', 15, 'center')
+	PrintText("Set up to 4 Spawn Points: HQ, 2nd Spawn, Alt HQ, and Alt 2nd Spawn.", 28, 'ffCBFFFF', 15, 'center')
     WaitTicks(40)
 	--[[for aindex, abrain in ArmyBrains do
 		 if abrain.BrainType ~= "Human" and  not ArmyIsCivilian(abrain:GetArmyIndex())  then
@@ -15739,7 +17442,7 @@ function InitSurvival()
 	AltHQSpawn = tostring(ScenarioInfo.Options.AltHQSpawn)
 	Alt2ndSpawn = tostring(ScenarioInfo.Options.Alt2ndSpawn)
 	
-	PrintText("Players can be set to suicide ACU's under 'HQ/2ndSpawn Base Building On/Off'.", 24, 'ffCC0000', 10, 'center')
+	--PrintText("Players can be set to suicide ACU's under 'HQ/2ndSpawn Base Building On/Off'.", 24, 'ffCC0000', 10, 'center')
     
 	aiBrain = GetAIOrHumanEnemyBrain()
 	SetIgnoreArmyUnitCap(aiBrain:GetArmyIndex(), true)
@@ -15756,13 +17459,8 @@ function InitSurvival()
 	ASFWaves = tostring(ScenarioInfo.Options.ASFWaves)
 	LandAmphibious = tostring(ScenarioInfo.Options.LandAmphibious)
 	TotalMayhemWaves = tostring(ScenarioInfo.Options.TotalMayhemWaves)
-	WaitTicks(2)
-	if TotalMayhemWaves == "Not Adjustable - Totally Random!" then
-		STRfour()
-	else
-		TablesForTotalMayhemMods()
-	end	
-    WaitTicks(20)
+	
+    WaitTicks(22)
 	humans = table.getn(humanBrains.HBrains)
 	if humans < 1 then
 		humans = 1
@@ -15811,7 +17509,7 @@ function InitSurvival()
 	AirExpMulti = (tonumber(ScenarioInfo.Options.AirExpMulti) * .01)
 	NavyExpMulti = (tonumber(ScenarioInfo.Options.NavyExpMulti) * .01)
 	ExtraWaveDelay = (tonumber(ScenarioInfo.Options.ExtraWaveDelay) * 60)
-	EndGameHoldTime = (tonumber(ScenarioInfo.Options.EndGameHoldTime) * 60)
+	EndGameHoldTime = tostring(ScenarioInfo.Options.EndGameHoldTime)
 	TorpBomberStartTime = (tonumber(ScenarioInfo.Options.TorpBomberStartTime) * 60)
 	KillAIBase = tostring(ScenarioInfo.Options.KillAIBase)
 	CrazyModeLand = tostring(ScenarioInfo.Options.CrazyModeLand)
@@ -15878,7 +17576,11 @@ function InitSurvival()
 	TotalMayhemLand = tonumber(ScenarioInfo.Options.TotalMayhemLand) * 0.1
 	TotalMayhemAir = tonumber(ScenarioInfo.Options.TotalMayhemAir) * 0.1
 	TotalMayhemNavy = tonumber(ScenarioInfo.Options.TotalMayhemNavy) * 0.1
-	
+	SupportBaseMulti = tonumber(ScenarioInfo.Options.SupportBaseMulti)
+	SupportBaseNukes = tostring(ScenarioInfo.Options.SupportBaseNukes)
+	HQAllyRestrict = tostring(ScenarioInfo.Options.HQAllyRestrict)
+	RiftUnits = tostring(ScenarioInfo.Options.RiftUnits)
+	AmphibiousCheck = tostring(ScenarioInfo.Options.AmphibiousCheck)
 	
 	
 	
@@ -15906,10 +17608,16 @@ function InitSurvival()
 	SelectHQDefenses()
 	Select2ndSpawnDefenses()
 	
-	if EndGameHoldTime > 0 then
+	if EndGameHoldTime ~= "Off --" then
+		EndGameHoldTime = (tonumber(ScenarioInfo.Options.EndGameHoldTime) * 60)
 		EndGameCondition = true
 		EndGameTime = EndGameHoldTime / 60
-		PrintText("Survive for " .. EndGameTime .. " Minutes after FINAL STAGE to Win!", 28, 'ffCBFFFF', 6, 'center')
+		PrintText("=Survive for " .. EndGameTime .. " Minutes after FINAL STAGE to Win!=", 28, 'ff8afbfb', 6, 'center')
+		if TorpBomberStartTime > 0 then --Spawns Torp Bombers if Hold to Win is on and ACU's hiding in water
+			ACUTorpHunters()
+		end	
+	else
+		EndGameHoldTime = 0
 	end
 	if DoomMaximum ~= "Off --" then
 		DoomMaximum = tonumber(ScenarioInfo.Options.DoomMaximum)
@@ -15988,21 +17696,40 @@ function InitSurvival()
         end
     end
 	WaitTicks(20)
-    Warning()
+	if AmphibiousCheck == 'Enabled' then	
+		CheckIfLandCanPass()
+	end	
     WaitTicks(50)
+	if TotalMayhemWaves == "Not Adjustable - Totally Random!" then
+		STRfour()
+	else
+		TablesForTotalMayhemMods()
+	end
 	
 	if secondaryspawn ~= "Off" and SecondSpawnCheck == false then
-		PrintText("==ERROR: Alternative 2nd Spawn not Set. Make sure correct Player Slot is set in Map Options.==", 28, 'ffCC0000', 30, 'center')	
+		PrintText("==ERROR: 2nd Spawn not Set. Make sure correct Player Slot is set in Map Options.==", 28, 'ffCC0000', 30, 'center')
+		ErrorMessage = true
 	end
 	if salvationspawn ~= "Off" and SalvationCheck == false and salvationspawn ~= "Half of Team" then
-		PrintText("==ERROR: Alternative 2nd Spawn not Set. Make sure correct Player Slot is set in Map Options.==", 28, 'ffCC0000', 30, 'center')	
+		PrintText("==ERROR: Salvation Player Not Set. Make sure correct Player Slot is set in Map Options.==", 28, 'ffCC0000', 30, 'center')	
 	end
 	if AltHQSpawn ~= "Off" and AltHQCheck == false then
-		PrintText("==ERROR: Alternative 2nd Spawn not Set. Make sure correct Player Slot is set in Map Options.==", 28, 'ffCC0000', 30, 'center')	
+		PrintText("==ERROR: Alternative HQ Spawn not Set. Make sure correct Player Slot is set in Map Options.==", 28, 'ffCC0000', 30, 'center')
+		ErrorMessage = true		
 	end
 	if Alt2ndSpawn ~= "Off" and secondaryspawn ~= "Off" and Alt2ndCheck == false then
-		PrintText("==ERROR: Alternative 2nd Spawn not Set. Make sure correct Player Slot is set in Map Options.==", 28, 'ffCC0000', 30, 'center')	
+		PrintText("==ERROR: Alternative 2nd Spawn not Set. Make sure correct Player Slot is set in Map Options.==", 28, 'ffCC0000', 30, 'center')
+		ErrorMessage = true
 	end
+	
+	if aBrainsHQ > 0 and AIWavePlayer ~= "Random" then 
+		if SecondSpawnCheck == true or AltHQCheck == true then
+			--Do nothing
+		elseif ErrorMessage == false then
+			PrintText("==NOTICE: HQ Allies Detected. Set Allies as optional Spawn points in MAP OPTIONS==", 28, 'ffffa548', 20, 'center')
+			PrintText("--Check Map Options under HQ SETTINGS or 2ND SPAWN SETTINGS to set Spawns--", 28, 'ffffa548', 20, 'center')
+		end
+	end	
 	
     CreateMainAIBuilding()
 	if secondaryspawn ~= "Off" then	
@@ -16033,10 +17760,18 @@ function InitSurvival()
 	if WaveProgressionData ~= "Normal" then
 		WaveProgressionRate()
 	end
-    MonitoringFunction()
-	MonitoringFunctionTwo()
-	MonitoringFunctionThree()
-	MonitoringFunctionFour()
+    MonitoringFunction() --Waves and Endgame Conditions
+	MonitoringFunctionTwo() --Weapon Restrictions
+	MonitoringFunctionThree() --Enemy Count Scripts
+	MonitoringFunctionFour() --Paragon Count
+	CheckMainGoal() --Monitors HQ
+	if RiftUnits ~= "Off --" then --Rift Orb Scripts
+		RiftUnits = tonumber(ScenarioInfo.Options.RiftUnits) 
+		CreateRiftSpawnPoints()
+		CreateRiftTables()
+		MonitorRiftBuildingCount()
+		DetectAndSpawnOrbRiftWaves()
+	end	
 	if HumanEcoBoost > 0 or EndGameEcoBoost > 0 then
 		MonitoringFunctionHQEnemyEcoBoosts()
 	end	
@@ -16068,10 +17803,10 @@ function InitSurvival()
     --MonitoringEnemyExpArtyFunction()
     --MonitoringEnemyExpDefencesFunction()
     --MonitoringEnemyT3DefencesFunction()
-    MonitoringNearbyEnemyUnitsFunction()
-	MonitoringNearbyEnemyUnitsFunctionTwo()
+    MonitoringNearbyEnemyUnitsFunction() --Defensive Nukes
+	MonitoringNearbyEnemyUnitsFunctionTwo() --Defensive Nukes Two
     --MonitoringAIExpArtyFunction()
-    MonitoringStationAssistPodsCount()
+    MonitoringStationAssistPodsCount() --Engy Stations Count Limit Monitor
 	if salvationspawn ~= "Off" then
 		MonitoringSalvationPlayer()
 	end
@@ -16090,13 +17825,11 @@ function InitSurvival()
 	if VersesSurvival == 'Versus Survival On' then	
 		MonitoringTeamElimination()
 	end
-	
+	--Support Bases
 	MonitoringAISecondaryBuildings()
 	MonitoringAISecondaryBuildingsDefenses()
-	if EndGameHoldTime > 0 and TorpBomberStartTime > 0 then
-		ACUTorpHunters()
-	end	
-	if ACUHunterTime ~= 'Off --' then
+	
+	if ACUHunterTime ~= 'Off --' then --Spawns the ACU Hunter Bot Waves
 		ACUHunterSpawn()	
 	end	
     --AIMainBuildingRespondMinotoring()
@@ -16110,7 +17843,7 @@ function InitSurvival()
     --NavalUnitsSpawnMonitoring()
 	--MonitoringPlayersACU()
 	--BoostAIACUHealth()
-	if (KillAIBase == "BaseBuilding On" or KillAIBase == "HQ Only BaseBuilding") and isAIBrain then
+	if (KillAIBase == "BaseBuilding On" or KillAIBase == "HQ Only BaseBuilding") and isAIBrain then --Spawns Engy Stations for AI if BaseBuilding On
 		EngiStationsForAI()
 	end	
 	for i, Army in ListArmies() do
@@ -16140,6 +17873,13 @@ function InitSurvival()
 	end	
 	DisableBlackOpsArtemis()
 	DisableBrewLANWalls()
+	if HQAllyRestrict == "HQ Allies No T4 Weapons" or  HQAllyRestrict == "HQ Allies All Restricted" then
+		DisableWeaponsHQAllies()
+	end	
+	if HQAllyRestrict == "HQ Allies No FABs/RAS" or  HQAllyRestrict == "HQ Allies All Restricted" then
+		DisableFabsHQAllies()
+		DisableFabsHQAlliesNomands()
+	end	
 	if RamboChance ~= "Off --" then
 		RamboChance = tonumber(ScenarioInfo.Options.RamboChance) * 0.1
 		--table.insert(RamboTransTable, 'UAL0301_RAMBO')
@@ -16383,73 +18123,98 @@ function CreateShieldDefenceForAI(unitId)
     local circle = ForkThread(function(self)
         local unit = nil
         local posX, posZ = aiBrain:GetArmyStartPos()
+		--local MapCheck = false
+		local Chance
+		--local count = 0
         if GetGameTimeSeconds() > 0 then
             rspawn = unitId
             if rspawn ~= nil then
                 local oldposX = posX
-                local oldposZ = posZ
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posX = posX + Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                else
-                    posX = posX - Random(5, 20)
-                    posZ = posZ - Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX + Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX + Random(5, 20)
-                end
-                if Random(1, 2) == 2 then
-                    posZ = posZ + Random(5, 20)
-                    posX = posX - Random(5, 20)
-                else
-                    posZ = posZ - Random(5, 20)
-                    posX = posX - Random(5, 20)
-                end
-                unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
-                if unit == nil then
-                    local posX = oldposX
-                    local posZ = oldposZ
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posX = posX + Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    else
-                        posX = posX - Random(5, 20)
-                        posZ = posZ - Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX + Random(5, 20)
-                    end
-                    if Random(1, 2) == 2 then
-                        posZ = posZ + Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    else
-                        posZ = posZ - Random(5, 20)
-                        posX = posX - Random(5, 20)
-                    end
-                    local terrainAltitude = GetTerrainHeight(oldposX, oldposZ)
-                    unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				local oldposZ = posZ
+					Chance = Random(1, 8)
+					if Chance == 1 then
+						posX = posX + Random(1, 45)
+						posZ = posZ + Random(1, 45)
+					elseif Chance == 2 then
+						posX = posX - Random(1, 45)
+						posZ = posZ + Random(1, 45)
+					elseif Chance == 3 then
+						posX = posX + Random(1, 45)
+						posZ = posZ - Random(1, 45)
+					elseif Chance == 4 then
+						posX = posX - Random(1, 45)
+						posZ = posZ - Random(1, 45)
+					elseif Chance == 5 then
+						posZ = posZ + Random(1, 45)
+						posX = posX + Random(1, 45)
+					elseif Chance == 6 then
+						posZ = posZ - Random(1, 45)
+						posX = posX + Random(1, 45)
+					elseif Chance == 7 then
+						posZ = posZ + Random(1, 45)
+						posX = posX - Random(1, 45)
+					else
+						posZ = posZ - Random(1, 45)
+						posX = posX - Random(1, 45)
+					end
+
+					if posX < 5 then
+						posX = Random(5, 45)
+					end
+					if posX > (sizeX - 5) then
+						posX = sizeX - Random(5, 45)
+					end
+					if posZ < 5 then
+						posZ = Random(5, 45)
+					end
+					if posZ > (sizeZ - 5) then
+						posZ = sizeZ - Random(5, 45)
+					end
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local posX = oldposX
+					local posZ = oldposZ
+						Chance = Random(1, 8)
+						if Chance == 1 then
+							posX = posX + Random(1, 45)
+							posZ = posZ + Random(1, 45)
+						elseif Chance == 2 then
+							posX = posX - Random(1, 45)
+							posZ = posZ + Random(1, 45)
+						elseif Chance == 3 then
+							posX = posX + Random(1, 45)
+							posZ = posZ - Random(1, 45)
+						elseif Chance == 4 then
+							posX = posX - Random(1, 45)
+							posZ = posZ - Random(1, 45)
+						elseif Chance == 5 then
+							posZ = posZ + Random(1, 45)
+							posX = posX + Random(1, 45)
+						elseif Chance == 6 then
+							posZ = posZ - Random(1, 45)
+							posX = posX + Random(1, 45)
+						elseif Chance == 7 then
+							posZ = posZ + Random(1, 45)
+							posX = posX - Random(1, 45)
+						else
+							posZ = posZ - Random(1, 45)
+							posX = posX - Random(1, 45)
+						end
+
+						if posX < 5 then
+							posX = Random(5, 45)
+						end
+						if posX > (sizeX - 5) then
+							posX = sizeX - Random(5, 45)
+						end
+						if posZ < 5 then
+							posZ = Random(5, 45)
+						end
+						if posZ > (sizeZ - 5) then
+							posZ = sizeZ - Random(5, 45)
+						end
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
                 end
             end
         end
@@ -16558,6 +18323,54 @@ function EnableNomadsArtyNuke()
 			RemoveBuildRestriction(Army, categories.xnb2305) --nuke
 			RemoveBuildRestriction(Army, categories.xnb2302) --arty
 			RemoveBuildRestriction(Army, categories.xnl0403) --missiletankT4
+		end
+	KillThread(self)
+	end)
+end	
+function DisableWeaponsHQAllies()
+	local Army
+	local circle = ForkThread(function(self)
+		for i, brain in allyBrainsHQ.ABrainsHQ do
+			Army = brain:GetArmyIndex()
+			AddBuildRestriction(Army, categories.pd4sp2108) --sera T4 Tacs
+			AddBuildRestriction(Army, categories.pdan2301) --aeon T4 PD
+			AddBuildRestriction(Army, categories.pdcb2301) --cybran T4 PD
+			AddBuildRestriction(Army, categories.pduef2301) --uef T4 PD
+		end
+	KillThread(self)
+	end)
+end	
+function DisableFabsHQAllies()
+	local Army
+	local circle = ForkThread(function(self)
+		for i, brain in allyBrainsHQ.ABrainsHQ do
+			Army = brain:GetArmyIndex()
+			AddBuildRestriction(Army, categories.ueb1104) --uef t2 massfab
+			AddBuildRestriction(Army, categories.ueb1303) --uef t3 massfab
+			AddBuildRestriction(Army, categories.urb1104) --cybran t2 massfab
+			AddBuildRestriction(Army, categories.urb1303) --cybran t3 massfab
+			AddBuildRestriction(Army, categories.uab1104) --aeon t2 massfab
+			AddBuildRestriction(Army, categories.uab1303) --aeon t3 massfab
+			AddBuildRestriction(Army, categories.xsb1104) --sera t2 massfab
+			AddBuildRestriction(Army, categories.xsb1303) --sera t3 massfab
+			
+			AddBuildRestriction(Army, categories.url0301_ras) --cybran ras
+			AddBuildRestriction(Army, categories.ual0301_ras) --aeon ras
+			AddBuildRestriction(Army, categories.uel0301_ras) --uef ras
+		end
+	KillThread(self)
+	end)
+end	
+function DisableFabsHQAlliesNomands()
+	local Army
+	local circle = ForkThread(function(self)
+		for i, brain in allyBrainsHQ.ABrainsHQ do
+			Army = brain:GetArmyIndex()
+			AddBuildRestriction(Army, categories.xnb1104) --nomad t2 massfab
+			AddBuildRestriction(Army, categories.xnb1303) --nomad t3 massfab
+			
+			AddBuildRestriction(Army, categories.xnl0301_ras) --Nomad RAS
+			AddBuildRestriction(Army, categories.xnl0301_naturalproducer) --Nomad RAS Alt
 		end
 	KillThread(self)
 	end)
