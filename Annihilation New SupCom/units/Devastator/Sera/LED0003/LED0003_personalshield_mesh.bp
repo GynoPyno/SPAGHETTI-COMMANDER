@@ -1,0 +1,18 @@
+MeshBlueprint {
+    IconFadeInZoom = 130,
+    LODs = {
+        {
+            MeshName = '/mods/Annihilation New SupCom/units/Devastator/Sera/LED0003/LED0003_lod0.scm',
+            AlbedoName = '/mods/Annihilation New SupCom/units/Devastator/Sera/LED0003/LED0003_albedo.dds',
+            NormalsName = '/mods/Annihilation New SupCom/units/Devastator/Sera/LED0003/LED0003_normalsTS.dds',
+            SpecularName = '/mods/Annihilation New SupCom/units/Devastator/Sera/LED0003/LED0003_specteam.dds',
+            LookupName = '/textures/environment/Falloff_seraphim_lookup.dds',
+            SecondaryName = '/effects/entities/PhaseShield/PhaseShieldLookup.dds',
+
+            LODCutoff = 195,
+            
+            Scrolling = true,
+            ShaderName = 'SeraphimPersonalShield',
+        },
+    },
+}

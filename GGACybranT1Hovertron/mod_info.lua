@@ -1,0 +1,16 @@
+name = "GGA Cybran T1 Hovertron"
+uid = "78d6877b-a2ce-42af-8e69-587b46f3dead"
+version = 5
+copyright = "bbkineebee"
+description = "Cybran T1 Hovertron - a Tech 1 Hover Tank designed to compete with equivalent Extreme Wars experimentals.  Hover / Cloak / Radar. Can be built by AI."
+author = "bbkineebee - Green Grocers Alliance (GGA)"
+icon = "/mods/GGACybranT1Hovertron/GGACybranT1Hovertron_icon.jpg"
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+requires = { }
+requiresNames = { }
+conflicts = { }
+before = { }
+after = { }

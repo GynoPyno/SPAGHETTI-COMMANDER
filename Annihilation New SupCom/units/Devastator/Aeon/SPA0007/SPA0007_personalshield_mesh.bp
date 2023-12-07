@@ -1,0 +1,17 @@
+MeshBlueprint {
+    IconFadeInZoom = 130,
+    LODs = {
+        {
+            MeshName = '/mods/Annihilation New SupCom/units/Devastator/Aeon/SPA0007/SPA0007_lod0.scm',
+            AlbedoName = '/mods/Annihilation New SupCom/units/Devastator/Aeon/SPA0007/SPA0007_albedo.dds',
+            NormalsName = '/mods/Annihilation New SupCom/units/Devastator/Aeon/SPA0007/SPA0007_normalsTS.dds',
+            SpecularName = '/mods/Annihilation New SupCom/units/Devastator/Aeon/SPA0007/SPA0007_specteam.dds',
+            LookupName = '/effects/entities/PhaseShield/PhaseShieldLookup.dds',
+
+            LODCutoff = 195,
+            
+            Scrolling = true,
+            ShaderName = 'PhaseShield',
+        },
+    },
+}

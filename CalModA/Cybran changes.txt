@@ -1,0 +1,96 @@
+List of changes for cybran
+
+Added Units; 
+
+            1. T4 Brick  - 20k Health
+                         - early experimental 1-4th the cost of a monkeylord.
+                         - equiped with acu laser weapon
+                         - powerfull anti air sam launcher 
+                         - jamming 
+ 
+            2. T1 Scout  - 71 Health 
+                         - introduces the only hover unit for the cybran
+                         - radar 
+                         - hover 
+                         - weak direct fire 
+
+            3. T4 Sniper - 17500 Health 
+                         - cloak 
+                         - stealth 
+                         - omni range 88
+                         - running costs -2500
+                         - 80 range
+                         - slow fire rate 0.18
+                         - 5500 per shot
+
+Adjusted units;
+
+            1. Interceptor - movement speed 20 
+                           - removed fuel use
+
+            2. T1 Engineer - movement speed 4
+                           - reduced hp - 90
+
+            3. Mantis      - health from 270--170
+                           - damage from 8--14
+                           - movement speed from 3.7--4.2
+                           - turret yaw speed from 100/160
+
+            4. T1 Sub      - health 775--15
+                           - movement speed 6--3
+                           - no water vision - sonar only 60
+                           - huge damage increase 50--266
+
+            5. T2 Pd       - Shotgun projectiles 
+     
+            6. Wagner      - Health from 1200--700
+                           - personal stealth 
+
+            7. Mobile      - added shield 2400         * cybran T2 land needed a buff
+               Stealth     - added radar 80
+                           
+            8. Destroyer   - Range 85--75              * to match all other destroyers 
+                           - damage 115--140
+            
+            9. Cruiser     - Changed sam to flak 
+                           - only single direct fire weapon 
+
+           10. Sub Killer  - Reduced HP 1430--550
+                           - 75--500
+                           - no water vision just sonar 60
+
+           11. Loyalist    - main weapon single fire 
+                           - second weapon added emp grenades 
+                           - death weapon 555 3.5 radius 
+                           - Personal Stealth -15 energy
+
+           12. Battleship  - Health 44500--41000                  * Health reduced on all battleships 
+                           - Fire Rate from 0.25--0.6             * damage/fire rate increased on all battleships
+                           - AA increased and given flak 
+
+           13. T3 Gunship  - Health from 5900--7100
+
+           14. T4 Gunship  - Increased Damage 
+                           - main weapons now direct fire 
+                           - increased aa damage and range 
+
+           15. Monkeylord  - Range 30--35
+                           - movement speed from 2.5--3.2
+                           - Health 45000--35000
+                           - stealth removed 
+                           - aa removed 
+                           - given strong anti torpedoes 
+           
+           16. Megalith    - Range from 64--80
+                           - vision from 30--60
+                           - Flak 18--267
+
+           17. Commander   - upgrades
+                           - Second gun upgrade that adds Stun and area of effect + 100 damage
+                           - Blast wave upgrade designed to prevent shift-G if units get within 5 range of acu
+                             then blastwave will activate and gives 1000 damage and area of effect 10
+
+
+
+
+      

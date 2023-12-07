@@ -1,0 +1,390 @@
+UnitBlueprint {
+    Air = {
+        AutoLandTime = 1,
+        BankFactor = 0.1,
+        BankForward = false,
+        CanFly = true,
+        CirclingDirChangeFrequencySec = 1,
+        CirclingElevationChangeRatio = 0.25,
+        CirclingRadiusChangeMaxRatio = 0.9,
+        CirclingRadiusChangeMinRatio = 0.6,
+        CirclingTurnMult = 3,
+        KLift = 3,
+        KLiftDamping = 2.5,
+        KMove = 1,
+        KMoveDamping = 2,
+        KTurn = 1,
+        KTurnDamping = 2.3,
+        LiftFactor = 7,
+        MaxAirspeed = 10,
+        MinAirspeed = 3,
+        StartTurnDistance = 5,
+    },
+    Audio = {
+        AirUnitWaterImpact = Sound {
+            Bank = 'Explosions',
+            Cue = 'Expl_Water_Lrg_01',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+        AmbientMove = Sound {
+            Bank = 'XSA',
+            Cue = 'XSA0203_Move_Loop',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+        Destroyed = Sound {
+            Bank = 'XSA_Destroy',
+            Cue = 'XSA_Destroy_Air_Killed',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+        Killed = Sound {
+            Bank = 'XSA_Destroy',
+            Cue = 'XSA_Destroy_Air_Killed',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+        Landing = Sound {
+            Bank = 'XSA',
+            Cue = 'XSA0203_Move_Land',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+        Refueling = Sound {
+            Bank = 'XSB',
+            Cue = 'XSB5202_Repair_Refuel',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+        StartMove = Sound {
+            Bank = 'XSA',
+            Cue = 'XSA0203_Move_Start',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+        StopMove = Sound {
+            Bank = 'XSA',
+            Cue = 'XSA0203_Move_Stop',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+        Thruster = Sound {
+            Bank = 'XSA',
+            Cue = 'XSA0203_Move_Thruster',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+        UISelection = Sound {
+            Bank = 'SeraphimSelect',
+            Cue = 'Seraphim_Select_Air',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+    },
+    AverageDensity = 1,
+    Buffs = {
+        Regen = {
+            Level1 = 3,
+            Level2 = 6,
+            Level3 = 9,
+            Level4 = 12,
+            Level5 = 15,
+        },
+    },
+    BuildIconSortPriority = 100,
+    Categories = {
+        'PRODUCTFA',
+        'SELECTABLE',
+        'BUILTBYTIER3FACTORY',
+        'SERAPHIM',
+        'MOBILE',
+        'AIR',
+        'TECH3',
+        'GROUNDATTACK',
+        'VISIBLETORECON',
+        'RECLAIMABLE',
+        'OVERLAYDIRECTFIRE',
+        'SNIPEMODE',
+    },
+    CollisionOffsetY = -0.075,
+    Defense = {
+        AirThreatLevel = 0,
+        ArmorType = 'Normal',
+        EconomyThreatLevel = 0,
+        Health = 7900,
+        MaxHealth = 7900,
+        RegenRate = 17,
+        SubThreatLevel = 0,
+        SurfaceThreatLevel = 18,
+    },
+    Description = 'Heavy Gunship',
+    Display = {
+        IdleEffects = {
+            Air = {
+                Effects = {
+                    {
+                        Bones = {
+                            'XSL0202',
+                        },
+                        Offset = {
+                            0,     #left or right
+                            1.8,     #hight
+                            -0.4,     #farword or back
+                        },
+                        Scale = 0.3,
+                        Type = 'SerOHWAirMoveExhaust01',
+                    },
+                },
+            },
+            Land = {
+                Effects = {
+                    {
+                        Bones = {
+                            'XSL0202',
+                        },
+                        Offset = {
+                            0,     #left or right
+                            1.8,     #hight
+                            -0.4,     #farword or back
+                        },
+                        Scale = 0.3,
+                        Type = 'SerOHWAirMoveExhaust01',
+                    },
+                },
+            },
+        },
+        LayerChangeEffects = {
+            AirLand = {
+                Effects = {
+                    {
+                        Bones = {
+                            'XSL0202',
+                        },
+                        Offset = {
+                            0,     #left or right
+                            1.8,     #hight
+                            -0.4,     #farword or back
+                        },
+                        Scale = 0.3,
+                        Type = 'SerOHWAirMoveExhaust01',
+                    },
+                },
+            },
+            LandAir = {
+                Effects = {
+                    {
+                        Bones = {
+                            'XSL0202',
+                        },
+                        Offset = {
+                            0,     #left or right
+                            1.8,     #hight
+                            -0.4,     #farword or back
+                        },
+                        Scale = 0.3,
+                        Type = 'SerOHWAirMoveExhaust01',
+                    },
+                },
+            },
+        },
+        Mesh = {
+            IconFadeInZoom = 130,
+            LODs = {
+                {
+                    MeshName = '/units/xsl0202/xsl0202_LOD0.scm',
+                    AlbedoName = '/units/xsl0202/xsl0202_Albedo.dds',
+                    LODCutoff = 130,
+                    Scrolling = true,
+                    ShaderName = 'Seraphim',
+                    NormalsName = '/units/xsl0202/xsl0202_NormalsTS.dds',
+                    SpecularName = '/units/xsl0202/xsl0202_Specteam.dds',
+                    LookupName = "/textures/environment/Falloff_seraphim_lookup.dds",
+                },
+            },
+        },
+        MovementEffects = {
+            Air = {
+                Effects = {
+                    {
+                        Bones = {
+                            'XSL0202',
+                        },
+                        Offset = {
+                            0,     #left or right
+                            1.8,     #hight
+                            -0.4,     #farword or back
+                        },
+                        Scale = 0.3,
+                        Type = 'SerOHWAirMoveExhaust01',
+                    },
+                },
+            },
+        },
+        PlaceholderMeshName = 'UXL0001',
+        SpawnRandomRotation = true,
+        UniformScale = 0.1,
+    },
+    Economy = {
+        BuildCostEnergy = 66000,
+        BuildCostMass = 1430,
+        BuildTime = 6600,
+    },
+    Footprint = {
+        MaxSlope = 0.25,
+        SizeX = 1,
+        SizeZ = 1,
+    },
+    General = {
+        Category = 'Gunship',
+        Classification = 'RULEUC_MilitaryAircraft',
+        CommandCaps = {
+            RULEUCC_Attack = true,
+            RULEUCC_CallTransport = true,
+            RULEUCC_Capture = false,
+            RULEUCC_Dock = true,
+            RULEUCC_Guard = true,
+            RULEUCC_Move = true,
+            RULEUCC_Nuke = false,
+            RULEUCC_Patrol = true,
+            RULEUCC_Reclaim = false,
+            RULEUCC_Repair = false,
+            RULEUCC_RetaliateToggle = true,
+            RULEUCC_Stop = true,
+            RULEUCC_Transport = false,
+        },
+        FactionName = 'Seraphim',
+        Icon = 'air',
+        TechLevel = 'RULEUTL_Advanced',
+        UnitName = 'Tapou',
+        UnitWeight = 1,
+    },
+    Intel = {
+        VisionRadius = 40,
+    },
+    Interface = {
+        HelpText = '<LOC xsl0202_help>Assault Bot',
+    },
+    LifeBarHeight = 0.075,
+    LifeBarOffset = 0.4,
+    LifeBarSize = 2,
+    Physics = {
+        BankingSlope = 0,
+        BuildOnLayerCaps = {
+            LAYER_Air = true,
+            LAYER_Land = false,
+            LAYER_Orbit = false,
+            LAYER_Seabed = false,
+            LAYER_Sub = false,
+            LAYER_Water = false,
+        },
+        Elevation = 10,
+        GroundCollisionOffset = 1.6,
+        MaxSpeed = 4,
+        MeshExtentsX = 2,
+        MeshExtentsY = 1,
+        MeshExtentsZ = 2,
+        MinSpeedPercent = 0.85,
+        MotionType = 'RULEUMT_Air',
+    },
+    SelectionCenterOffsetY = 1.5,
+    SelectionSizeX = 1.4,
+    SelectionSizeZ = 1.2,
+    SelectionThickness = 0.5,
+    SizeX = 2,
+    SizeY = 2.2,
+    SizeZ = 2,
+    StrategicIconName = 'icon_gunship3_directfire',
+    StrategicIconSortPriority = 125,
+    Veteran = {
+        Level1 = 9,
+        Level2 = 18,
+        Level3 = 27,
+        Level4 = 35,
+        Level5 = 42,
+    },
+    Weapon = {
+        {
+            AboveWaterTargetsOnly = true,
+            Audio = {
+                Fire = Sound {
+                    Bank = 'XSL_Weapon',
+                    Cue = 'XSL0203_Cannon_Tau',
+                    LodCutoff = 'Weapon_LodCutoff',
+                },
+            },
+            AutoInitiateAttackCommand = true,
+            BallisticArc = 'RULEUBA_None',
+            CollideFriendly = false,
+            Damage = 200,
+            DamageRadius = 1,
+            DamageType = 'Normal',
+            DetonatesAtTargetHeight = true,
+            DisplayName = 'Aire-au Bolter',
+            FireTargetLayerCapsTable = {
+                Air = 'Land|Water|Seabed',
+                Land = 'Land|Water|Seabed',
+                Water = 'Land|Water|Seabed',
+            },
+            FiringTolerance = 2,
+            Label = 'MainGun',
+            MaxRadius = 22,
+            MuzzleChargeDelay = 0,
+            MuzzleSalvoDelay = 0,
+            MuzzleSalvoSize = 1,
+            MuzzleVelocity = 28,
+            ProjectileId = '/mods/calmoda/projectiles/ilshygunship/SDFTauCannon01_proj.bp',
+            ProjectileLifetimeUsesMultiplier = 1.15,
+            ProjectilesPerOnFire = 1,
+            RackBones = {
+                {
+                    MuzzleBones = {
+                        'Right_Muzzle',
+                    },
+                    RackBone = 'Right_Arm',
+                },
+                {
+                    MuzzleBones = {
+                        'Left_Muzzle',
+                    },
+                    RackBone = 'Left_Arm',
+                },
+            },
+            RackFireTogether = true,
+            RackRecoilDistance = 0,
+            RackReloadTimeout = 10,
+            RackSalvoChargeTime = 0,
+            RackSalvoReloadTime = 0,
+            RackSalvoSize = 1,
+            RackSlavedToTurret = true,
+            RangeCategory = 'UWRC_DirectFire',
+            RateOfFire = 1,
+            TargetCheckInterval = 0.66,
+            TargetPriorities = {
+                'ALLUNITS',
+            },
+            TargetRestrictDisallow = 'UNTARGETABLE',
+            TrackingRadius = 1.15,
+            TurretBoneDualMuzzle = 'Left_Muzzle',
+            TurretBoneDualPitch = 'Left_Arm',
+            TurretBoneMuzzle = 'Right_Muzzle',
+            TurretBonePitch = 'Right_Arm',
+            TurretBoneYaw = 'Torso',
+            TurretDualManipulators = true,
+            TurretPitch = 0,
+            TurretPitchRange = 160,
+            TurretPitchSpeed = 80,
+            TurretYaw = 0,
+            TurretYawRange = 180,
+            TurretYawSpeed = 180,
+            Turreted = true,
+            WeaponCategory = 'Direct Fire',
+            WeaponRepackTimeout = 0,
+            WeaponUnpacks = false,
+        },
+    },
+    Wreckage = {
+        Blueprint = '/props/DefaultWreckage/DefaultWreckage_prop.bp',
+        EnergyMult = 0,
+        HealthMult = 0.9,
+        MassMult = 0.9,
+        ReclaimTimeMultiplier = 1,
+        WreckageLayers = {
+            Air = false,
+            Land = true,
+            Seabed = false,
+            Sub = false,
+            Water = false,
+        },
+    },
+}

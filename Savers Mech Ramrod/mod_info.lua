@@ -1,0 +1,12 @@
+name = "Savers Mech - Ramrod"       
+uid = "51705a9a-a569-424a-80af-254222051751v75"
+version = 45
+description = "UEF Experimental Infantry Mech - fix for AI Support - thx to my good friends UVESO and CDRMV"
+author = "Saver"
+icon = "/mods/Savers Mech Ramrod/Ramrod.jpg"
+url = ""
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+conflicts = {}

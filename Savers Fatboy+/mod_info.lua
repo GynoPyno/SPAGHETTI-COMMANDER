@@ -1,0 +1,12 @@
+name = "Savers Fatboy+"       
+uid = "51705a9a-a569-424a-80af-254222051751v04"
+version = 4
+description = "New Fatboy, no more replace the old Fatboy, the single version - Savers Fatboy is supported by AI as it replaces the old Fatboy"
+author = "Saver"
+icon = "/mods/Savers Fatboy+/Fatboy.jpg"
+url = ""
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+conflicts = {}

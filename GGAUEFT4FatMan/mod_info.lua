@@ -1,0 +1,16 @@
+name = "GGA UEF T4 Fat Man"
+uid = "88f9d3d4-dda3-44c1-8383-cb66ec9ee264"
+version = 3
+copyright = "bbkineebee"
+description = "UEF T4 Fat Man - a UEF T4 Walking Experimental. Intended for use with land only, no arty, extreme wars, experimental type games.  Based on GC.  "
+author = "bbkineebee - Green Grocers Alliance (GGA)"
+icon = "/mods/GGAUEFT4FatMan/GGAUEFT4FatMan_icon.jpg"
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+requires = { }
+requiresNames = { }
+conflicts = { }
+before = { }
+after = { }

@@ -1,0 +1,16 @@
+name = "Hyper Experimental Tier - Vanilla Eco"
+uid = "f88bc669-0ff2-4e5a-8b38-7ceb7d5bc120"
+version = 1
+copyright = "Cmd Draven & Alek05"
+description = "Adding even more End to the Endgame: A new Tier of Experimental Technology, now without boosted Eco."
+author = "Cmd Draven & Alek05"
+icon = "/mods/Hyper Experimental Tier - VanillaEco/HyperExperimentalTier_icon.jpg"
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+requires = { }
+requiresNames = { }
+conflicts = { }
+before = { }
+after = { }

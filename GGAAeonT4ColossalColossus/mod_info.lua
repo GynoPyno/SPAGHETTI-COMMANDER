@@ -1,0 +1,16 @@
+name = "GGA Aeon T4 Colossal Colossus"
+uid = "3f036382-8a1d-11ed-a1eb-0242ac120002"
+version = 5
+copyright = "bbkineebee"
+description = "Aeon T4 Colossal Colossus - for when a normal sized GC is just not big enough."
+author = "bbkineebee - Green Grocers Alliance (GGA)"
+icon = "/mods/GGAAeonT4ColossalColossus/GGAAeonT4ColossalColossus.jpg"
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+requires = { }
+requiresNames = { }
+conflicts = { }
+before = { }
+after = { }

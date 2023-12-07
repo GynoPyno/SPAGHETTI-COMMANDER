@@ -1,0 +1,16 @@
+name = "GGA Cybran T4 Crusher"
+uid = "fb529215-5f2e-457c-9775-63fec68010c7"
+version = 4
+copyright = "bbkineebee"
+description = "Cybran T4 Crusher - a very tough, slow moving experimental unit that crushes EVERYTHING in it's path."
+author = "bbkineebee - Green Grocers Alliance (GGA)"
+icon = "/mods/GGACybranT4Crusher/GGACybranT4Crusher_icon.jpg"
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+requires = { }
+requiresNames = { }
+conflicts = { }
+before = { }
+after = { }

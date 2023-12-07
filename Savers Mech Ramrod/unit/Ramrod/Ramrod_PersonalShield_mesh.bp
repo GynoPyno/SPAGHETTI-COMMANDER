@@ -1,0 +1,14 @@
+MeshBlueprint {
+    IconFadeInZoom = 100,
+    LODs = {
+        {
+            MeshName = 'Ramrod_lod0.scm',
+            AlbedoName = 'Ramrod_albedo.dds',
+            NormalsName = 'Ramrod_normalsTS.dds',
+            SpecularName = 'Ramrod_specteam.dds',
+            LookupName = '/effects/entities/PhaseShield/PhaseShieldLookup.dds',
+            ShaderName = 'PhaseShield',
+            LODCutoff = 600,
+        },
+    },
+}

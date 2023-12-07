@@ -1,0 +1,16 @@
+MeshBlueprint {
+    IconFadeInZoom = 220,
+    LODs = {
+        {
+            MeshName = '/mods/Annihilation New SupCom/units/Devastator/Cybran/VOS0032/VOS0032_lod0.scm',
+            AlbedoName = '/Units/url0402/url0402_Albedo.dds',
+            NormalsName = '/Units/url0402/url0402_NormalsTS.DDS',
+            LODCutoff = 500,
+            SpecularName = '/Units/url0402/url0402_SpecTeam.dds',
+            LookupName = '/effects/entities/PhaseShield/PhaseShieldLookup.dds',
+            
+            Scrolling = false,
+            ShaderName = 'PhaseShield',
+        },
+    },
+}
