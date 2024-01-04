@@ -336,7 +336,7 @@ options = {
         },
     },
 	{
-        default = 1,
+        default = 2,
         label = "<LOC aiwave_0310>Salvation Player Slot",
         help = "<LOC aiwave_0311> Salvation Player can save team through sacrafice. The death/suicide of their ACU will trigger entire wave to self destruct. Half of team requires half of ACUs to be dead to trigger salvation.",
         key = 'salvationspawn',
@@ -480,7 +480,7 @@ options = {
         },
     },
 	{
-        default = 2,
+        default = 3,
         label = "<LOC aiwave_0342> 1b: Air Delay Spawn Time",
         help = "<LOC aiwave_0343>Adds more time to when Air begins to spawn. Delays tech level (Starts at T1). Will start at T2 if Tech 2 Wave Start is on.",
         key = 'AirTime',
@@ -492,7 +492,7 @@ options = {
         },
     },
 	{
-        default = 3,
+        default = 4,
         label = "<LOC aiwave_0345> 1c: Naval Delay Spawn Time",
         help = "<LOC aiwave_0346>Adds more time to when Navy begins to spawn. Delays tech level (Starts as T1). Will start at T2 if Tech 2 Wave Start is on.",
         key = 'NavyTime',
@@ -540,17 +540,20 @@ options = {
         },
     },
 	{
-        default = 19,
+        default = 31,
         label = "<LOC aiwave_0357>4: Wave Tech Progression",
         help = "<LOC aiwave_0358> Waves T1/T2/T3 Progression. Can be set to be faster or slower. Small changes can greatly affect difficulty.",
         key = 'WaveProgressionData',
 		value_text = "  %s Tech Progression",
         value_help = "<LOC aiwave_0359>( Speed up or slow down Tech Progression of Waves. )",
         values = {
-			'90 % Faster', '85 % Faster', '80 % Faster', '75 % Faster', '70 % Faster', '65 % Faster', '60 % Faster', '55 % Faster',
-			'50 % Faster', '45 % Faster', '40 % Faster', '35 % Faster', '30 % Faster', '25 % Faster', '20 % Faster', '15 % Faster', '10 % Faster', '5 % Faster', 'Normal', '5 % Slower', '10 % Slower', '15 % Slower', '20 % Slower', '25 % Slower', '30 % Slower', '35 % Slower', '40 % Slower', '45 % Slower', '50 % Slower',
-			'55 % Slower', '60 % Slower', '65 % Slower', '70 % Slower', '75 % Slower', '80 % Slower', '85 % Slower', '90 % Slower', '95 % Slower', '100 % Slower',
-			'110 % Slower', '120 % Slower', '130 % Slower', '140 % Slower', '150 % Slower', '160 % Slower', '170 % Slower', '180 % Slower', '190 % Slower', '200 % Slower'
+		
+			'200 % Slower', '190 % Slower', '180 % Slower', '170 % Slower', '160 % Slower', '150 % Slower', '140 % Slower', '130 % Slower', '120 % Slower', '110 % Slower',
+			'100 % Slower', '95 % Slower', '90 % Slower', '85 % Slower', '80 % Slower', '75 % Slower', '70 % Slower', '65 % Slower', '60 % Slower', '55 % Slower', '50 % Slower',
+			'45 % Slower', '40 % Slower', '35 % Slower', '30 % Slower', '25 % Slower', '20 % Slower', '15 % Slower', '10 % Slower', '5 % Slower', 'Normal', '5 % Faster', '10 % Faster',
+			'15 % Faster', '20 % Faster', '25 % Faster', '30 % Faster', '35 % Faster', '40 % Faster', '45 % Faster', '50 % Faster', '55 % Faster', '60 % Faster', '65 % Faster',
+			'70 % Faster', '75 % Faster', '80 % Faster', '85 % Faster', '90 % Faster'
+			
         },
     },
 	{
@@ -566,7 +569,7 @@ options = {
         },
     },
 	{
-        default = 11,
+        default = 9,
         label = "<LOC aiwave_0363>6a: LAND UNITS Per Player",
         help = "<LOC aiwave_0364>Number of Land Units Per Player.",
         key = 'LandPerWave',
@@ -616,7 +619,7 @@ options = {
         },
     },
 	{
-        default = 8,
+        default = 6,
         label = "<LOC aiwave_0372> 6d: LAND Experimental/Boss Frequency",
         help = "<LOC aiwave_0373> Will increase or decrease spawn rate of Land Experimentals and Mini Bosses.",
         key = 'ExpMulti',
@@ -628,7 +631,7 @@ options = {
         },
     },
 	{
-        default = 11,
+        default = 9,
         label = "<LOC aiwave_0375>7a: AIR UNITS Per Player",
         help = "<LOC aiwave_0376>Number of Air Units Per Player.",
         key = 'AirPerWave',
@@ -666,7 +669,7 @@ options = {
         },
     },
 	{
-        default = 8,
+        default = 6,
         label = "<LOC aiwave_0384> 7d: AIR Experimental/Boss Frequency",
         help = "<LOC aiwave_0385> Will increase or decrease spawn rate of Air Experimentals and Mini Bosses.",
         key = 'AirExpMulti',
@@ -704,7 +707,7 @@ options = {
         },
     },
 	{
-        default = 8,
+        default = 5,
         label = "<LOC aiwave_0393> 8c: NAVAL Experimental Frequency",
         help = "<LOC aiwave_0394> Will increase or decrease spawn rate of Navy Experimentals.",
         key = 'NavyExpMulti',
@@ -872,7 +875,7 @@ options = {
         },
     },
 	{
-        default = 15,
+        default = 10,
         label = "<LOC aiwave_0431>DROPS: Airdrops Wave Multiply",
         help = "<LOC aiwave_0432>Will increase or decrease the size of waves as game progresses.",
         key = 'TransportMultiplier',
@@ -882,7 +885,7 @@ options = {
            
          '1 > 1.5 > 2 > 3 > 1.5', '1 > 1.25 > 1.5 > 2 > 1.25', '1 > 1.5 > 2 > 1.5 > 1', '1 > 2 > 3 > 2 > 1', '1 > 2 > 4 > 8 > 16', '1 > 2 > 4 > 8 > 12', '1 > 2 > 4 > 6 > 8', '1 > 2 > 3 > 4 > 5', '1 > 1.5 > 2 > 2.5 > 3', '1 > 1.25 > 1.5 > 1.75 > 2', '1 > 1.2 > 1.4 > 1.6 > 1.8', '1 > 1.15 > 1.3 > 1.45 > 1.6', '1 > 1.1 > 1.2 > 1.3 > 1.4', '1 > 1.05 > 1.1 > 1.15 > 1.2', 
 		 "No",
-		 "1.2 > 1.15 > 1.1 > 1.05 > 1", "1.4 > 1.3 > 1.2 > 1.1 > 1", "1.6 > 1.45 > 1.3 > 1.15 > 1", "1.8 > 1.6 > 1.4 > 1.2 > 1", "2 > 1.75 > 1.5 > 1.25 > 1", "3 > 2.5 > 2 > 1.5 > 1", "5 > 4 > 3 > 2 > 1", "8 > 6 > 4 > 2 > 1", "12 > 6 > 4 > 2 > 1", "16 > 6 > 4 > 2 > 1", "4 > 4 > 4 > 2 > 1", "3 > 3 > 3 > 2 > 1", "2 > 2 > 2 > 1.5 > 1", "1 > 1 > 1 > 1.5 > 2", "1 > 1 > 1.5 > 2 > 3", "1 > 1.5 > 2 > 2 > 2", "1 > 1 > 2 > 3 > 3", "1 > 2 > 2 > 3 > 3", "1 > 2 > 2 > 3 > 4", "1 > 2 > 3 > 4 > 4"
+		 "1.2 > 1.15 > 1.1 > 1.05 > 1", "1.4 > 1.3 > 1.2 > 1.1 > 1", "1.6 > 1.45 > 1.3 > 1.15 > 1", "1.8 > 1.6 > 1.4 > 1.2 > 1", "2 > 1.75 > 1.5 > 1.25 > 1", "3 > 2.5 > 2 > 1.5 > 1", "5 > 4 > 3 > 2 > 1", "8 > 6 > 4 > 2 > 1", "12 > 6 > 4 > 2 > 1", "16 > 8 > 4 > 2 > 1", "4 > 4 > 4 > 2 > 1", "3 > 3 > 3 > 2 > 1", "2 > 2 > 2 > 1.5 > 1", "1 > 1 > 1 > 1.5 > 2", "1 > 1 > 1.5 > 2 > 3", "1 > 1.5 > 2 > 2 > 2", "1 > 1 > 2 > 3 > 3", "1 > 2 > 2 > 3 > 3", "1 > 2 > 2 > 3 > 4", "1 > 2 > 3 > 4 > 4"
         },
     },
 	{
@@ -1162,7 +1165,7 @@ options = {
         },
     },
 	{
-        default = 3,
+        default = 4,
         label = "<LOC aiwave_0496>2a: BOSS LAND Units",
         help = "<LOC aiwave_0497> Adjust size of Land Boss Wave. Turn on Endless Boss Waves for repeat waves.",
         key = 'EndWaveMulti',
@@ -1198,7 +1201,7 @@ options = {
         },
     },
 	{
-        default = 1,
+        default = 2,
         label = "<LOC aiwave_0505>3a: ARTILLERY Endgame On/Off",
         help = "<LOC aiwave_0506> Turns Endgame Artillery On/Off. Setting to Repeat Spawn will have the event re-occur.",
         key = 'ArtyOn',
@@ -1234,7 +1237,7 @@ options = {
         },
     },
 	{
-        default = 3,
+        default = 2,
         label = "<LOC aiwave_0514>4a: DOOM EndGame Wave",
         help = "<LOC aiwave_0515> DOOM units are powerful T5 Units. Destroying the DOOM Waves will damage the HQ. Dooms waves respawn 1 minute after being destroyed.",
         key = 'DoomCount',
@@ -1258,7 +1261,7 @@ options = {
         },
     },
 	{
-        default = 6,
+        default = 7,
         label = "<LOC aiwave_0520> 4c: DOOM Wave +/-",
         help = "<LOC aiwave_0521> Increases/Decreases DOOM Wave size by the set amount each spawn. Waves will never go lower than 1.",
         key = 'DoomIncrease',
@@ -1282,7 +1285,7 @@ options = {
         },
     },
 	{
-        default = 1,
+        default = 3,
         label = "<LOC aiwave_0526> 4e: DOOM Maximum Wave Size",
         help = "<LOC aiwave_05267> Set a maximum wave size.",
         key = 'DoomMaximum',
@@ -1390,7 +1393,7 @@ options = {
         },
     },
 	{
-        default = 1,
+        default = 3,
         label = "<LOC aiwave_0551>ECO 2a: Endgame EcoBoost, 0 = Off",
         help = "<LOC aiwave_0552> Sets Mass and Energy of Human ACU for Endgame. Activates 60 Seconds before Endgame stage. Works even if Starting ACU EcoBoost is Off. 0 = Off",
         key = 'EndGameEcoBoost',
@@ -1402,7 +1405,7 @@ options = {
         },
     },
 	{
-        default = 2,
+        default = 4,
         label = "<LOC aiwave_0554> ECO 2b: Endgame EcoBoost Start Time",
         help = "<LOC aiwave_0555> Sets how many Minutes before end of Hold Time that Endgame EcoBoost Starts.",
         key = 'EndEcoBoostTime',

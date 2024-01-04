@@ -4,11 +4,11 @@
 
     -- Armor Definition
     'Normal 1.0',
-    'Overcharge 2.5',
+    'Overcharge 3',
     'Deathnuke 0.032',
     'ExperimentalFootfall 0.0',
-    'CzarBeam 0.33',
-	'OtheTacticalBomb 1.75',
+    'CzarBeam 0.4',
+	'OtheTacticalBomb 2',
 	'Nuke 0.5',
 }
 

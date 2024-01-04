@@ -155,7 +155,7 @@ UnitBlueprint {
     LifeBarSize = 0.5,
 
     # This is energy ball stuff
-    Lifetime = 25,
+    Lifetime = 28,
     MaxMoveRange = 5,
     Physics = {
         BackUpDistance = 4,
@@ -207,6 +207,18 @@ UnitBlueprint {
                     LodCutoff = 'Weapon_LodCutoff',
                 },
             },
+			Buffs = {
+                {
+                    Add = {
+                        OnImpact = true,
+                    },
+                    AppliedToTarget = true,
+                    BuffType = 'STUN',
+                    Duration = 3,
+                    TargetAllow = 'NAVAL,EXPERIMENTAL,TECH1,TECH2,TECH3,STRUCTURE,SUBCOMMANDER',
+                    TargetDisallow = 'OPERATION,COMMAND',
+                },
+			},	
             AutoInitiateAttackCommand = false,
             BallisticArc = 'RULEUBA_None',
             BeamCollisionDelay = 0.05,

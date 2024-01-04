@@ -14,5 +14,7 @@ Description['pd4sp2108'] = "Will spawn two to four Energy Beings on impact, whic
 Description['raa2304'] = "Powerful long-range AntiAir, designed to kill T4 Air. Requires 500 power for 10 seconds to fire."
 Description['pas4301'] = "Experimental shields, with high health and a large coverage area. Slowly repairs self if damaged. Energy hungry."
 Description['edc0305'] = "Hybrid Technology Sonar Depth Charge Platform. Delivers powerful charges against units on the ocean floor. Provides naval units protection with a strong shield, torpedo defense, anti-ship missiles, and sonar. Unable to target submarines. Shield is disabled and only able to target ships with anti-ship missiles if submerged."
+Description['lbs0201'] = "Heavy Cruiser based off the Salem and able to tranverse land. Provides effective damage against air, surface, and submerged threats."
+Description['shc0202'] = "Heavy Cruiser equipped with long-range tracking missiles and advanced long-range AA weapons. Provides effective supporting fire for fleets."
 
 

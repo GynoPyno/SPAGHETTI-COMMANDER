@@ -43,13 +43,13 @@ UnitBlueprint {
             ShieldEnergyDrainRechargeTime = 5,
             ShieldMaxHealth = 30000,
             ShieldRechargeTime = 25,
-            ShieldRegenRate = 175,
+            ShieldRegenRate = 240,
             ShieldRegenStartTime = 1,
             ShieldSize = 50,
             ShieldVerticalOffset = -7,
         },
     },
-    Description = '<LOC b_obj1301_desc>Support Base',
+    Description = '<LOC b_obj1301_desc>Rift Control Center',
     Display = {
         DamageEffects = {
             {
@@ -141,7 +141,7 @@ UnitBlueprint {
         UnitWeight = 1,
     },
     Interface = {
-        HelpText = '<LOC b_obj1301_help>Support Base',
+        HelpText = '<LOC b_obj1301_help>Rift Control Center',
     },
     LifeBarHeight = 0.075,
     LifeBarOffset = 1.2,

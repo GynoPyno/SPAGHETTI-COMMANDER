@@ -195,6 +195,7 @@ ParagonLock = 0
 totalEnemyExpArty = 0
 totalEnemyT3Arty = 0
 totalEnemySatelites = 0
+SatFinalCounter = false
 totalEnemyExpAirDefences = 0
 CrazyModeLand = "Normal Land"
 CrazyModeAir = "Normal Air"
@@ -2913,64 +2914,82 @@ GetRandomizedUnitID = function(self)
 	--GameTime = math.floor(GetGameTimeSeconds() - WavesStartTimeAI) / HoldTimeAI
 
 		if Lland > 0 and GameTime < (0.1 * WaveProgression) then
-			rspawn = (landUnitsL.Tech4)[Random(1, Lland)]
+			
 				if Mland > 0 and (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Land+Navy" or JumpTech2 == "Land") then
 					rspawn = (landUnitsM.Tech4)[Random(1, Mland)]
-				end	
-			elseif Mland > 0 and GameTime >= (0.1 * WaveProgression) and GameTime < (0.25 * WaveProgression) then
-				rspawn = (landUnitsM.Tech4)[Random(1, Mland)]
-				if Lland > 0 and Random(1, 3) == 1 and GameTime < (0.15 * WaveProgression) and not (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Land+Navy" or JumpTech2 == "Land") then
+				else
 					rspawn = (landUnitsL.Tech4)[Random(1, Lland)]
 				end	
-			elseif Hland > 0 and GameTime >= (0.25 * WaveProgression) and GameTime < (0.35 * WaveProgression) then
-				rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
-				if Mland > 0 and Random(1, 3) == 1 and GameTime < (0.3 * WaveProgression) then
+			elseif Mland > 0 and GameTime >= (0.1 * WaveProgression) and GameTime < (0.25 * WaveProgression) then
+				
+				if Lland > 0 and Random(1, 3) == 1 and GameTime < (0.15 * WaveProgression) and not (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Land+Navy" or JumpTech2 == "Land") then
+					rspawn = (landUnitsL.Tech4)[Random(1, Lland)]
+				else
 					rspawn = (landUnitsM.Tech4)[Random(1, Mland)]
 				end	
+			elseif Hland > 0 and GameTime >= (0.25 * WaveProgression) and GameTime < (0.35 * WaveProgression) then
+				
+				if Mland > 0 and Random(1, 3) == 1 and GameTime < (0.3 * WaveProgression) then
+					rspawn = (landUnitsM.Tech4)[Random(1, Mland)]
+				else
+					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+				end	
 			elseif Hland > 0 and GameTime >= (0.35 * WaveProgression) and GameTime < (0.45 * WaveProgression) then
-				rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+				
 				if Eland > 0 and Random(0, 250) <= 10 * ExpMulti --1% 4.4% 8.3% 1.5x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
 				end
 			elseif Hland > 0 and GameTime >= (0.45 * WaveProgression) and GameTime < (0.55 * WaveProgression) then --15.75 to 22.75
-				rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+				
 				--x = math.floor(7 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 180) <= 10 * ExpMulti --2% 6% 11.6% 1.8x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
 				end
 			elseif Hland > 0 and GameTime >= (0.55 * WaveProgression) and GameTime < (0.65 * WaveProgression) then --15.75 to 22.75
-				rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+				
 				--x = math.floor(7 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 130) <= 10 * ExpMulti --2.8% 15.4% 29.6% 1.8x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
 				end	
 			elseif Hland > 0 and GameTime >= (0.65 * WaveProgression) and GameTime < (0.77 * WaveProgression) then --22.75 to 29.75
-				rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+				
 				--x = math.floor(3 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 70) <= 10 * ExpMulti --5% 24% 52% 1.8x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
 				end
 			elseif Hland > 0 and GameTime >= (0.77 * WaveProgression) and GameTime < (0.9 * WaveProgression) then --22.75 to 29.75
-				rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+				
 				--x = math.floor(3 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 60) <= 10 * ExpMulti --6.5% 34% 65% 2x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
 				end
 				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
 				and Random(0, 200) <= 10 * ExpMulti then --1.1% 6.1% 11.6% +20
 					CreateACombinedLandBossUnitAroundMainBuildingForAI()
 				end
 			elseif Hland > 0 and GameTime >= (0.90 * WaveProgression) and GameTime < (1.05 * WaveProgression) then --29.75
-				rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+				
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 40) <= 10 * ExpMulti --9.1% 50% 95% 2x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
 				end
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
@@ -2978,11 +2997,13 @@ GetRandomizedUnitID = function(self)
 					CreateACombinedLandBossUnitAroundMainBuildingForAI()
 				end
 			elseif Hland > 0 and GameTime >= (1.05 * WaveProgression) and GameTime < (1.2 * WaveProgression) then --29.75
-				rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+				
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 36) <= 10 * ExpMulti --10% 55% 100% 1.89x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
 				end
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
@@ -2990,11 +3011,13 @@ GetRandomizedUnitID = function(self)
 					CreateACombinedLandBossUnitAroundMainBuildingForAI()
 				end
 			elseif Hland > 0 and GameTime >= (1.2 * WaveProgression) and GameTime < (1.35 * WaveProgression) then --29.75
-				rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+				
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 25) <= 10 * ExpMulti --11.1% 61% 100% 1.47x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
 				end
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
@@ -3002,11 +3025,13 @@ GetRandomizedUnitID = function(self)
 					CreateACombinedLandBossUnitAroundMainBuildingForAI()
 				end
 			elseif Hland > 0 and GameTime >= (1.35 * WaveProgression) then --29.75
-				rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+				
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 20) <= 10 * ExpMulti --12.5% 68.8% 100% 1.3x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
 				end
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
@@ -3022,113 +3047,130 @@ GetRandomizedTotMayLandID = function(self)
 	--GameTime = math.floor(GetGameTimeSeconds() - WavesStartTimeAI) / HoldTimeAI
 
 		if Lland > 0 and GameTime < (0.1 * WaveProgression) then
-			if LlandHeavy > 0 and  Random(1, 40) <= TotalMayhemLand then
-				rspawn = (landUnitsLHeavy.Tech4)[Random(1, LlandHeavy)]
-			else
-				rspawn = (landUnitsL.Tech4)[Random(1, Lland)]
-			end	
+				
 				if Mland > 0 and (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Land+Navy" or JumpTech2 == "Land") then
 					if MlandHeavy > 0 and  Random(1, 40) <= TotalMayhemLand then
 						rspawn = (landUnitsMHeavy.Tech4)[Random(1, MlandHeavy)]
 					else
 						rspawn = (landUnitsM.Tech4)[Random(1, Mland)]
-					end	
-				end	
-			elseif Mland > 0 and GameTime >= (0.1 * WaveProgression) and GameTime < (0.25 * WaveProgression) then
-				if MlandHeavy > 0 and  Random(1, 40) <= TotalMayhemLand then
-					rspawn = (landUnitsMHeavy.Tech4)[Random(1, MlandHeavy)]
+					end
 				else
-					rspawn = (landUnitsM.Tech4)[Random(1, Mland)]
-				end	
-				if Lland > 0 and Random(1, 3) == 1 and GameTime < (0.15 * WaveProgression) and not (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Land+Navy" or JumpTech2 == "Land") then
-					if LlandHeavy > 0 and  Random(1, 30) <= TotalMayhemLand then
+					if LlandHeavy > 0 and  Random(1, 40) <= TotalMayhemLand then
 						rspawn = (landUnitsLHeavy.Tech4)[Random(1, LlandHeavy)]
 					else
 						rspawn = (landUnitsL.Tech4)[Random(1, Lland)]
 					end	
 				end	
-			elseif Hland > 0 and GameTime >= (0.25 * WaveProgression) and GameTime < (0.35 * WaveProgression) then
-				if HlandHeavy > 0 and  Random(1, 40) <= TotalMayhemLand then
-					rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
+			elseif Mland > 0 and GameTime >= (0.1 * WaveProgression) and GameTime < (0.25 * WaveProgression) then
+				if Lland > 0 and Random(1, 3) == 1 and GameTime < (0.15 * WaveProgression) and not (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Land+Navy" or JumpTech2 == "Land") then
+					if LlandHeavy > 0 and  Random(1, 30) <= TotalMayhemLand then
+						rspawn = (landUnitsLHeavy.Tech4)[Random(1, LlandHeavy)]
+					else
+						rspawn = (landUnitsL.Tech4)[Random(1, Lland)]
+					end
 				else
-					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
-				end
-				rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+					if MlandHeavy > 0 and  Random(1, 40) <= TotalMayhemLand then
+						rspawn = (landUnitsMHeavy.Tech4)[Random(1, MlandHeavy)]
+					else
+						rspawn = (landUnitsM.Tech4)[Random(1, Mland)]
+					end	
+
+				end	
+			elseif Hland > 0 and GameTime >= (0.25 * WaveProgression) and GameTime < (0.35 * WaveProgression) then
+				
 				if Mland > 0 and Random(1, 3) == 1 and GameTime < (0.3 * WaveProgression) then
 					if MlandHeavy > 0 and  Random(1, 30) <= TotalMayhemLand then
 						rspawn = (landUnitsMHeavy.Tech4)[Random(1, MlandHeavy)]
 					else
 						rspawn = (landUnitsM.Tech4)[Random(1, Mland)]
-					end	
+					end
+				else
+					if HlandHeavy > 0 and  Random(1, 40) <= TotalMayhemLand then
+						rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
+					else
+						rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+					end
 				end	
 			elseif Hland > 0 and GameTime >= (0.35 * WaveProgression) and GameTime < (0.45 * WaveProgression) then
-				if HlandHeavy > 0 and  Random(1, 39) <= TotalMayhemLand then
-					rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
-				else
-					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
-				end
+				
 				if Eland > 0 and Random(0, 250) <= 10 * ExpMulti --1% 4.4% 8.3% 1.5x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					if HlandHeavy > 0 and  Random(1, 39) <= TotalMayhemLand then
+						rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
+					else
+						rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+					end
 				end
 			elseif Hland > 0 and GameTime >= (0.45 * WaveProgression) and GameTime < (0.55 * WaveProgression) then --15.75 to 22.75
-				if HlandHeavy > 0 and  Random(1, 38) <= TotalMayhemLand then
-					rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
-				else
-					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
-				end
+				
 				--x = math.floor(7 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 180) <= 10 * ExpMulti --2% 6% 11.6% 1.8x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					if HlandHeavy > 0 and  Random(1, 38) <= TotalMayhemLand then
+						rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
+					else
+						rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+					end
 				end
 			elseif Hland > 0 and GameTime >= (0.55 * WaveProgression) and GameTime < (0.65 * WaveProgression) then --15.75 to 22.75
-				if HlandHeavy > 0 and  Random(1, 37) <= TotalMayhemLand then
-					rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
-				else
-					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
-				end
+				
 				--x = math.floor(7 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 130) <= 10 * ExpMulti --2.8% 15.4% 29.6% 1.8x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					if HlandHeavy > 0 and  Random(1, 37) <= TotalMayhemLand then
+						rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
+					else
+						rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+					end
 				end	
 			elseif Hland > 0 and GameTime >= (0.65 * WaveProgression) and GameTime < (0.77 * WaveProgression) then --22.75 to 29.75
-				if HlandHeavy > 0 and  Random(1, 36) <= TotalMayhemLand then
-					rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
-				else
-					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
-				end
+				
 				--x = math.floor(3 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 70) <= 10 * ExpMulti --5% 24% 52% 1.8x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					if HlandHeavy > 0 and  Random(1, 36) <= TotalMayhemLand then
+						rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
+					else
+						rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+					end
 				end
 			elseif Hland > 0 and GameTime >= (0.77 * WaveProgression) and GameTime < (0.9 * WaveProgression) then --22.75 to 29.75
-				if HlandHeavy > 0 and  Random(1, 35) <= TotalMayhemLand then
-					rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
-				else
-					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
-				end
+				
 				--x = math.floor(3 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 60) <= 10 * ExpMulti --6.5% 34% 65% 2x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					if HlandHeavy > 0 and  Random(1, 35) <= TotalMayhemLand then
+						rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
+					else
+						rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+					end
 				end
 				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
 				and Random(0, 200) <= 10 * ExpMulti then --1.1% 6.1% 11.6% +20
 					CreateACombinedLandBossUnitAroundMainBuildingForAI()
 				end
 			elseif Hland > 0 and GameTime >= (0.90 * WaveProgression) and GameTime < (1.05 * WaveProgression) then --29.75
-				if HlandHeavy > 0 and  Random(1, 34) <= TotalMayhemLand then
-					rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
-				else
-					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
-				end
+				
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 40) <= 10 * ExpMulti --9.1% 50% 95% 2x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					if HlandHeavy > 0 and  Random(1, 34) <= TotalMayhemLand then
+						rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
+					else
+						rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+					end
 				end
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
@@ -3136,15 +3178,17 @@ GetRandomizedTotMayLandID = function(self)
 					CreateACombinedLandBossUnitAroundMainBuildingForAI()
 				end
 			elseif Hland > 0 and GameTime >= (1.05 * WaveProgression) and GameTime < (1.2 * WaveProgression) then --29.75
-				if HlandHeavy > 0 and  Random(1, 33) <= TotalMayhemLand then
-					rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
-				else
-					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
-				end
+				
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 36) <= 10 * ExpMulti --10% 55% 100% 1.89x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					if HlandHeavy > 0 and  Random(1, 33) <= TotalMayhemLand then
+						rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
+					else
+						rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+					end
 				end
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
@@ -3152,15 +3196,17 @@ GetRandomizedTotMayLandID = function(self)
 					CreateACombinedLandBossUnitAroundMainBuildingForAI()
 				end
 			elseif Hland > 0 and GameTime >= (1.2 * WaveProgression) and GameTime < (1.35 * WaveProgression) then --29.75
-				if HlandHeavy > 0 and  Random(1, 32) <= TotalMayhemLand then
-					rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
-				else
-					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
-				end
+				
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 25) <= 10 * ExpMulti --11.1% 61% 100% 1.47x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					if HlandHeavy > 0 and  Random(1, 32) <= TotalMayhemLand then
+						rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
+					else
+						rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+					end
 				end
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
@@ -3168,15 +3214,17 @@ GetRandomizedTotMayLandID = function(self)
 					CreateACombinedLandBossUnitAroundMainBuildingForAI()
 				end
 			elseif Hland > 0 and GameTime >= (1.35 * WaveProgression) then --29.75
-				if HlandHeavy > 0 and  Random(1, 31) <= TotalMayhemLand then
-					rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
-				else
-					rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
-				end
+				
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 20) <= 10 * ExpMulti --12.5% 68.8% 100% 1.3x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				else
+					if HlandHeavy > 0 and  Random(1, 31) <= TotalMayhemLand then
+						rspawn = (landUnitsHHeavy.Tech4)[Random(1, HlandHeavy)]
+					else
+						rspawn = (landUnitsH.Tech4)[Random(1, Hland)]
+					end
 				end
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
@@ -3192,79 +3240,91 @@ GetRandomizedAirID = function(self)
 	--GameTime = math.floor(GetGameTimeSeconds() - WavesStartTimeAI) / HoldTimeAI
 
 		if LAir > 0 and GameTimeAir < (0.1 * WaveProgression) then
-			rspawn = (LAirUnits.Tech4)[Random(1, LAir)]
-			if MAir > 0 and (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Air+Navy" or JumpTech2 == "Air") then
+				if MAir > 0 and (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Air+Navy" or JumpTech2 == "Air") then
 					rspawn = (MAirUnits.Tech4)[Random(1, MAir)]
-				end	
+				else	
+					rspawn = (LAirUnits.Tech4)[Random(1, LAir)]
+				end
 			elseif MAir > 0 and GameTimeAir >= (0.1 * WaveProgression) and GameTimeAir < (0.25 * WaveProgression) then
 				rspawn = (MAirUnits.Tech4)[Random(1, MAir)]
 			elseif MAir > 0 and GameTimeAir >= (0.25 * WaveProgression) and GameTimeAir < (0.35 * WaveProgression) then
-				rspawn = (MAirUnits.Tech4)[Random(1, MAir)]	
 				if HAir > 0 and Random(0, 50) <= 17 then
 					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
-				end	
+				else	
+					rspawn = (MAirUnits.Tech4)[Random(1, MAir)]	
+				end
 			elseif HAir > 0 and GameTimeAir >= (0.35 * WaveProgression) and GameTimeAir < (0.45 * WaveProgression) then
-				rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 				if EAir > 0 and Random(0, 540) <= 10 * AirExpMulti then -- 0.5% 3% 5.8% x1.5
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
 					end	
+				else
+					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 				end
 			elseif HAir > 0 and GameTimeAir >= (0.45 * WaveProgression) and GameTimeAir < (0.55 * WaveProgression) then
-				rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 				if EAir > 0 and Random(0, 396) <= 10 * AirExpMulti then -- 0.9% 4.9% 9.5% x1.8
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
 					end	
-				end
+				else
+					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
+				end	
 			elseif HAir > 0 and GameTimeAir >= (0.55 * WaveProgression) and GameTimeAir < (0.65 * WaveProgression) then
-				rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
+				
 				if EAir > 0 and Random(0, 306) <= 10 * AirExpMulti then -- 1.2% 6.4% 12.2% x1.8
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
 					end	
+				else
+					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 				end	
 			elseif HAir > 0 and GameTimeAir >= (0.65 * WaveProgression) and GameTimeAir < (0.77 * WaveProgression) then
-				rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
+				
 				--x = math.floor(12 * WaveProgression + 0.5)
 				if EAir > 0 and Random(0, 240) <= 10 * AirExpMulti then -- 1.6% 9% 17.5% x2
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
-					end	
+					end
+				else
+					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 				end
 				--[[if countair > 0 and Random(0, 360) <= 10 * AirExpMulti and (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Air" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "ExtraAir") then
 					SpawnAIAirUnit()
 				end]]--
 			elseif HAir > 0 and GameTimeAir >= (0.77 * WaveProgression) and GameTimeAir < (0.9 * WaveProgression) then
-				rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
+				
 				--x = math.floor(12 * WaveProgression + 0.5)
 				if EAir > 0 and Random(0, 180) <= 10 * AirExpMulti then -- 2.2% 12% 23% x2
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
-					end	
+					end
+				else
+					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 				end
 				if countair > 0 and Random(0, 360) <= 10 * AirExpMulti and (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Air" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "ExtraAir" or MinorBossSpawns == "Air+ExtraLand") then
 					SpawnAIAirUnit() --0.8% 4.5% 8.7% x1.5
 				end
 			elseif HAir > 0 and GameTimeAir >= (0.9 * WaveProgression) and GameTimeAir < (1.05 * WaveProgression) then
-				rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
+				
 				--math.floor(5 * WaveProgression + 0.5)
 				if EAir > 0 and Random(0, 120) <= 10 * AirExpMulti then -- 3.2% 18% 34% x2
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
-					end	
+					end
+				else
+					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 				end
 				--math.floor(20 * WaveProgression + 0.5)
 				if countair > 0 and Random(0, 240) <= 10 * AirExpMulti and (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Air" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "ExtraAir" or MinorBossSpawns == "Air+ExtraLand") then
@@ -3273,37 +3333,42 @@ GetRandomizedAirID = function(self)
 					--CreateACombinedAirBossUnitAroundMainBuildingForAI()
 				end
 			elseif HAir > 0 and GameTimeAir >= (1.05 * WaveProgression) and GameTimeAir < (1.2 * WaveProgression) then
-				rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
+				
 				if EAir > 0 and Random(0, 100) <= 10 * AirExpMulti then -- 4.3% 24% 45.6% x2
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
-					end	
+					end
+				else
+					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 				end
 				if countair > 0 and Random(0, 210) <= 10 * AirExpMulti and (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Air" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "ExtraAir" or MinorBossSpawns == "Air+ExtraLand") then
 					SpawnAIAirUnit() --1.6% 9% 17.5% x1.5
 				end
 			elseif HAir > 0 and GameTimeAir >= (1.2 * WaveProgression) and GameTimeAir < (1.35 * WaveProgression) then
-				rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
+				
 				if EAir > 0 and Random(0, 80) <= 10 * AirExpMulti then -- 5.6% 30.6% 58.3% x2
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
-					end	
+					end
+				else
+					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 				end
 				if countair > 0 and Random(0, 180) <= 10 * AirExpMulti and (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Air" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "ExtraAir" or MinorBossSpawns == "Air+ExtraLand") then
 					SpawnAIAirUnit() --2.1% 12.1% 23.1% x1.5
 				end
 			elseif HAir > 0 and GameTimeAir >= (1.35 * WaveProgression) then
-				rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 				if EAir > 0 and Random(0, 45) <= 10 * AirExpMulti then -- 6.7% 36.7% 70% x1.5
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
-					end	
+					end
+				else
+					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 				end
 				if countair > 0 and Random(0, 100) <= 10 * AirExpMulti and (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Air" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "ExtraAir" or MinorBossSpawns == "Air+ExtraLand") then
 					SpawnAIAirUnit() --2.8% 12.1% 23.1%
@@ -3317,18 +3382,19 @@ GetRandomizedTotMayAirID = function(self)
 	--GameTime = math.floor(GetGameTimeSeconds() - WavesStartTimeAI) / HoldTimeAI
 
 		if LAir > 0 and GameTimeAir < (0.1 * WaveProgression) then
-			if LAirHeavy > 0 and Random(1, 40) <= TotalMayhemAir then
-				rspawn = (LAirUnitsHeavy.Tech4)[Random(1, LAirHeavy)]
-			else
-				rspawn = (LAirUnits.Tech4)[Random(1, LAir)]
-			end	
-			if MAir > 0 and (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Air+Navy" or JumpTech2 == "Air") then
+				if MAir > 0 and (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Air+Navy" or JumpTech2 == "Air") then
 					if MAirHeavy > 0 and Random(1, 40) <= TotalMayhemAir then
 						rspawn = (MAirUnitsHeavy.Tech4)[Random(1, MAirHeavy)]
 					else
 						rspawn = (MAirUnits.Tech4)[Random(1, MAir)]
 					end	
-				end	
+				else	
+					if LAirHeavy > 0 and Random(1, 40) <= TotalMayhemAir then
+						rspawn = (LAirUnitsHeavy.Tech4)[Random(1, LAirHeavy)]
+					else
+						rspawn = (LAirUnits.Tech4)[Random(1, LAir)]
+					end	
+				end
 			elseif MAir > 0 and GameTimeAir >= (0.1 * WaveProgression) and GameTimeAir < (0.25 * WaveProgression) then
 				if MAirHeavy > 0 and Random(1, 40) <= TotalMayhemAir then
 					rspawn = (MAirUnitsHeavy.Tech4)[Random(1, MAirHeavy)]
@@ -3336,103 +3402,116 @@ GetRandomizedTotMayAirID = function(self)
 					rspawn = (MAirUnits.Tech4)[Random(1, MAir)]
 				end	
 			elseif MAir > 0 and GameTimeAir >= (0.25 * WaveProgression) and GameTimeAir < (0.35 * WaveProgression) then
-				if MAirHeavy > 0 and Random(1, 30) <= TotalMayhemAir then
-					rspawn = (MAirUnitsHeavy.Tech4)[Random(1, MAirHeavy)]
-				else
-					rspawn = (MAirUnits.Tech4)[Random(1, MAir)]
-				end		
 				if HAir > 0 and Random(0, 50) <= 17 then
 					if HAirHeavy > 0 and Random(1, 40) <= TotalMayhemAir then
 						rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
 					else
 						rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 					end	
-				end	
+				else	
+					if MAirHeavy > 0 and Random(1, 30) <= TotalMayhemAir then
+						rspawn = (MAirUnitsHeavy.Tech4)[Random(1, MAirHeavy)]
+					else
+						rspawn = (MAirUnits.Tech4)[Random(1, MAir)]
+					end		
+				end
 			elseif HAir > 0 and GameTimeAir >= (0.35 * WaveProgression) and GameTimeAir < (0.45 * WaveProgression) then
-				if HAirHeavy > 0 and Random(1, 40) <= TotalMayhemAir then
-					rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
-				else
-					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
-				end	
+				
 				if EAir > 0 and Random(0, 540) <= 10 * AirExpMulti then -- 0.5% 3% 5.8% x1.5
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
+					end
+				else
+					if HAirHeavy > 0 and Random(1, 40) <= TotalMayhemAir then
+						rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
+					else
+						rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 					end	
 				end
 			elseif HAir > 0 and GameTimeAir >= (0.45 * WaveProgression) and GameTimeAir < (0.55 * WaveProgression) then
-				if HAirHeavy > 0 and Random(1, 39) <= TotalMayhemAir then
-					rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
-				else
-					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
-				end	
+				
 				if EAir > 0 and Random(0, 396) <= 10 * AirExpMulti then -- 0.9% 4.9% 9.5% x1.8
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
 					end	
-				end
-			elseif HAir > 0 and GameTimeAir >= (0.55 * WaveProgression) and GameTimeAir < (0.65 * WaveProgression) then
-				if HAirHeavy > 0 and Random(1, 38) <= TotalMayhemAir then
-					rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
 				else
-					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
+					if HAirHeavy > 0 and Random(1, 39) <= TotalMayhemAir then
+						rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
+					else
+						rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
+					end
 				end	
+			elseif HAir > 0 and GameTimeAir >= (0.55 * WaveProgression) and GameTimeAir < (0.65 * WaveProgression) then
+				
 				if EAir > 0 and Random(0, 306) <= 10 * AirExpMulti then -- 1.2% 6.4% 12.2% x1.8
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
+					end
+				else
+					if HAirHeavy > 0 and Random(1, 38) <= TotalMayhemAir then
+						rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
+					else
+						rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 					end	
 				end	
 			elseif HAir > 0 and GameTimeAir >= (0.65 * WaveProgression) and GameTimeAir < (0.77 * WaveProgression) then
-				if HAirHeavy > 0 and Random(1, 37) <= TotalMayhemAir then
-					rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
-				else
-					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
-				end	
+				
 				--x = math.floor(12 * WaveProgression + 0.5)
 				if EAir > 0 and Random(0, 240) <= 10 * AirExpMulti then -- 1.6% 9% 17.5% x2
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
+					end
+				else
+					if HAirHeavy > 0 and Random(1, 37) <= TotalMayhemAir then
+						rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
+					else
+						rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 					end	
 				end
 				--[[if countair > 0 and Random(0, 360) <= 10 * AirExpMulti and (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Air" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "ExtraAir") then
 					SpawnAIAirUnit()
 				end]]--
 			elseif HAir > 0 and GameTimeAir >= (0.77 * WaveProgression) and GameTimeAir < (0.9 * WaveProgression) then
-				if HAirHeavy > 0 and Random(1, 36) <= TotalMayhemAir then
-					rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
-				else
-					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
-				end	
+				
 				--x = math.floor(12 * WaveProgression + 0.5)
 				if EAir > 0 and Random(0, 180) <= 10 * AirExpMulti then -- 2.2% 12% 23% x2
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
+					end
+				else
+					if HAirHeavy > 0 and Random(1, 36) <= TotalMayhemAir then
+						rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
+					else
+						rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 					end	
 				end
 				if countair > 0 and Random(0, 360) <= 10 * AirExpMulti and (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Air" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "ExtraAir" or MinorBossSpawns == "Air+ExtraLand") then
 					SpawnAIAirUnit() --0.8% 4.5% 8.7% x1.5
 				end
 			elseif HAir > 0 and GameTimeAir >= (0.9 * WaveProgression) and GameTimeAir < (1.05 * WaveProgression) then
-				if HAirHeavy > 0 and Random(1, 35) <= TotalMayhemAir then
-					rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
-				else
-					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
-				end	
+				
 				--math.floor(5 * WaveProgression + 0.5)
 				if EAir > 0 and Random(0, 120) <= 10 * AirExpMulti then -- 3.2% 18% 34% x2
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
+					end
+				else
+					if HAirHeavy > 0 and Random(1, 35) <= TotalMayhemAir then
+						rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
+					else
+						rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 					end	
 				end
 				--math.floor(20 * WaveProgression + 0.5)
@@ -3442,48 +3521,54 @@ GetRandomizedTotMayAirID = function(self)
 					--CreateACombinedAirBossUnitAroundMainBuildingForAI()
 				end
 			elseif HAir > 0 and GameTimeAir >= (1.05 * WaveProgression) and GameTimeAir < (1.2 * WaveProgression) then
-				if HAirHeavy > 0 and Random(1, 34) <= TotalMayhemAir then
-					rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
-				else
-					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
-				end	
+				
 				if EAir > 0 and Random(0, 100) <= 10 * AirExpMulti then -- 4.3% 24% 45.6% x2
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
+					end
+				else
+					if HAirHeavy > 0 and Random(1, 34) <= TotalMayhemAir then
+						rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
+					else
+						rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 					end	
 				end
 				if countair > 0 and Random(0, 210) <= 10 * AirExpMulti and (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Air" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "ExtraAir" or MinorBossSpawns == "Air+ExtraLand") then
 					SpawnAIAirUnit() --1.6% 9% 17.5% x1.5
 				end
 			elseif HAir > 0 and GameTimeAir >= (1.2 * WaveProgression) and GameTimeAir < (1.35 * WaveProgression) then
-				if HAirHeavy > 0 and Random(1, 33) <= TotalMayhemAir then
-					rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
-				else
-					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
-				end	
+				
 				if EAir > 0 and Random(0, 80) <= 10 * AirExpMulti then -- 5.6% 30.6% 58.3% x2
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
+					end
+				else
+					if HAirHeavy > 0 and Random(1, 33) <= TotalMayhemAir then
+						rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
+					else
+						rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 					end	
 				end
 				if countair > 0 and Random(0, 180) <= 10 * AirExpMulti and (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Air" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "ExtraAir" or MinorBossSpawns == "Air+ExtraLand") then
 					SpawnAIAirUnit() --2.1% 12.1% 23.1% x1.5
 				end
 			elseif HAir > 0 and GameTimeAir >= (1.35 * WaveProgression) then
-				if HAirHeavy > 0 and Random(1, 32) <= TotalMayhemAir then
-					rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
-				else
-					rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
-				end	
+				
 				if EAir > 0 and Random(0, 45) <= 10 * AirExpMulti then -- 6.7% 36.7% 70% x1.5
 					if 1 >= Random(0, 10) and AirPower > 0 then
 						rspawn = "AAR0310"
 					else
 						rspawn = (EAirUnits.Tech4)[Random(1, EAir)]
+					end
+				else
+					if HAirHeavy > 0 and Random(1, 32) <= TotalMayhemAir then
+						rspawn = (HAirUnitsHeavy.Tech4)[Random(1, HAirHeavy)]
+					else
+						rspawn = (HAirUnits.Tech4)[Random(1, HAir)]
 					end	
 				end
 				if countair > 0 and Random(0, 100) <= 10 * AirExpMulti and (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Air" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "ExtraAir" or MinorBossSpawns == "Air+ExtraLand") then
@@ -3498,66 +3583,87 @@ GetRandomizedNavyID = function(self)
 	--GameTimeNavy = math.floor(GetGameTimeSeconds() - WavesStartTimeAI - NavyTime) / HoldTimeAI
 
 		if LNavy > 0 and GameTimeNavy < (0.12 * WaveProgression) then
-			rspawn = (LNavyUnits.Tech4)[Random(1, LNavy)]
 				if MNavy > 0 and (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Navy" or JumpTech2 == "Air+Navy" or JumpTech2 == "Navy") then
 					rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
-				end	
-			elseif MNavy > 0 and GameTimeNavy >= (0.12 * WaveProgression) and GameTimeNavy < (0.27 * WaveProgression) then
-				rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
-				if LNavy > 0 and Random(1, 3) == 1 and GameTimeNavy < (0.18 * WaveProgression) and not (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Navy" or JumpTech2 == "Air+Navy" or JumpTech2 == "Navy") then
+				else
 					rspawn = (LNavyUnits.Tech4)[Random(1, LNavy)]
 				end	
+			elseif MNavy > 0 and GameTimeNavy >= (0.12 * WaveProgression) and GameTimeNavy < (0.27 * WaveProgression) then
+				if LNavy > 0 and Random(1, 3) == 1 and GameTimeNavy < (0.18 * WaveProgression) and not (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Navy" or JumpTech2 == "Air+Navy" or JumpTech2 == "Navy") then
+					rspawn = (LNavyUnits.Tech4)[Random(1, LNavy)]
+				else
+					rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
+				end	
 			elseif MNavy > 0 and GameTimeNavy >= (0.27 * WaveProgression) and GameTimeNavy < (0.36 * WaveProgression) then
-				rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
 				if HNavy > 0 and Random(1, 5) == 1 then
 					rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
+				else
+					rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
 				end
 			elseif MNavy > 0 and GameTimeNavy >= (0.36 * WaveProgression) and GameTimeNavy < (0.45 * WaveProgression) then
-				rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
+				
 				if HNavy > 0 and Random(1, 3) == 1 then
 					rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
+				else
+					rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
 				end
 			elseif HNavy > 0 and GameTimeNavy >= (0.45 * WaveProgression) and GameTimeNavy < (0.55 * WaveProgression) then
-				rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
+				
 				if MNavy > 0 and Random(1, 2) == 1 then
 					rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
+				else
+					rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
 				end
 				if ENavy > 0 and Random(0, 320) <= 10 * NavyExpMulti then --1.2% 6.8% 13% x2
 					rspawn = (ENavyUnits.Tech4)[Random(1, ENavy)]
 				end
 			elseif HNavy > 0 and GameTimeNavy >= (0.55 * WaveProgression) and GameTimeNavy < (0.65 * WaveProgression) then
-				rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
+				
 				if MNavy > 0 and Random(1, 3) == 1 then
 					rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
+				else
+					rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
 				end
 				if ENavy > 0 and Random(0, 200) <= 10 * NavyExpMulti then --1.9% 10.8% 20.7% x2
 					rspawn = (ENavyUnits.Tech4)[Random(1, ENavy)]
 				end
 			elseif HNavy > 0 and GameTimeNavy >= (0.65 * WaveProgression) and GameTimeNavy < (0.77 * WaveProgression) then
-				rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
-				if MNavy > 0 and Random(1, 5) == 1 then
+				
+				if MNavy > 0 and Random(1, 4) == 1 then
 					rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
+				else
+					rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
 				end
 				if ENavy > 0 and Random(0, 140) <= 10 * NavyExpMulti then --2.8% 15.5% 29.6% x2
 					rspawn = (ENavyUnits.Tech4)[Random(1, ENavy)]
 				end		
 			elseif HNavy > 0 and GameTimeNavy >= (0.77 * WaveProgression) and GameTimeNavy < (0.9 * WaveProgression) then
-				rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
-				if MNavy > 0 and Random(1, 8) == 1 then
+				
+				if MNavy > 0 and Random(1, 5) == 1 then
 					rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
+				else
+					rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
 				end
 				--x = math.floor(8 * WaveProgression + 0.5)
 				if ENavy > 0 and Random(0, 100) <= 10 * NavyExpMulti then --3.9% 21.6% 41.2% x2
 					rspawn = (ENavyUnits.Tech4)[Random(1, ENavy)]
 				end
 			elseif HNavy > 0 and GameTimeNavy >= (0.9 * WaveProgression) and GameTimeNavy < (1.05 * WaveProgression) then
-				rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
+				if MNavy > 0 and Random(1, 6) == 1 then
+					rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
+				else
+					rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
+				end
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if ENavy > 0 and Random(0, 60) <= 10 * NavyExpMulti then --6.5% 35.5% 67.7% x2
 					rspawn = (ENavyUnits.Tech4)[Random(1, ENavy)]
 				end
 			elseif HNavy > 0 and GameTimeNavy >= (1.05 * WaveProgression) and GameTimeNavy < (1.2 * WaveProgression) then
-				rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
+				if MNavy > 0 and Random(1, 8) == 1 then
+					rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
+				else
+					rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
+				end
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if ENavy > 0 and Random(0, 52) <= 10 * NavyExpMulti then --7.7% 42.3% 80.1% x2
 					rspawn = (ENavyUnits.Tech4)[Random(1, ENavy)]
@@ -3583,116 +3689,124 @@ GetRandomizedTotMayNavyID = function(self)
 	--GameTimeNavy = math.floor(GetGameTimeSeconds() - WavesStartTimeAI - NavyTime) / HoldTimeAI
 
 		if LNavy > 0 and GameTimeNavy < (0.12 * WaveProgression) then
-			if LNavyHeavy > 0 and Random(1, 40) <= TotalMayhemNavy then
-				rspawn = (LNavyUnitsHeavy.Tech4)[Random(1, LNavyHeavy)]
-			else
-				rspawn = (LNavyUnits.Tech4)[Random(1, LNavy)]
-			end	
 				if MNavy > 0 and (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Navy" or JumpTech2 == "Air+Navy" or JumpTech2 == "Navy") then
 					if MNavyHeavy > 0 and Random(1, 40) <= TotalMayhemNavy then
 						rspawn = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
 					else
 						rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
 					end	
-				end	
+				else		
+					if LNavyHeavy > 0 and Random(1, 40) <= TotalMayhemNavy then
+						rspawn = (LNavyUnitsHeavy.Tech4)[Random(1, LNavyHeavy)]
+					else
+						rspawn = (LNavyUnits.Tech4)[Random(1, LNavy)]
+					end	
+				end
 			elseif MNavy > 0 and GameTimeNavy >= (0.12 * WaveProgression) and GameTimeNavy < (0.27 * WaveProgression) then
-				if MNavyHeavy > 0 and Random(1, 40) <= TotalMayhemNavy then
-					rspawn = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
-				else
-					rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
-				end	
 				if LNavy > 0 and Random(1, 3) == 1 and GameTimeNavy < (0.18 * WaveProgression) and not (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Navy" or JumpTech2 == "Air+Navy" or JumpTech2 == "Navy") then
 					if LNavyHeavy > 0 and Random(1, 30) <= TotalMayhemNavy then
 						rspawn = (LNavyUnitsHeavy.Tech4)[Random(1, LNavyHeavy)]
 					else
 						rspawn = (LNavyUnits.Tech4)[Random(1, LNavy)]
 					end
-				end	
+				else	
+					if MNavyHeavy > 0 and Random(1, 40) <= TotalMayhemNavy then
+						rspawn = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
+					else
+						rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
+					end	
+				end
 			elseif MNavy > 0 and GameTimeNavy >= (0.27 * WaveProgression) and GameTimeNavy < (0.36 * WaveProgression) then
-				if MNavyHeavy > 0 and Random(1, 38) <= TotalMayhemNavy then
-					rspawn = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
-				else
-					rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
-				end	
 				if HNavy > 0 and Random(1, 5) == 1 then
 					if HNavyHeavy > 0 and Random(1, 40) <= TotalMayhemNavy then
 						rspawn = (HNavyUnitsHeavy.Tech4)[Random(1, HNavyHeavy)]
 					else
 						rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
 					end	
+				else
+					if MNavyHeavy > 0 and Random(1, 38) <= TotalMayhemNavy then
+						rspawn = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
+					else
+						rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
+					end	
 				end
 			elseif MNavy > 0 and GameTimeNavy >= (0.36 * WaveProgression) and GameTimeNavy < (0.45 * WaveProgression) then
-				if MNavyHeavy > 0 and Random(1, 36) <= TotalMayhemNavy then
-					rspawn = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
-				else
-					rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
-				end	
 				if HNavy > 0 and Random(1, 3) == 1 then
 					if HNavyHeavy > 0 and Random(1, 39) <= TotalMayhemNavy then
 						rspawn = (HNavyUnitsHeavy.Tech4)[Random(1, HNavyHeavy)]
 					else
 						rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
 					end	
+				else
+					if MNavyHeavy > 0 and Random(1, 36) <= TotalMayhemNavy then
+						rspawn = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
+					else
+						rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
+					end	
 				end
 			elseif HNavy > 0 and GameTimeNavy >= (0.45 * WaveProgression) and GameTimeNavy < (0.55 * WaveProgression) then
-					if HNavyHeavy > 0 and Random(1, 38) <= TotalMayhemNavy then
-						rspawn = (HNavyUnitsHeavy.Tech4)[Random(1, HNavyHeavy)]
-					else
-						rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
-					end	
 				if MNavy > 0 and Random(1, 2) == 1 then
 					if MNavyHeavy > 0 and Random(1, 34) <= TotalMayhemNavy then
 					rspawn = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
 					else
 					rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
 					end	
+				else	
+					if HNavyHeavy > 0 and Random(1, 38) <= TotalMayhemNavy then
+						rspawn = (HNavyUnitsHeavy.Tech4)[Random(1, HNavyHeavy)]
+					else
+						rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
+					end	
 				end
 				if ENavy > 0 and Random(0, 320) <= 10 * NavyExpMulti then --1.2% 6.8% 13% x2
 					rspawn = (ENavyUnits.Tech4)[Random(1, ENavy)]
 				end
 			elseif HNavy > 0 and GameTimeNavy >= (0.55 * WaveProgression) and GameTimeNavy < (0.65 * WaveProgression) then
-					if HNavyHeavy > 0 and Random(1, 37) <= TotalMayhemNavy then
-						rspawn = (HNavyUnitsHeavy.Tech4)[Random(1, HNavyHeavy)]
-					else
-						rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
-					end	
 				if MNavy > 0 and Random(1, 3) == 1 then
 					if MNavyHeavy > 0 and Random(1, 32) <= TotalMayhemNavy then
 						rspawn = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
 					else
 						rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
 					end	
+				else
+					if HNavyHeavy > 0 and Random(1, 37) <= TotalMayhemNavy then
+						rspawn = (HNavyUnitsHeavy.Tech4)[Random(1, HNavyHeavy)]
+					else
+						rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
+					end	
 				end
 				if ENavy > 0 and Random(0, 200) <= 10 * NavyExpMulti then --1.9% 10.8% 20.7% x2
 					rspawn = (ENavyUnits.Tech4)[Random(1, ENavy)]
 				end
 			elseif HNavy > 0 and GameTimeNavy >= (0.65 * WaveProgression) and GameTimeNavy < (0.77 * WaveProgression) then
-					if HNavyHeavy > 0 and Random(1, 36) <= TotalMayhemNavy then
-						rspawn = (HNavyUnitsHeavy.Tech4)[Random(1, HNavyHeavy)]
-					else
-						rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
-					end	
-				if MNavy > 0 and Random(1, 5) == 1 then
+				if MNavy > 0 and Random(1, 4) == 1 then
 					if MNavyHeavy > 0 and Random(1, 30) <= TotalMayhemNavy then
 						rspawn = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
 					else
 						rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
+					end	
+				else
+					if HNavyHeavy > 0 and Random(1, 36) <= TotalMayhemNavy then
+						rspawn = (HNavyUnitsHeavy.Tech4)[Random(1, HNavyHeavy)]
+					else
+						rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
 					end	
 				end
 				if ENavy > 0 and Random(0, 140) <= 10 * NavyExpMulti then --2.8% 15.5% 29.6% x2
 					rspawn = (ENavyUnits.Tech4)[Random(1, ENavy)]
 				end		
 			elseif HNavy > 0 and GameTimeNavy >= (0.77 * WaveProgression) and GameTimeNavy < (0.9 * WaveProgression) then
-					if HNavyHeavy > 0 and Random(1, 35) <= TotalMayhemNavy then
-						rspawn = (HNavyUnitsHeavy.Tech4)[Random(1, HNavyHeavy)]
-					else
-						rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
-					end	
-				if MNavy > 0 and Random(1, 8) == 1 then
+				if MNavy > 0 and Random(1, 5) == 1 then
 					if MNavyHeavy > 0 and Random(1, 28) <= TotalMayhemNavy then
 						rspawn = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
 					else
 						rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
+					end	
+				else
+					if HNavyHeavy > 0 and Random(1, 35) <= TotalMayhemNavy then
+						rspawn = (HNavyUnitsHeavy.Tech4)[Random(1, HNavyHeavy)]
+					else
+						rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
 					end	
 				end
 				--x = math.floor(8 * WaveProgression + 0.5)
@@ -3700,21 +3814,37 @@ GetRandomizedTotMayNavyID = function(self)
 					rspawn = (ENavyUnits.Tech4)[Random(1, ENavy)]
 				end
 			elseif HNavy > 0 and GameTimeNavy >= (0.9 * WaveProgression) and GameTimeNavy < (1.05 * WaveProgression) then
+				if MNavy > 0 and Random(1, 6) == 1 then
+					if MNavyHeavy > 0 and Random(1, 28) <= TotalMayhemNavy then
+						rspawn = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
+					else
+						rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
+					end	
+				else
 					if HNavyHeavy > 0 and Random(1, 34) <= TotalMayhemNavy then
 						rspawn = (HNavyUnitsHeavy.Tech4)[Random(1, HNavyHeavy)]
 					else
 						rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
-					end	
+					end
+				end
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if ENavy > 0 and Random(0, 60) <= 10 * NavyExpMulti then --6.5% 35.5% 67.7% x2
 					rspawn = (ENavyUnits.Tech4)[Random(1, ENavy)]
 				end
 			elseif HNavy > 0 and GameTimeNavy >= (1.05 * WaveProgression) and GameTimeNavy < (1.2 * WaveProgression) then
+				if MNavy > 0 and Random(1, 8) == 1 then
+					if MNavyHeavy > 0 and Random(1, 28) <= TotalMayhemNavy then
+						rspawn = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
+					else
+						rspawn = (MNavyUnits.Tech4)[Random(1, MNavy)]
+					end	
+				else	
 					if HNavyHeavy > 0 and Random(1, 33) <= TotalMayhemNavy then
 						rspawn = (HNavyUnitsHeavy.Tech4)[Random(1, HNavyHeavy)]
 					else
 						rspawn = (HNavyUnits.Tech4)[Random(1, HNavy)]
-					end	
+					end
+				end	
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if ENavy > 0 and Random(0, 52) <= 10 * NavyExpMulti then --7.7% 42.3% 80.1% x2
 					rspawn = (ENavyUnits.Tech4)[Random(1, ENavy)]
@@ -4815,9 +4945,11 @@ function RedirectUnitNavy(aaUnitNavy)
 				if Random(1, 7) <= 4 then
 					IssueMove({ aUnit }, pUnitPos)
 				else
-					IssueMove({ aUnit }, pUnitPos)
-					WaitSeconds(Random(90, 120))
-					IssueClearCommands({ aUnit })
+					if Random(1, 3) <= 2 then
+						IssueMove({ aUnit }, pUnitPos)
+						WaitSeconds(Random(90, 120))
+						IssueClearCommands({ aUnit })
+					end	
 					IssueAggressiveMove({ aUnit }, pUnitPos)
 					WaitSeconds(Random(48, 78))
 					if EntityCategoryContains(categories.TECH3, aUnit) == true or EntityCategoryContains(categories.EXPERIMENTAL, aUnit) == true then
@@ -4867,9 +4999,11 @@ function RedirectUnitLand(aaUnitLand)
 					if Random(1, 8) <= 6 then
 						IssueMove({ aUnit }, pUnitPos)
 					else
-						IssueMove({ aUnit }, pUnitPos)
-						WaitSeconds(Random(20, 60))
-						IssueClearCommands({ aUnit })
+						if Random(1, 4) <= 3 then
+							IssueMove({ aUnit }, pUnitPos)
+							WaitSeconds(Random(20, 60))
+							IssueClearCommands({ aUnit })
+						end	
 						IssueAggressiveMove({ aUnit }, pUnitPos)
 						WaitSeconds(Random(48, 78))
 						repeat
@@ -4906,9 +5040,11 @@ function RedirectUnitLand(aaUnitLand)
                 IssueClearCommands({ aUnit })
                 local VECTOR3
                 local pUnitPos = pUnit:GetPosition()
-				IssueMove({ aUnit }, pUnitPos)
-				WaitSeconds(Random(45, 90))
-				IssueClearCommands({ aUnit })
+				if Random(1, 4) <= 3 then
+					IssueMove({ aUnit }, pUnitPos)
+					WaitSeconds(Random(45, 90))
+					IssueClearCommands({ aUnit })
+				end	
 				IssueAggressiveMove({ aUnit }, pUnitPos)
 				WaitSeconds(Random(48, 78))
 				repeat
@@ -4946,9 +5082,11 @@ function RedirectUnitLand(aaUnitLand)
 				if Random(1, 10) <= 8 then
 					IssueMove({ aUnit }, pUnitPos)
 				else
-					IssueMove({ aUnit }, pUnitPos)
-					WaitSeconds(Random(10, 20))
-					IssueClearCommands({ aUnit })
+					if Random(1, 3) <= 2 then
+						IssueMove({ aUnit }, pUnitPos)
+						WaitSeconds(Random(10, 20))
+						IssueClearCommands({ aUnit })
+					end	
 					IssueAggressiveMove({ aUnit }, pUnitPos)
 					WaitSeconds(Random(48, 78))
 					repeat
@@ -5405,7 +5543,7 @@ function RedirectUnit(aaUnit)
             if pUnit then
                 local VECTOR3
                 local pUnitPos = pUnit:GetPosition()
-				if Random(1, 4) <= 3 then
+				if Random(1, 3) <= 2 then
 					IssueMove({ aUnit }, pUnitPos)
 				else
 					IssueMove({ aUnit }, pUnitPos)
@@ -5819,9 +5957,11 @@ function RedirectUnitRegularLand(aaUnit)
 			if Random(1, 8) <= 6 then
 				IssueMove({ aUnit }, pUnitPos)
 			else
-				IssueMove({ aUnit }, pUnitPos)
-				WaitSeconds(Random(20, 60))
-				IssueClearCommands({ aUnit })
+				if Random(1, 3) == 1 then
+					IssueMove({ aUnit }, pUnitPos)
+					WaitSeconds(Random(20, 60))
+					IssueClearCommands({ aUnit })
+				end	
 				IssueAggressiveMove({ aUnit }, pUnitPos)
 				WaitSeconds(Random(48, 78))
 				repeat
@@ -5869,7 +6009,7 @@ function RedirectUnitLandArtillery(aaUnit)
 				local pUnitPos = pUnit:GetPosition()
 				if Random(1, 2) == 1 then	
 					IssueMove({ aUnit }, pUnitPos)
-					WaitSeconds(Random(20, 35))
+					WaitSeconds(Random(5, 10))
 					IssueClearCommands({ aUnit })
 					IssueAggressiveMove({ aUnit }, pUnitPos)
 					WaitSeconds(Random(48, 78))
@@ -6245,10 +6385,12 @@ function RedirectUnitRegularNavy(aaUnit)
 				IssueClearCommands({ aUnit })
 				local VECTOR3
 				local pUnitPos = pUnit:GetPosition()
-				if Random(1, 7) <= 4 then
-					IssueMove({ aUnit }, pUnitPos)
-					WaitSeconds(Random(70, 110))
-					IssueClearCommands({ aUnit })
+				if Random(1, 7) <= 5 then
+					if Random(1, 2) == 1 then
+						IssueMove({ aUnit }, pUnitPos)
+						WaitSeconds(Random(70, 110))
+						IssueClearCommands({ aUnit })
+					end	
 					IssueAggressiveMove({ aUnit }, pUnitPos)
 					WaitSeconds(Random(50, 80))
 					if EntityCategoryContains(categories.TECH3, aUnit) == true or EntityCategoryContains(categories.EXPERIMENTAL, aUnit) == true then
@@ -8325,6 +8467,7 @@ function MonitoringFunctionThree()
 			totalEnemyExpArty = CalculateTotalEnemyUnitsOfCategory(self, categories.STRUCTURE * categories.ARTILLERY * categories.EXPERIMENTAL)
 			totalEnemyT3Arty = CalculateTotalEnemyUnitsOfCategory(self, categories.STRUCTURE * categories.ARTILLERY * categories.TECH3)
 			totalEnemySatelites = CalculateTotalEnemyUnitsOfCategory(self, categories.STRUCTURE * categories.EXPERIMENTAL * categories.ORBITALSYSTEM)
+			--totalActiveSatelites = CalculateTotalEnemyUnitsOfCategory(self, categories.SATELLITE * categories.MOBILE * categories.EXPERIMENTAL)
 			--PrintText("Yolos are " .. totalEnemyYolonas .. " !", 28, 'ffCBFFFF', 4, 'center') 
 			--PrintText("Tech3 Arty " .. totalEnemyT3Arty .. " !", 28, 'ffCBFFFF', 4, 'center') 
 		until GetGameTimeSeconds() > 20000 or won == true
@@ -8343,6 +8486,7 @@ function MonitoringFunctionFour()
 				cyclecount = cyclecount + 1
 				if ParagonDetected == false then
 					PrintText("Paragon Detected! Hurry, you fools!", 28, 'ffCBFFFF', 4, 'center') 
+					AIMessageTo('Warning! Paragon Detected!', nil)
 					ParagonDetected = true
 				end	
 			end	
@@ -8364,6 +8508,7 @@ function MonitoringFunctionFive() -- Damage Bonus
 			if totalEnemyMass > (250 * humans) then
 				if damageamplificationflag == false then
 					PrintText("Damage Amplification x" .. DamageBoostMulti .. "! Bringing the Pain!", 28, 'ffCBFFFF', 4, 'center') 
+					AIMessageTo('Damage Amplification Active', nil)
 					damageamplificationflag = true
 				end	
 				massDamageBoost = math.floor(totalEnemyMass * 0.0125 * DamageBoostMulti + 0.5)
@@ -8381,7 +8526,7 @@ function MonitoringFunctionSix() --Air Counter
 		repeat
 			WaitSeconds(60)
 			totalT3Gunships = CalculateTotalEnemyUnitsOfCategory(self, categories.MOBILE * categories.TECH3 * categories.AIR * categories.GROUNDATTACK) 
-			totalExpAir = CalculateTotalEnemyUnitsOfCategory(self, categories.MOBILE * categories.EXPERIMENTAL * categories.AIR) 
+			totalExpAir = CalculateTotalEnemyUnitsOfCategory(self, categories.MOBILE * categories.EXPERIMENTAL * categories.AIR - categories.SATELLITE) 
 			if totalExpAir >= 1 then
 				totalExpAir = totalExpAir - 1
 			end	
@@ -8502,96 +8647,108 @@ GetRandomizedRiftUnitID = function(self)
 	--local x = nil
 	--GameTime = math.floor(GetGameTimeSeconds() - WavesStartTimeAI) / HoldTimeAI
 
-		if RiftLland > 0 and GameTime < (0.1 * WaveProgression) then
+		if RiftLland > 0 and GameTime < (0.13 * WaveProgression) then
 			rspawn = (RiftUnitsL.Tech4)[Random(1, RiftLland)]
 				if RiftMland > 0 and (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Land+Navy" or JumpTech2 == "Land") then
 					rspawn = (RiftUnitsM.Tech4)[Random(1, RiftMland)]
 				end	
-			elseif RiftMland > 0 and GameTime >= (0.1 * WaveProgression) and GameTime < (0.25 * WaveProgression) then
+			elseif RiftMland > 0 and GameTime >= (0.13 * WaveProgression) and GameTime < (0.28 * WaveProgression) then
 				rspawn = (RiftUnitsM.Tech4)[Random(1, RiftMland)]
-				if RiftLland > 0 and Random(1, 3) == 1 and GameTime < (0.15 * WaveProgression) and not (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Land+Navy" or JumpTech2 == "Land") then
+				if RiftLland > 0 and Random(1, 3) == 1 and GameTime < (0.18 * WaveProgression) and not (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Land+Navy" or JumpTech2 == "Land") then
 					rspawn = (RiftUnitsL.Tech4)[Random(1, RiftLland)]
 				end	
-			elseif RiftHland > 0 and GameTime >= (0.25 * WaveProgression) and GameTime < (0.35 * WaveProgression) then
+			elseif RiftHland > 0 and GameTime >= (0.28 * WaveProgression) and GameTime < (0.38 * WaveProgression) then
 				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
-				if RiftMland > 0 and Random(1, 3) == 1 and GameTime < (0.3 * WaveProgression) then
+				if RiftMland > 0 and Random(1, 3) == 1 and GameTime < (0.33 * WaveProgression) then
 					rspawn = (RiftUnitsM.Tech4)[Random(1, RiftMland)]
 				end	
-			elseif RiftHland > 0 and GameTime >= (0.35 * WaveProgression) and GameTime < (0.45 * WaveProgression) then
+			elseif RiftHland > 0 and GameTime >= (0.38 * WaveProgression) and GameTime < (0.47 * WaveProgression) then
 				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
-				if Eland > 0 and Random(0, 250) <= 10 * ExpMulti --1% 4.4% 8.3% 1.5x
+				if Eland > 0 and Random(0, 300) <= 10 * ExpMulti --1% 4.4% 8.3% 1.5x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
 				end
-			elseif RiftHland > 0 and GameTime >= (0.45 * WaveProgression) and GameTime < (0.55 * WaveProgression) then --15.75 to 22.75
+			elseif RiftHland > 0 and GameTime >= (0.47 * WaveProgression) and GameTime < (0.56 * WaveProgression) then --15.75 to 22.75
 				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
 				--x = math.floor(7 * WaveProgression + 0.5)
-				if Eland > 0 and Random(0, 180) <= 10 * ExpMulti --2% 6% 11.6% 1.8x
+				if Eland > 0 and Random(0, 216) <= 10 * ExpMulti --2% 6% 11.6% 1.8x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
 				end
-			elseif RiftHland > 0 and GameTime >= (0.55 * WaveProgression) and GameTime < (0.65 * WaveProgression) then --15.75 to 22.75
+			elseif RiftHland > 0 and GameTime >= (0.56 * WaveProgression) and GameTime < (0.65 * WaveProgression) then --15.75 to 22.75
 				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
 				--x = math.floor(7 * WaveProgression + 0.5)
-				if Eland > 0 and Random(0, 130) <= 10 * ExpMulti --2.8% 15.4% 29.6% 1.8x
+				if Eland > 0 and Random(0, 156) <= 10 * ExpMulti --2.8% 15.4% 29.6% 1.8x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
 				end	
 			elseif RiftHland > 0 and GameTime >= (0.65 * WaveProgression) and GameTime < (0.77 * WaveProgression) then --22.75 to 29.75
 				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
 				--x = math.floor(3 * WaveProgression + 0.5)
-				if Eland > 0 and Random(0, 70) <= 10 * ExpMulti --5% 24% 52% 1.8x
+				if Eland > 0 and Random(0, 84) <= 10 * ExpMulti --5% 24% 52% 1.8x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
 				end
 			elseif RiftHland > 0 and GameTime >= (0.77 * WaveProgression) and GameTime < (0.9 * WaveProgression) then --22.75 to 29.75
 				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
 				--x = math.floor(3 * WaveProgression + 0.5)
-				if Eland > 0 and Random(0, 60) <= 10 * ExpMulti --6.5% 34% 65% 2x
+				if Eland > 0 and Random(0, 72) <= 10 * ExpMulti --6.5% 34% 65% 2x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
 				end
 				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
-				and Random(0, 200) <= 10 * ExpMulti then --1.1% 6.1% 11.6% +20
+				and Random(0, 240) <= 10 * ExpMulti then --1.1% 6.1% 11.6% +20
 					CreateACombinedLandBossUnitAroundMainBuildingForAI()
 				end
 			elseif RiftHland > 0 and GameTime >= (0.90 * WaveProgression) and GameTime < (1.05 * WaveProgression) then --29.75
 				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
 				--x = math.floor(4 * WaveProgression + 0.5)
-				if Eland > 0 and Random(0, 40) <= 10 * ExpMulti --9.1% 50% 95% 2x
+				if Eland > 0 and Random(0, 48) <= 10 * ExpMulti --9.1% 50% 95% 2x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
 				end
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
-				and Random(0, 120) <= 10 * ExpMulti then --2% 10.9% 20.8% +20
+				and Random(0, 144) <= 10 * ExpMulti then --2% 10.9% 20.8% +20
 					CreateACombinedLandBossUnitAroundMainBuildingForAI()
 				end
 			elseif RiftHland > 0 and GameTime >= (1.05 * WaveProgression) and GameTime < (1.2 * WaveProgression) then --29.75
 				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
 				--x = math.floor(4 * WaveProgression + 0.5)
-				if Eland > 0 and Random(0, 36) <= 10 * ExpMulti --10% 55% 100% 1.89x
+				if Eland > 0 and Random(0, 43) <= 10 * ExpMulti --10% 55% 100% 1.89x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
 				end
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
-				and Random(0, 95) <= 10 * ExpMulti then --2.3% 12.8% 24.4% +10
+				and Random(0, 114) <= 10 * ExpMulti then --2.3% 12.8% 24.4% +10
 					CreateACombinedLandBossUnitAroundMainBuildingForAI()
 				end
 			elseif RiftHland > 0 and GameTime >= (1.2 * WaveProgression) and GameTime < (1.35 * WaveProgression) then --29.75
 				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
 				--x = math.floor(4 * WaveProgression + 0.5)
-				if Eland > 0 and Random(0, 25) <= 10 * ExpMulti --11.1% 61% 100% 1.47x
+				if Eland > 0 and Random(0, 30) <= 10 * ExpMulti --11.1% 61% 100% 1.47x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
 				end
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
-				and Random(0, 80) <= 10 * ExpMulti then --2.8% 15.5% 29.6% +10
+				and Random(0, 96) <= 10 * ExpMulti then --2.8% 15.5% 29.6% +10
 					CreateACombinedLandBossUnitAroundMainBuildingForAI()
 				end
-			elseif RiftHland > 0 and GameTime >= (1.35 * WaveProgression) then --29.75
+			elseif RiftHland > 0 and GameTime >= (1.35 * WaveProgression) and GameTime < (1.5 * WaveProgression) then --29.75
+				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 24) <= 10 * ExpMulti --12.5% 68.8% 100% 1.3x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
+				and Random(0, 72) <= 10 * ExpMulti then --3.6% 19.6% 37.5% +5
+					CreateACombinedLandBossUnitAroundMainBuildingForAI()
+				end
+			elseif RiftHland > 0 and GameTime >= (1.5 * WaveProgression) then --29.75
 				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if Eland > 0 and Random(0, 20) <= 10 * ExpMulti --12.5% 68.8% 100% 1.3x
@@ -8611,153 +8768,169 @@ GetRandomizedTotMayRiftID = function(self)
 	--local x = nil
 	--GameTime = math.floor(GetGameTimeSeconds() - WavesStartTimeAI) / HoldTimeAI
 
-		if RiftLland > 0 and GameTime < (0.1 * WaveProgression) then
-			if BigRiftLland > 0 and  Random(1, 40) <= TotalMayhemLand then
+		if RiftLland > 0 and GameTime < (0.13 * WaveProgression) then
+			if BigRiftLland > 0 and  Random(1, 48) <= TotalMayhemLand then
 				rspawn = (BigRiftUnitsL.Tech4)[Random(1, BigRiftLland)]
 			else
 				rspawn = (RiftUnitsL.Tech4)[Random(1, RiftLland)]
 			end	
 				if RiftMland > 0 and (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Land+Navy" or JumpTech2 == "Land") then
-					if BigRiftMland > 0 and  Random(1, 40) <= TotalMayhemLand then
+					if BigRiftMland > 0 and  Random(1, 48) <= TotalMayhemLand then
 						rspawn = (BigRiftUnitsM.Tech4)[Random(1, BigRiftMland)]
 					else
 						rspawn = (RiftUnitsM.Tech4)[Random(1, RiftMland)]
 					end	
 				end	
-			elseif RiftMland > 0 and GameTime >= (0.1 * WaveProgression) and GameTime < (0.25 * WaveProgression) then
-				if BigRiftMland > 0 and  Random(1, 40) <= TotalMayhemLand then
+			elseif RiftMland > 0 and GameTime >= (0.13 * WaveProgression) and GameTime < (0.28 * WaveProgression) then
+				if BigRiftMland > 0 and  Random(1, 48) <= TotalMayhemLand then
 					rspawn = (BigRiftUnitsM.Tech4)[Random(1, BigRiftMland)]
 				else
 					rspawn = (RiftUnitsM.Tech4)[Random(1, RiftMland)]
 				end	
-				if RiftLland > 0 and Random(1, 3) == 1 and GameTime < (0.15 * WaveProgression) and not (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Land+Navy" or JumpTech2 == "Land") then
-					if BigRiftLland > 0 and  Random(1, 30) <= TotalMayhemLand then
+				if RiftLland > 0 and Random(1, 3) == 1 and GameTime < (0.18 * WaveProgression) and not (JumpTech2 == "Land+Air+Navy" or JumpTech2 == "Land+Air" or JumpTech2 == "Land+Navy" or JumpTech2 == "Land") then
+					if BigRiftLland > 0 and  Random(1, 36) <= TotalMayhemLand then
 						rspawn = (BigRiftUnitsL.Tech4)[Random(1, BigRiftLland)]
 					else
 						rspawn = (RiftUnitsL.Tech4)[Random(1, RiftLland)]
 					end	
 				end	
-			elseif RiftHland > 0 and GameTime >= (0.25 * WaveProgression) and GameTime < (0.35 * WaveProgression) then
-				if BigRiftHland > 0 and  Random(1, 40) <= TotalMayhemLand then
+			elseif RiftHland > 0 and GameTime >= (0.28 * WaveProgression) and GameTime < (0.38 * WaveProgression) then
+				if BigRiftHland > 0 and  Random(1, 44) <= TotalMayhemLand then
 					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
 				else
 					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
 				end
 				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
-				if RiftMland > 0 and Random(1, 3) == 1 and GameTime < (0.3 * WaveProgression) then
-					if BigRiftMland > 0 and  Random(1, 30) <= TotalMayhemLand then
+				if RiftMland > 0 and Random(1, 3) == 1 and GameTime < (0.33 * WaveProgression) then
+					if BigRiftMland > 0 and  Random(1, 36) <= TotalMayhemLand then
 						rspawn = (BigRiftUnitsM.Tech4)[Random(1, BigRiftMland)]
 					else
 						rspawn = (RiftUnitsM.Tech4)[Random(1, RiftMland)]
 					end	
 				end	
-			elseif RiftHland > 0 and GameTime >= (0.35 * WaveProgression) and GameTime < (0.45 * WaveProgression) then
+			elseif RiftHland > 0 and GameTime >= (0.38 * WaveProgression) and GameTime < (0.47 * WaveProgression) then
+				if BigRiftHland > 0 and  Random(1, 43) <= TotalMayhemLand then
+					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
+				else
+					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				end
+				if Eland > 0 and Random(0, 300) <= 10 * ExpMulti --1% 4.4% 8.3% 1.5x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+			elseif RiftHland > 0 and GameTime >= (0.47 * WaveProgression) and GameTime < (0.56 * WaveProgression) then --15.75 to 22.75
+				if BigRiftHland > 0 and  Random(1, 42) <= TotalMayhemLand then
+					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
+				else
+					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				end
+				--x = math.floor(7 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 216) <= 10 * ExpMulti --2% 6% 11.6% 1.8x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+			elseif RiftHland > 0 and GameTime >= (0.56 * WaveProgression) and GameTime < (0.65 * WaveProgression) then --15.75 to 22.75
+				if BigRiftHland > 0 and  Random(1, 41) <= TotalMayhemLand then
+					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
+				else
+					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				end
+				--x = math.floor(7 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 156) <= 10 * ExpMulti --2.8% 15.4% 29.6% 1.8x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end	
+			elseif RiftHland > 0 and GameTime >= (0.65 * WaveProgression) and GameTime < (0.77 * WaveProgression) then --22.75 to 29.75
+				if BigRiftHland > 0 and  Random(1, 40) <= TotalMayhemLand then
+					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
+				else
+					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				end
+				--x = math.floor(3 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 84) <= 10 * ExpMulti --5% 24% 52% 1.8x
+				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
+					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+				end
+			elseif RiftHland > 0 and GameTime >= (0.77 * WaveProgression) and GameTime < (0.9 * WaveProgression) then --22.75 to 29.75
 				if BigRiftHland > 0 and  Random(1, 39) <= TotalMayhemLand then
 					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
 				else
 					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
 				end
-				if Eland > 0 and Random(0, 250) <= 10 * ExpMulti --1% 4.4% 8.3% 1.5x
+				--x = math.floor(3 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 72) <= 10 * ExpMulti --6.5% 34% 65% 2x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
 				end
-			elseif RiftHland > 0 and GameTime >= (0.45 * WaveProgression) and GameTime < (0.55 * WaveProgression) then --15.75 to 22.75
+				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
+				and Random(0, 240) <= 10 * ExpMulti then --1.1% 6.1% 11.6% +20
+					CreateACombinedLandBossUnitAroundMainBuildingForAI()
+				end
+			elseif RiftHland > 0 and GameTime >= (0.90 * WaveProgression) and GameTime < (1.05 * WaveProgression) then --29.75
 				if BigRiftHland > 0 and  Random(1, 38) <= TotalMayhemLand then
 					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
 				else
 					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
 				end
-				--x = math.floor(7 * WaveProgression + 0.5)
-				if Eland > 0 and Random(0, 180) <= 10 * ExpMulti --2% 6% 11.6% 1.8x
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 48) <= 10 * ExpMulti --9.1% 50% 95% 2x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
 				end
-			elseif RiftHland > 0 and GameTime >= (0.55 * WaveProgression) and GameTime < (0.65 * WaveProgression) then --15.75 to 22.75
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
+				and Random(0, 144) <= 10 * ExpMulti then --2% 10.9% 20.8% +20
+					CreateACombinedLandBossUnitAroundMainBuildingForAI()
+				end
+			elseif RiftHland > 0 and GameTime >= (1.05 * WaveProgression) and GameTime < (1.2 * WaveProgression) then --29.75
 				if BigRiftHland > 0 and  Random(1, 37) <= TotalMayhemLand then
 					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
 				else
 					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
 				end
-				--x = math.floor(7 * WaveProgression + 0.5)
-				if Eland > 0 and Random(0, 130) <= 10 * ExpMulti --2.8% 15.4% 29.6% 1.8x
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 43) <= 10 * ExpMulti --10% 55% 100% 1.89x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
-				end	
-			elseif RiftHland > 0 and GameTime >= (0.65 * WaveProgression) and GameTime < (0.77 * WaveProgression) then --22.75 to 29.75
+				end
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
+				and Random(0, 114) <= 10 * ExpMulti then --2.3% 12.8% 24.4% +10
+					CreateACombinedLandBossUnitAroundMainBuildingForAI()
+				end
+			elseif RiftHland > 0 and GameTime >= (1.2 * WaveProgression) and GameTime < (1.35 * WaveProgression) then --29.75
 				if BigRiftHland > 0 and  Random(1, 36) <= TotalMayhemLand then
 					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
 				else
 					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
 				end
-				--x = math.floor(3 * WaveProgression + 0.5)
-				if Eland > 0 and Random(0, 70) <= 10 * ExpMulti --5% 24% 52% 1.8x
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if Eland > 0 and Random(0, 30) <= 10 * ExpMulti --11.1% 61% 100% 1.47x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
 				end
-			elseif RiftHland > 0 and GameTime >= (0.77 * WaveProgression) and GameTime < (0.9 * WaveProgression) then --22.75 to 29.75
+				--x = math.floor(4 * WaveProgression + 0.5)
+				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
+				and Random(0, 96) <= 10 * ExpMulti then --2.8% 15.5% 29.6% +10
+					CreateACombinedLandBossUnitAroundMainBuildingForAI()
+				end
+			elseif RiftHland > 0 and GameTime >= (1.35 * WaveProgression) and GameTime < (1.5 * WaveProgression) then --29.75
 				if BigRiftHland > 0 and  Random(1, 35) <= TotalMayhemLand then
 					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
 				else
 					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
 				end
-				--x = math.floor(3 * WaveProgression + 0.5)
-				if Eland > 0 and Random(0, 60) <= 10 * ExpMulti --6.5% 34% 65% 2x
-				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
-					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
-				end
-				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
-				and Random(0, 200) <= 10 * ExpMulti then --1.1% 6.1% 11.6% +20
-					CreateACombinedLandBossUnitAroundMainBuildingForAI()
-				end
-			elseif RiftHland > 0 and GameTime >= (0.90 * WaveProgression) and GameTime < (1.05 * WaveProgression) then --29.75
-				if BigRiftHland > 0 and  Random(1, 34) <= TotalMayhemLand then
-					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
-				else
-					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
-				end
 				--x = math.floor(4 * WaveProgression + 0.5)
-				if Eland > 0 and Random(0, 40) <= 10 * ExpMulti --9.1% 50% 95% 2x
+				if Eland > 0 and Random(0, 24) <= 10 * ExpMulti --12.5% 68.8% 100% 1.3x
 				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
 					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
 				end
 				--x = math.floor(4 * WaveProgression + 0.5)
 				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
-				and Random(0, 120) <= 10 * ExpMulti then --2% 10.9% 20.8% +20
+				and Random(0, 72) <= 10 * ExpMulti then --3.6% 19.6% 37.5% +5
 					CreateACombinedLandBossUnitAroundMainBuildingForAI()
 				end
-			elseif RiftHland > 0 and GameTime >= (1.05 * WaveProgression) and GameTime < (1.2 * WaveProgression) then --29.75
-				if BigRiftHland > 0 and  Random(1, 33) <= TotalMayhemLand then
-					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
-				else
-					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
-				end
-				--x = math.floor(4 * WaveProgression + 0.5)
-				if Eland > 0 and Random(0, 36) <= 10 * ExpMulti --10% 55% 100% 1.89x
-				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
-					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
-				end
-				--x = math.floor(4 * WaveProgression + 0.5)
-				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
-				and Random(0, 95) <= 10 * ExpMulti then --2.3% 12.8% 24.4% +10
-					CreateACombinedLandBossUnitAroundMainBuildingForAI()
-				end
-			elseif RiftHland > 0 and GameTime >= (1.2 * WaveProgression) and GameTime < (1.35 * WaveProgression) then --29.75
-				if BigRiftHland > 0 and  Random(1, 32) <= TotalMayhemLand then
-					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
-				else
-					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
-				end
-				--x = math.floor(4 * WaveProgression + 0.5)
-				if Eland > 0 and Random(0, 25) <= 10 * ExpMulti --11.1% 61% 100% 1.47x
-				and (ExperimentalSpawns == "Land+Air+Navy" or ExperimentalSpawns == "Land+Air" or ExperimentalSpawns == "Land+Navy" or ExperimentalSpawns == "Land") then
-					rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
-				end
-				--x = math.floor(4 * WaveProgression + 0.5)
-				if (MinorBossSpawns == "Land+Air" or MinorBossSpawns == "Land" or MinorBossSpawns == "ExtraLand" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir")
-				and Random(0, 80) <= 10 * ExpMulti then --2.8% 15.5% 29.6% +10
-					CreateACombinedLandBossUnitAroundMainBuildingForAI()
-				end
-			elseif RiftHland > 0 and GameTime >= (1.35 * WaveProgression) then --29.75
+			elseif RiftHland > 0 and GameTime >= (1.5 * WaveProgression) then --29.75
 				if BigRiftHland > 0 and  Random(1, 31) <= TotalMayhemLand then
 					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
 				else
@@ -8884,7 +9057,7 @@ function CreateRiftSpawnPoints()
 		local sizeEdgeX = sizeX - 10
 		local sizeEdgeZ = sizeZ - 10
 		local validPosCount
-		--local NotvalidPosCount
+		local NotvalidPosCount
 		WaitSeconds(30)
 		repeat
 			unit = nil
@@ -8967,8 +9140,32 @@ function CreateRiftSpawnPoints()
 				--if StartAmphibious == EndAmphibious then
 					local AccurateTest = NavUtils.CanPathTo('Amphibious', startPos, {randX, terrainAttitude, randZ})
 					if AccurateTest == true then
-						newPos = { randX, terrainAttitude, randZ, type = "VECTOR3" }
-						table.insert(validRiftPositions.positions, newPos)
+						AccurateTest = NavUtils.CanPathTo('Amphibious', startPos, {(randX - 5), terrainAttitude, randZ})
+						if AccurateTest == true then
+							AccurateTest = NavUtils.CanPathTo('Amphibious', startPos, {(randX + 5), terrainAttitude, randZ})
+							if AccurateTest == true then
+								AccurateTest = NavUtils.CanPathTo('Amphibious', startPos, {randX, terrainAttitude, (randZ - 5)})
+								if AccurateTest == true then
+									AccurateTest = NavUtils.CanPathTo('Amphibious', startPos, {randX, terrainAttitude, (randZ + 5)})
+									if AccurateTest == true then
+										AccurateTest = NavUtils.CanPathTo('Amphibious', startPos, {(randX + 4), terrainAttitude, (randZ + 4)})
+										if AccurateTest == true then
+											AccurateTest = NavUtils.CanPathTo('Amphibious', startPos, {(randX - 4), terrainAttitude, (randZ - 4)})
+											if AccurateTest == true then
+												AccurateTest = NavUtils.CanPathTo('Amphibious', startPos, {(randX - 4), terrainAttitude, (randZ + 4)})
+												if AccurateTest == true then
+													AccurateTest = NavUtils.CanPathTo('Amphibious', startPos, {(randX + 4), terrainAttitude, (randZ - 4)})
+													if AccurateTest == true then
+														newPos = { randX, terrainAttitude, randZ, type = "VECTOR3" }
+														table.insert(validRiftPositions.positions, newPos)
+													end	
+												end	
+											end	
+										end	
+									end	
+								end
+							end
+						end
 					--[[else
 						newPos = { randX, terrainAttitude, randZ, type = "VECTOR3" }
 						table.insert(validNotRiftPositions.positions, newPos)]]--
@@ -9051,6 +9248,7 @@ function MonitorRiftBuildingCount()
 						CreateARiftNuke(SupportBase)
 						count = count - 1
 					until count < 1
+					WaitSeconds(60)
 				end
 			end
 			WaitSeconds(120)
@@ -9165,6 +9363,7 @@ function CreateARiftNuke(SupportBase)
 					if nukePos then
 						IssueNuke({ unit }, nukePos)
 					end
+					AIMessageTo('Rift Nuke Launched!', nil)
 					WaitTicks(750)
 					if unit ~= nil and not unit:BeenDestroyed() then
 						unit:Destroy()
@@ -9190,8 +9389,8 @@ function DetectAndSpawnOrbRiftWaves()
 			totalEnemyMass = CalculateEnemyMass()
 			UnitsFromMass = math.floor((totalEnemyMass * 0.00134) + 0.5)
 			wavesize = RiftUnits + totalEnemyParagons + totalEnemyYolonas + UnitsFromMass
-			if wavesize > 50 then
-				wavesize = 50
+			if wavesize > 40 then
+				wavesize = 40
 			end
 			for i, orb in riftBuildingList2 do
 				if orb and not orb:BeenDestroyed() then
@@ -9208,10 +9407,17 @@ function CreateWavesForOrbRift(orb, wavesize)
 		local riftorb = orb
 		local posX, posY, posZ = riftorb:GetPositionXYZ()
 		local unitcount = wavesize
+		local SpawnDelay = false
+		if unitcount > 10 then
+			SpawnDelay = true
+		end	
 		repeat
 			SpawnLandUnitsForOrb(posX, posZ)
 			unitcount = unitcount - 1
 			WaitTicks(3)
+			if SpawnDelay == true then
+				WaitTicks(7)
+			end	
 		until unitcount < 1 or won == true
 		KillThread(self)
 	end)
@@ -9498,18 +9704,28 @@ function CheckFinalEndgame()
 		if DoomCount ~= 'Off --' then
 			WaitSeconds(10)
 			DeployDooms()
+			MonitorSpirits()
+			local Dooms = tostring(ScenarioInfo.Options.DoomDamageHQ)
+			Dooms = Dooms .. "% of HQ's health."
+			AIMessageTo('Destroy Doom Waves to damage HQ. Each defeated Doom Wave will damage HQ by ', Dooms)
 		end
     end
 end
 function CheckMainGoal()
 	local circle = ForkThread(function(self)
 		--PrintText("CHECK MAIN GOAL!", 30, 'c71c1c', 4, 'center')
+		VictoryMessage = false
 		repeat
-			WaitSeconds(2)
+			WaitSeconds(3)
 			local unitlist = aiBrain:GetListOfUnits(categories.mai2201, false)
 			if (GetGameTimeSeconds() > 60 and (table.getn(unitlist) == 0 or (AIMainBuilding ~= nil and AIMainBuilding:BeenDestroyed()))) or
 			(EndGameCondition == true and GetGameTimeSeconds() > (WavesStartTimeAI + HoldTimeAI + EndGameHoldTime)) then
 				won = true
+				if VictoryMessage == false then
+					AIMessageTo('/70', nil)
+					AIMessageTo('HQ has been Destroyed!', nil)
+					VictoryMessage = true
+				end	
 				if aiSecondaryBuildings and aiSecondaryBuildings.secondaryBuildings then
 					for aindex, sBuilding in aiSecondaryBuildings.secondaryBuildings do
 						if sBuilding and not sBuilding:BeenDestroyed() then
@@ -9525,6 +9741,87 @@ function CheckMainGoal()
 		until GetGameTimeSeconds() > 20000	
 	end)
 end	
+function SatelliteCountermeasures()
+	local circle = ForkThread(function(self)
+		repeat
+			WaitSeconds(5)
+			if won ~= true and AIMainBuilding ~= nil and not AIMainBuilding:BeenDestroyed() then
+				local HQMaxHP = AIMainBuilding:GetMaxHealth()
+				local HQCurrentHP = AIMainBuilding:GetHealth()
+				local HQDamageThreshold = HQCurrentHP / HQMaxHP
+				if HQDamageThreshold <= 0.2 and SatFinalCounter == false then
+					local totalActiveSatelites = CalculateTotalEnemyUnitsOfCategory(self, categories.SATELLITE * categories.MOBILE * categories.EXPERIMENTAL)
+					if totalActiveSatelites > 0 then
+						local AllEnemyUnits = {}
+						local enemyUnitList = {}
+						local EnemyUnit = nil
+						for i, brain in humanBrains.HBrains do
+							enemyUnitList = brain:GetListOfUnits((categories.SATELLITE * categories.MOBILE * categories.EXPERIMENTAL), false)
+							for i = 1, table.getn(enemyUnitList) do
+								AllEnemyUnits[table.getn(AllEnemyUnits) + 1] = enemyUnitList[i]
+							end
+						end
+						for i, EnemyUnit in AllEnemyUnits do
+							if EnemyUnit and not EnemyUnit:BeenDestroyed() then
+								EnemyUnit:Kill()
+							end
+						end	
+						AIMessageTo('Emergency Satellite Countermeasures Deployed! All Satellites Eliminated!', nil)
+						SatFinalCounter = true
+					end
+				end
+			end
+		until GetGameTimeSeconds() > 20000 or won == true or SatFinalCounter == true
+	end)
+end		
+function RandomSatelliteCountermeasures()
+	local circle = ForkThread(function(self)
+		repeat
+			WaitSeconds(Random(240, 300))
+			local totalActiveSatelites2 = 0
+			local AllEnemyUnits = {}
+			local enemyUnitList = {}
+			local EnemyUnit = nil
+			for i, brain in humanBrains.HBrains do
+				enemyUnitList = brain:GetListOfUnits((categories.SATELLITE * categories.MOBILE * categories.EXPERIMENTAL), false)
+				for i = 1, table.getn(enemyUnitList) do
+					if enemyUnitList[i] and not enemyUnitList[i]:BeenDestroyed() then
+						local posX, posY, posZ = enemyUnitList[i]:GetPositionXYZ()
+						local terrainAttitude = GetTerrainHeight(posX, posZ)
+						if posY > (terrainAttitude + 10) then
+							AllEnemyUnits[table.getn(AllEnemyUnits) + 1] = enemyUnitList[i]
+						end
+					end	
+				end
+			end
+			totalActiveSatelites2 = table.getn(AllEnemyUnits)
+			--AIMessageTo('Total Satellites: ', totalActiveSatelites2)
+			if totalActiveSatelites2 > 3 then
+				if Random(1, 2) == 2 then
+					KillASatellite()
+				end
+				if totalActiveSatelites2 > 5 and Random(1, 8) == 4 then
+					KillASatellite()
+				end
+				if totalActiveSatelites2 > 7 and Random(1, 8) == 4 then
+					KillASatellite()
+				end
+				if totalActiveSatelites2 > 9 and Random(1, 7) == 5 then
+					KillASatellite()
+				end
+				if totalActiveSatelites2 > 11 and Random(1, 6) == 3 then
+					KillASatellite()
+				end
+				if totalActiveSatelites2 > 13 then
+					KillASatellite()
+				end
+				if totalActiveSatelites2 > 15 then
+					KillASatellite()
+				end
+			end	
+		until GetGameTimeSeconds() > 20000 or won == true
+	end)
+end				
 function EndgameArtyEvents()
 	local circle = ForkThread(function(self)
 		local ArtyCount
@@ -9555,7 +9852,7 @@ function EndgameArtyEvents()
 			until AACount < 1
 		end	
 		if ArtyOn == "On" or ArtyOn == "On, Repeats Spawn" then
-			if ArtyType == "UEB2302" or ArtyType == "UAB2302" or ArtyType == "URB2302" or ArtyType == "XSB2302" or ArtyType == "ARU2401" then
+			if ArtyType == "UEB2302" or ArtyType == "UAB2302" or ArtyType == "URB2302" or ArtyType == "XSB2302" or ArtyType == "GARTY2303" then
 				ArtyCount = MavCount + 2
 			else
 				ArtyCount = MavCount
@@ -9568,6 +9865,7 @@ function EndgameArtyEvents()
 				ArtyCount = ArtyCount - 1
 			until ArtyCount < 1
 			PrintText("EndGame Artillery Deployed!", 30, 'c71c1c', 4, 'center')
+			AIMessageTo('Alert! EndGame Artillery!', nil)
 			if ArtyOn == "On, Repeats Spawn" then
 				RepeatEndgameArtillery()
 			end	
@@ -9579,7 +9877,7 @@ function RepeatEndgameArtillery()
 		local ArtyCount
 		repeat
 			WaitSeconds(30)
-			if ArtyType == "UEB2302" or ArtyType == "UAB2302" or ArtyType == "URB2302" or ArtyType == "XSB2302" or ArtyType == "ARU2401" then
+			if ArtyType == "UEB2302" or ArtyType == "UAB2302" or ArtyType == "URB2302" or ArtyType == "XSB2302" or ArtyType == "GARTY2303" then
 				ArtyCount = Random(2, 3) + math.floor(totalEnemyEndgamers * 0.5 + 0.5) + math.floor(humans * 0.5 + 0.5)
 			end
 			GameOver()
@@ -9590,6 +9888,7 @@ function RepeatEndgameArtillery()
 				ArtyCount = ArtyCount - 1
 			until ArtyCount < 1
 			PrintText("EndGame Artillery Deployed!", 30, 'c71c1c', 4, 'center')
+			AIMessageTo('Alert! EndGame Artillery!', nil)
 		until GetGameTimeSeconds() > 20000 or won == true
 	end)
 end
@@ -9630,10 +9929,12 @@ function MonitoringAiNukeFunction() -- Offensive
             local gameEndersCount = totalEnemyParagons + totalEnemyYolonas
 			if NukeWarningOne == false and (GetGameTimeSeconds() - WavesStartTimeAI) > ((HoldTimeAI * NukeTime) - 600) and (NukesOn == "All On" or NukesOn == "Offensive") then
 				PrintText("==Nukes in 10 Minutes==", 24, 'ffFF1100', 4, 'center')
+				AIMessageTo('Alert! Nukes in 10 minutes!', nil)
 				NukeWarningOne = true
 			end
 			if NukeWarningTwo == false and (GetGameTimeSeconds() - WavesStartTimeAI) > ((HoldTimeAI * NukeTime) - 300) and (NukesOn == "All On" or NukesOn == "Offensive") then
 				PrintText("==Nukes in 5 Minutes==", 24, 'ffFF1100', 4, 'center')
+				AIMessageTo('Alert! Nukes in 5 minutes!', nil)
 				NukeWarningTwo = true
 			end
             if (((GetGameTimeSeconds() - WavesStartTimeAI) / HoldTimeAI) > NukeTime and (NukesOn == "All On" or NukesOn == "Offensive")) or (totalEnemyParagons > Random(1, 2) and (NukesOn == "All On" or NukesOn == "Offensive") and ParagonNuke == "On") or (((GetGameTimeSeconds() - WavesStartTimeAI) / HoldTimeAI) > NukeTime and NuclearOverwhelm > 0) then
@@ -9665,13 +9966,14 @@ function YolonaResponse()
                     AIMessageTo('Is this too much? ', nil)
                 end]]--
 				PrintText("Yolona have a good time?", 30, 'c71c1c', 4, 'center')
+				AIMessageTo('Yolona Detected!', nil)
 				WaitTicks(10)
 				local YoloCount = totalEnemyYolonas
 				local LBoss = math.floor(YoloCount * 1.5 + 0.5)
 				local ABoss = YoloCount
 				repeat
 					WaitTicks(2)
-					CreateArtilleryAroundMainBuilding("ARU2401")
+					CreateArtilleryAroundMainBuilding("GARTY2303")
 					--CreateAndLoadSMDForAI()
 					if Random(1, 4) == 1 then	
 						CreateAndLoadSMDForAI("ASD4302")
@@ -9705,28 +10007,31 @@ function ArtilleryResponse()
 	local c
 	local InitialResponse = false
 	ArtyResponseTime = 0
+		WaitSeconds(30)
 		repeat
 		WaitTicks(100)
 			if (totalEnemyExpArty >= 1 and ShieldType ~= "GAS4301") or totalEnemyExpArty >= 2 or (totalEnemyT3Arty > 3 and ShieldType ~= "GAS4301")
 			or totalEnemyT3Arty > Random(5, 6) or (totalEnemyT3Arty + totalEnemyExpArty) > Random(4, 5) or ((totalEnemyT3Arty >= 1 or totalEnemyExpArty >= 1) and Random(1, 99) == 45) or (totalEnemySatelites >= 4 and Random(1, 50) <= totalEnemySatelites) then
 				if InitialResponse == false then
 					PrintText("Artillery response inbound. ETA 6 Minutes.", 30, 'c71c1c', 4, 'center')
+					AIMessageTo('Alert! Artillery in 6 Minutes!', nil)
 					InitialResponse = true
 					WaitSeconds(360)
 				else
 					PrintText("Artillery response inbound. ETA 4 Minutes.", 30, 'c71c1c', 4, 'center')
+					AIMessageTo('Alert! Artillery in 4 Minutes!', nil)
 					WaitSeconds(240)
 				end	
 				c = 1
 				if totalEnemyExpArty > 0 then
 					c = 0
 				end	
-				local x = totalEnemyExpArty + math.floor(totalEnemyT3Arty * 0.5 + 0.5) + math.floor(totalEnemySatelites * 0.25 + 0.25) - (1 * c)
+				local x = totalEnemyExpArty + math.floor(totalEnemyT3Arty * 0.35 + 0.5) + math.floor(totalEnemySatelites * 0.25 + 0.25) - (1 * c)
 				if x < 1 then
 					x = 1
 				end	
 				repeat
-					CreateArtilleryAroundMainBuilding("ARU2401")
+					CreateArtilleryAroundMainBuilding("GARTY2303")
 					x = x - 1
 				until x < 1	
 				CreateShieldDefenceForAI("GAS4302")
@@ -9738,14 +10043,40 @@ function ArtilleryResponse()
 					if secondaryspawn ~= "Off" then
 						CreateDefenceFor2ndSpawn("GAS4302")
 					end	
-				end	
-				WaitSeconds(295 - (30 * ArtyResponseTime))
+				end
+				AIMessageTo('Artillery Response Deployed.', nil)
+				WaitSeconds(270 - (30 * ArtyResponseTime))
 				ArtyResponseTime = ArtyResponseTime + 1
 				if ArtyResponseTime > 4 then
 					ArtyResponseTime = 4
-				end	
+				end
 			end
 		until GetGameTimeSeconds() > 20000 or won == true
+	end)
+end
+function KillASatellite()
+    local circle = ForkThread(function()
+		local AllEnemyUnits = {}
+		local enemyUnitList = {}
+		local EnemyUnit = nil
+		for i, brain in humanBrains.HBrains do
+			enemyUnitList = brain:GetListOfUnits((categories.SATELLITE * categories.MOBILE * categories.EXPERIMENTAL), false)
+			for i = 1, table.getn(enemyUnitList) do
+				if enemyUnitList[i] and not enemyUnitList[i]:BeenDestroyed() then
+					local posX, posY, posZ = enemyUnitList[i]:GetPositionXYZ()
+					local terrainAttitude = GetTerrainHeight(posX, posZ)
+					if posY > (terrainAttitude + 10) then
+						AllEnemyUnits[table.getn(AllEnemyUnits) + 1] = enemyUnitList[i]
+					end
+				end
+			end
+		end
+		EnemyUnit = AllEnemyUnits[Random(1, table.getn(AllEnemyUnits))]
+		if EnemyUnit and not EnemyUnit:BeenDestroyed() then
+			EnemyUnit:Kill()
+			AIMessageTo('Satellite hit by Countermeasure!', nil)
+		end
+		KillThread(self)	
 	end)
 end	
 function MonitoringAiNukeSubmarinesFunction() --disabled
@@ -9814,7 +10145,7 @@ function MonitoringNearbyEnemyUnitsFunctionTwo()  -- Defensive
         repeat
             WaitSeconds(Random(Nukex1, Nukex2))
             if AIMainBuilding ~= nil and not AIMainBuilding:BeenDestroyed() then
-                local nearbyUnit = GetClosestEnemyUnitToHQ(AIMainBuilding, 35000)
+                local nearbyUnit = GetClosestEnemyUnitToHQ(AIMainBuilding, 30000)
                 if nearbyUnit ~= nil and (NukesOn == "All On" or NukesOn == "Defensive") then
                     local x = Random(1, 2)
                     repeat
@@ -9993,6 +10324,8 @@ function GetClosestEnemyUnitToHQ(HQUnit, maxDistance)
                                 AIMessageTo('You are annoying me ', brain)
                             end]]--
 							PrintText("Enemy Detected Near HQ!", 30, 'c71c1c', 4, 'center')
+							PrintText("Defensive Nukes Launched!", 30, 'c71c1c', 4, 'center')
+							AIMessageTo('Notice: Units near HQ will trigger a defensive nuke strike.', nil)
                             closestEnemyUnit = huUnit
                             return closestEnemyUnit
                         end
@@ -10008,6 +10341,7 @@ end
 function NavalUnitsSpawnWaves()  -- Enabled Spawns Navy Waves
     local circle = ForkThread(function()
         LOG("sa: Running  NavalUnitsSpawnMonitoring")
+		local randNavalUnit
         --repeat
             WaitTicks(Random(1, 6))
             local validPosCount = table.getn(validWaterPositions.positions)
@@ -10029,6 +10363,60 @@ function NavalUnitsSpawnWaves()  -- Enabled Spawns Navy Waves
 					randNavalUnit = (ENavyUnits.Tech4)[Random(1, ENavy)]
 				end
                 SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+				WaitTicks(5)
+				--Spawns additional T2 Naval Units for Late Game
+				if GameTimeNavy >= (1.05 * WaveProgression) and GameTimeNavy < (1.2 * WaveProgression) then
+					if Random(1, 12) == 1 then
+						if TotalMayhemWaves == "Adjustable T1/T2/T3 Experimentals" then
+							if MNavyHeavy > 0 and Random(1, 28) <= TotalMayhemNavy then
+								randNavalUnit = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							elseif MNavy > 0 then
+								randNavalUnit = (MNavyUnits.Tech4)[Random(1, MNavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							end	
+						else
+							if MNavy > 0 then
+								randNavalUnit = (MNavyUnits.Tech4)[Random(1, MNavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							end
+						end
+					end	
+				elseif GameTimeNavy >= (1.2 * WaveProgression) and GameTimeNavy < (1.35 * WaveProgression) then
+					if Random(1, 6) == 1 then
+						if TotalMayhemWaves == "Adjustable T1/T2/T3 Experimentals" then
+							if MNavyHeavy > 0 and Random(1, 28) <= TotalMayhemNavy then
+								randNavalUnit = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							elseif MNavy > 0 then
+								randNavalUnit = (MNavyUnits.Tech4)[Random(1, MNavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							end	
+						else
+							if MNavy > 0 then
+								randNavalUnit = (MNavyUnits.Tech4)[Random(1, MNavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							end
+						end
+					end	
+				elseif GameTimeNavy >= (1.35 * WaveProgression) then
+					if Random(1, 5) == 1 then
+						if TotalMayhemWaves == "Adjustable T1/T2/T3 Experimentals" then
+							if MNavyHeavy > 0 and Random(1, 28) <= TotalMayhemNavy then
+								randNavalUnit = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							elseif MNavy > 0 then
+								randNavalUnit = (MNavyUnits.Tech4)[Random(1, MNavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							end	
+						else
+							if MNavy > 0 then
+								randNavalUnit = (MNavyUnits.Tech4)[Random(1, MNavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							end
+						end
+					end	
+				end
             end
         --until GetGameTimeSeconds() > 20000
     end)
@@ -10036,6 +10424,7 @@ end
 function NavalUnitsSpawnWaves2ndSpawn()  -- Enabled Spawns Navy Waves at 2ndSpawn
     local circle = ForkThread(function()
         LOG("sa: Running  NavalUnitsSpawnMonitoring")
+		local randNavalUnit
         --repeat
             WaitTicks(Random(1, 6))
             local validPosCount = table.getn(validWaterPositions.positions)
@@ -10057,6 +10446,60 @@ function NavalUnitsSpawnWaves2ndSpawn()  -- Enabled Spawns Navy Waves at 2ndSpaw
 					randNavalUnit = (ENavyUnits.Tech4)[Random(1, ENavy)]
 				end
                 SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+				WaitTicks(5)
+				--Spawns additional T2 Naval Units for Late Game
+				if GameTimeNavy >= (1.05 * WaveProgression) and GameTimeNavy < (1.2 * WaveProgression) then
+					if Random(1, 12) == 1 then
+						if TotalMayhemWaves == "Adjustable T1/T2/T3 Experimentals" then
+							if MNavyHeavy > 0 and Random(1, 28) <= TotalMayhemNavy then
+								randNavalUnit = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							elseif MNavy > 0 then
+								randNavalUnit = (MNavyUnits.Tech4)[Random(1, MNavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							end	
+						else
+							if MNavy > 0 then
+								randNavalUnit = (MNavyUnits.Tech4)[Random(1, MNavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							end
+						end
+					end	
+				elseif GameTimeNavy >= (1.2 * WaveProgression) and GameTimeNavy < (1.35 * WaveProgression) then
+					if Random(1, 6) == 1 then
+						if TotalMayhemWaves == "Adjustable T1/T2/T3 Experimentals" then
+							if MNavyHeavy > 0 and Random(1, 28) <= TotalMayhemNavy then
+								randNavalUnit = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							elseif MNavy > 0 then
+								randNavalUnit = (MNavyUnits.Tech4)[Random(1, MNavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							end	
+						else
+							if MNavy > 0 then
+								randNavalUnit = (MNavyUnits.Tech4)[Random(1, MNavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							end
+						end
+					end	
+				elseif GameTimeNavy >= (1.35 * WaveProgression) then
+					if Random(1, 5) == 1 then
+						if TotalMayhemWaves == "Adjustable T1/T2/T3 Experimentals" then
+							if MNavyHeavy > 0 and Random(1, 28) <= TotalMayhemNavy then
+								randNavalUnit = (MNavyUnitsHeavy.Tech4)[Random(1, MNavyHeavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							elseif MNavy > 0 then
+								randNavalUnit = (MNavyUnits.Tech4)[Random(1, MNavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							end	
+						else
+							if MNavy > 0 then
+								randNavalUnit = (MNavyUnits.Tech4)[Random(1, MNavy)]
+								SpawnEnemyUnitAtPosition(randNavalUnit, validPosX, validPosZ, 0, 0)
+							end
+						end
+					end	
+				end
             end
         --until GetGameTimeSeconds() > 20000
     end)
@@ -10344,7 +10787,9 @@ function DoomElectronStormsSpawner()
 		local StormCount = 3
 		local validPosX
 		local validPosZ
+		local terrainAltitude
 		local Storms
+		local RiftSpawnCnt = table.getn(validRiftPositions.positions)
 		if sizeX >= 1024 or sizeZ >= 1024 then
 				StormCount = 27
 		elseif sizeX == 512 or sizeZ == 512 then
@@ -10358,8 +10803,12 @@ function DoomElectronStormsSpawner()
 				Storms = 1
 			end
 			repeat
-				validPosX = Random(10, sizeX - 10)
-				validPosZ = Random(10, sizeZ - 10)
+				if Random(1, 3) <= 2 then
+					validPosX = Random(10, sizeX - 10)
+					validPosZ = Random(10, sizeZ - 10)
+				else
+					validPosX, terrainAltitude, validPosZ = (validRiftPositions.positions)[Random(1, RiftSpawnCnt)]
+				end	
 				SpawnElectronStormAt('SPIRIT0402', validPosX, validPosZ, 1, 1)
 				Storms = Storms - 1
 				WaitTicks(1)
@@ -10891,7 +11340,9 @@ function ElectronStormsSpawner()
 		local StormCount = 3
 		local validPosX
 		local validPosZ
+		local terrainAltitude
 		local Storms
+		local RiftSpawnCnt = table.getn(validRiftPositions.positions)
 		if sizeX >= 1024 or sizeZ >= 1024 then
 				StormCount = 27
 		elseif sizeX == 512 or sizeZ == 512 then
@@ -10905,8 +11356,12 @@ function ElectronStormsSpawner()
 				Storms = 1
 			end
 			repeat
-				validPosX = Random(10, sizeX - 10)
-				validPosZ = Random(10, sizeZ - 10)
+				if Random(1, 3) <= 2 then
+					validPosX = Random(10, sizeX - 10)
+					validPosZ = Random(10, sizeZ - 10)
+				else
+					validPosX, terrainAltitude, validPosZ = (validRiftPositions.positions)[Random(1, RiftSpawnCnt)]
+				end	
 				SpawnElectronStormAt('SPIRIT0402', validPosX, validPosZ, 1, 1)
 				Storms = Storms - 1
 				WaitTicks(1)
@@ -11010,21 +11465,21 @@ end
 function RandomEffectAltSpawnDestroyed()
 	local circle = ForkThread(function(self)
 	local count = 1 + math.floor(humans * 0.5 + 0.5)
-	local count2 = 1 + math.floor(count * 1.5 + 0.5)
+	local count2 = 2 + math.floor(count * 1.5 + 0.5)
 	local chance = Random(1, 6)
 			StunHQUnitsFinal()	
-			FinalDamageHQEffect(0.15)
+			FinalDamageHQEffect(0.125)
 			GrantResources()
 			WaitSeconds(10)
 			if Random(1, 2) == 1 then
 				ReinforcementsForTeam(count)
 			end
 			if chance == 1 or chance == 3 then
-				BossRetaliation(count)
+				BossRetaliation(count2)
 			elseif chance == 2 or chance == 4 then
 				NukeRetaliation(count)
 			else
-				ArtilleryRetaliation(count)
+				ArtilleryRetaliation(count2)
 			end	
 			repeat
 				TransportRetaliation()
@@ -11076,6 +11531,7 @@ function DestroyRandomBuildings()
 	local circle = ForkThread(function(self)
 		local aiUnit
 		PrintText("Defensive Structures have become unstable!", 28, 'ff0914E8', 6, 'center')
+		AIMessageTo('HQs defenses are starting to self-destruct!', nil)
 		repeat	
 			local unitList = aiBrain:GetListOfUnits(categories.STRUCTURE - categories.OPERATION, false)
 			local TableSize = table.getn(unitList)
@@ -11122,6 +11578,7 @@ function DamageHQEffect()
 			if HQhp > 0 then
 				AIMainBuilding:SetHealth(self, HQhp)
 				PrintText("HQ Damaged! " .. HQhp .. " Health!", 28, 'ff0914E8', 6, 'center')
+				AIMessageTo('HQ Health is ', HQhp)
 			else
 				AIMainBuilding:Kill()
 			end	
@@ -11144,6 +11601,7 @@ function FinalDamageHQEffect(harm)
 			if HQhp > 0 then
 				AIMainBuilding:SetHealth(self, HQhp)
 				PrintText("Heavy HQ Damage! " .. HQhp .. " Health!", 28, 'ff0914E8', 6, 'center')
+				AIMessageTo('HQ Health is ', HQhp)
 			else
 				AIMainBuilding:Kill()
 			end	
@@ -11163,6 +11621,7 @@ function BossRetaliation(num)
 			WaitTicks(2)
 		until count < 1
 		PrintText("WARNING! Powerful Units Detected!", 28, 'ffDD1313', 6, 'center')
+		AIMessageTo('Boss Retaliation Deployed', nil)
 	KillThread(self)
 	end)
 end	
@@ -11170,6 +11629,7 @@ function NukeRetaliation(num)
 	local circle = ForkThread(function(self)
 	local count = num
 		PrintText("WARNING! Nuclear Strike Imminent!", 28, 'ffDD1313', 6, 'center')
+		AIMessageTo('Nuclear Retaliation Deployed', nil)
 		WaitSeconds(10)
 		repeat
 			CreateAndLaunchNukeAtEnemy()
@@ -11196,6 +11656,7 @@ function ArtilleryRetaliation(num)
 			count = SideObjsDestroyed
 		end
 		PrintText("WARNING! Artillery Barrage Inbound!", 28, 'ffDD1313', 6, 'center')
+		AIMessageTo('Survive Artillery Barrage for 4 Minutes!', nil)
 		repeat
 			SpawnArtilleryForRetaliation()
 			count = count - 1
@@ -11212,7 +11673,7 @@ function SpawnArtilleryForRetaliation()
 		--local count = 0
         local posX, posZ = aiBrain:GetArmyStartPos()
         if GetGameTimeSeconds() > 60 then
-            rspawn = "ARU2401"
+            rspawn = "GARTY2303"
             if rspawn ~= nil then
                 local oldposX = posX
 				local oldposZ = posZ
@@ -13472,16 +13933,18 @@ function DeployDooms() --Begin Doom Wave
 		local count = DoomCount
 		if HQAlert == true then
 			local totalEnemyMass = CalculateEnemyMass()
-			if totalEnemyMass >= 5000 then
-				local ExtraDooms = math.floor(totalEnemyMass * 0.0002 + 0.1)
-				count = count + ExtraDooms
+			local ExtraDooms = 0
+			if totalEnemyMass >= 4000 then
+				local ExtraDooms = math.floor(totalEnemyMass * 0.00025 + 0.1)
 			end
+			count = count + ExtraDooms + 1
 		end
 		repeat
 			CreateDoomBoss()
 			count = count - 1
 		until count < 1	
 		PrintText("===Doom Wave Deployed!===", 28, 'ffCBFFFF', 10, 'center')
+		AIMessageTo('Doom Wave Deployed', nil)
 		if DoomIncrease ~= 0 then
 			DoomWaveCount = DoomWaveCount + 1
 			DoomCount = DoomCount + (DoomWaveCount * DoomIncrease)
@@ -13498,6 +13961,21 @@ function DeployDooms() --Begin Doom Wave
 		end	
 	end)
 end	
+function MonitorSpirits() --Monitor Spirits
+	local circle = ForkThread(function(self)
+		local ActiveSpirits
+		repeat
+			ActiveSpirits = nil
+			ActiveSpirits = aiBrain:GetListOfUnits(categories.spirit0403, false)
+				for i, Spirit in ActiveSpirits do
+					if Spirit and not Spirit:BeenDestroyed() then
+						CreatUnitForSpirit(Spirit)
+					end
+				end
+			WaitSeconds(1)
+		until won == true
+	end)
+end		
 function MonitorDoomWave() --Monitor Dooms
 	local circle = ForkThread(function(self)
 		local AliveDooms
@@ -13526,11 +14004,13 @@ function MonitorDoomWave() --Monitor Dooms
 			if HQhp > 0 and DoomDamageHQ > 0 then
 				AIMainBuilding:SetHealth(self, HQhp)
 				PrintText("HQ Damaged! " .. HQhp .. " Health!", 28, 'ffCBFFFF', 6, 'center')
+				AIMessageTo('HQ Damaged! Current HQ health is ', HQhp)
 			else
 				AIMainBuilding:Kill()
 			end	
 			if HQAlmostDead <= 0 and DoomDamageHQ > 0 and HQAlert == false then
 				PrintText("===HQ near Defeat! Final Doom Wave!===", 28, 'ffEC3F35', 6, 'center')
+				AIMessageTo('Final Doom Wave!', nil)
 				HQAlert = true
 			end	
 		end
@@ -13699,6 +14179,75 @@ function CreateAUnitAroundSecondaryBuildingsForAI(unitIda)
                 end
             end
         end
+        KillThread(self)
+    end)
+end
+function CreatUnitForSpirit(SpiritUnit) -- Spirit Spawn
+    local circle = ForkThread(function(self)
+        local spirit = SpiritUnit
+		local unit = nil
+        local rspawn = nil
+		local posX = nil
+		local posZ = nil
+		local posY = nil
+		if spirit and not spirit:BeenDestroyed() then
+			posX, posY, posZ = spirit:GetPositionXYZ()
+				--rspawn = (landUnitsL.Tech4)[Random(1, Lland)]
+				--rspawn = (landUnitsM.Tech4)[Random(1, Mland)]
+				--rspawn = (landUnitsE.Tech4)[Random(1, Eland)]
+			if TotalMayhemWaves == "Adjustable T1/T2/T3 Experimentals" then
+				if BigRiftHland > 0 and  Random(1, 40) <= TotalMayhemLand then
+					rspawn = (BigRiftUnitsH.Tech4)[Random(1, BigRiftHland)]
+				else
+					rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+				end	
+			else	
+				rspawn = (RiftUnitsH.Tech4)[Random(1, RiftHland)]
+			end	
+			if rspawn ~= nil then
+				unit = aiBrain:CreateUnitNearSpot(rspawn, posX, posZ)
+				if unit == nil then
+					local terrainAltitude = GetTerrainHeight(posX, posZ)
+					unit = CreateUnitHPR(rspawn, aiBrain:GetArmyIndex(), posX, terrainAltitude, posZ, 0, 0, 0)
+				end
+				if unit and unit ~= nil and not unit.Dead and (HPBonusAI > 0 or ParagonCycle ~= "Off") then
+					if GameTime < 0.33 then
+						totalIncrease = HealthBonus * 0.5
+						maxhp = unit:GetMaxHealth()
+						unit:SetMaxHealth(maxhp + totalIncrease)
+					elseif GameTime >= 0.33 and GameTime < 0.66 then
+						totalIncrease = HealthBonus
+						maxhp = unit:GetMaxHealth()
+						unit:SetMaxHealth(maxhp + totalIncrease)
+					elseif GameTime >= 0.66 and GameTime < 1 then
+						totalIncrease = HealthBonus * 1.5 + Random(1400, 1800) * totalEnemyEndgamers
+						maxhp = unit:GetMaxHealth()
+						unit:SetMaxHealth(maxhp + totalIncrease)
+					elseif GameTime >= 1 then
+						totalIncrease = HealthBonus * 2 + Random(1800, 2800) * totalEnemyEndgamers
+						maxhp = unit:GetMaxHealth()
+						unit:SetMaxHealth(maxhp + totalIncrease)
+					end
+					hp = unit:GetMaxHealth()
+					unit:SetHealth(self, hp)
+					unit:SetReclaimable(false)
+				end
+				if unit and not unit.Dead then
+					if DamageBoost ~= 'Off - 0' then
+						ModifyWeaponDamageBuffAndRange(unit)
+					end	
+					unit:SetSpeedMult(1 + waveNum * SpeedBonus + SpeedBonusOnce)
+					if WaveStyle == "Even Attack Waves" then	
+						RedirectUnit(unit)
+					elseif WaveStyle == "Dynamic Attack Waves" or WaveStyle == "Human with AI Assist" then
+						RedirectUnitLand(unit)	
+					end	
+				end
+				if KillPlayerUnit > 0 then
+					SuicideLandNavyUnit(unit)
+				end
+			end
+		end
         KillThread(self)
     end)
 end
@@ -14832,9 +15381,11 @@ function SecondaryBuildingsWarning()
 	local message3 = ("Eliminate Support Bases to Reduce # of Rifts that can be Deployed.")
     WaitSeconds(30)
 	BroadcastMSG(message, size, color, fade, alignment)
+	AIMessageTo("Destroying Support bases will damage HQ by 5% to 7% of HQ's health and trigger random events.", nil)
 	if RiftUnits ~= "Off --" then
 		BroadcastMSG(message2, size, color, fade, alignment)
 		BroadcastMSG(message3, size, color, fade, alignment)
+		AIMessageTo('Rift Nukes deploy Rift Orbs, which spawn waves of units. Destroy Orbs to stop spawn. Destroy Support Bases to reduce max number of Rift Orbs.', nil)
 	end	
 end
 function HQPowerStallMessage()
@@ -14938,10 +15489,74 @@ end
 function AIMessageTo(message, brain)
     local tmpMessage = message
     if brain then
-        tmpMessage = message .. brain.Nickname
-    end
+        tmpMessage = message .. brain
+    else
+		tmpMessage = message
+	end
+
+    Sync.AIChat = Sync.AIChat or { }
     table.insert(Sync.AIChat, { group = 'all', text = tmpMessage, sender = aiBrain.Nickname })
 end
+function GameStartMessage() --Message for Game Stats
+    local circle = ForkThread(function(self)
+	local HoldToWin
+	local Nukes
+	local NavyDelay
+	local AirDelay
+		AIMessageTo('Guide for Hosting with AI Wave Survival at: https://forum.faforever.com/topic/5563/ai-wave-survival-mod-information', nil)
+		if LandPerWave > 0 then
+			AIMessageTo('Land Waves On', nil)
+		else
+			AIMessageTo('Land Waves Off.', nil)
+		end	
+		if AirPerWave > 0 then
+			AirDelay = tonumber(ScenarioInfo.Options.AirTime) + 1
+			AIMessageTo('Air Waves On. Air start on Wave ', AirDelay)
+		else
+			AIMessageTo('Air Waves Off.', nil)
+		end
+		if NavyPerWave > 0 then
+			NavyDelay = tonumber(ScenarioInfo.Options.NavyTime) + 1
+			AIMessageTo('Navy Waves On. Navy start on Wave ', NavyDelay)
+		else
+			AIMessageTo('Navy Waves Off.', nil)	
+		end
+		if EndGameHoldTime ~= "Off --" then
+			HoldToWin = tostring(ScenarioInfo.Options.EndGameHoldTime)
+			HoldToWin = HoldToWin .. " Minutes."
+			AIMessageTo('Hold to Win On. Destroy HQ or Survive Endgame for ', HoldToWin)
+		else
+			AIMessageTo('Hold to Win Off. Must destroy HQ to Win!', nil)
+		end
+		if NukesOn ~= "Off" and NukesOn ~= "Defensive" then
+			
+			Nukes = math.floor(tonumber(ScenarioInfo.Options.NukeTime) * HoldTimeAI / 60)
+			Nukes = tostring(Nukes)
+			Nukes = Nukes .. " Mins after Start of Waves."
+			AIMessageTo('Nuke Strikes are On! Nuke strikes in ', Nukes)
+		elseif NukesOn == "Defensive" then
+			AIMessageTo('Defensive Nukes are enabled.', nil)
+		else
+			AIMessageTo('Nukes are Off.', nil)
+		end
+		if TransportFrequency ~= "Off" then
+			AIMessageTo('Airdrops are On.', nil)
+		else
+			AIMessageTo('Airdrops are Off.', nil)
+		end
+		if RiftUnits ~= "Off --" then
+			AIMessageTo('Rift Nukes are On.', nil)
+		else
+			AIMessageTo('Rift Nukes are Off.', nil)
+		end
+		if DoomCount ~= 'Off --' then
+			AIMessageTo('Dooms are On.', nil)
+		else
+			AIMessageTo('Dooms are Off.', nil)
+		end
+	KillThread(self)
+    end)
+end	
 function ScanMapToSpawnAI(numOfBuildings) --Scans Map to Spawn Support Bases
 	local circle = ForkThread(function(self)
 		local sizeX, sizeZ = GetMapSize()
@@ -15109,7 +15724,7 @@ function CreateSecondaryObjectives(aPosX, aPosZ, numOfBuildings) --Spawns a Supp
 				else
 					unit:SetMaxHealth(110000)
 				end
-                unit:SetCustomName("Control Center # " .. Random(1, 1000))
+                unit:SetCustomName("Support Base # " .. Random(1, 1000))
                 local hp = unit:GetMaxHealth()
                 unit:SetReclaimable(false)
                 unit:SetCapturable(false)
@@ -15208,7 +15823,7 @@ function CreateSecondaryAIBuildings(numOfBuildings) --Spawns a Support Base (Fal
 				else
 					unit:SetMaxHealth(110000)
 				end	
-                unit:SetCustomName("Control Center # " .. Random(1, 1000))
+                unit:SetCustomName("Support Base # " .. Random(1, 1000))
                 local hp = unit:GetMaxHealth()
                 unit:SetReclaimable(false)
                 unit:SetCapturable(false)
@@ -15843,6 +16458,7 @@ function SecondarySpawnBuildingMonitor()
 			WaitSeconds(10)
 			if SecondarySpawnDead == true then
 				PrintText("===2nd Spawn has been ELIMINATED!===", 28, 'ffCBFFFF', 10, 'center')
+				AIMessageTo('2nd Spawn Eliminated', nil)
 				break
 			end	
 		until GetGameTimeSeconds() > 20000 or won == true
@@ -16038,6 +16654,7 @@ function HQAltSpawnBuildingBuildingMonitor()
 			WaitSeconds(5)
 			if HQAltBuildingDead == true then
 				PrintText("===HQ Alt Spawn ELIMINATED!===", 28, 'ffCBFFFF', 10, 'center')
+				AIMessageTo('HQ Alt Spawn Eliminated', nil)
 				WaitSeconds(2)
 				RandomEffectAltSpawnDestroyed()
 				break
@@ -16385,6 +17002,7 @@ function Alt2ndSpawnBuildingBuildingMonitor()
 			WaitSeconds(5)
 			if Alt2ndBuildingDead == true then
 				PrintText("===Alt 2nd Spawn ELIMINATED!===", 28, 'ffCBFFFF', 10, 'center')
+				AIMessageTo('Alt 2nd Spawn Eliminated', nil)
 				WaitSeconds(2)
 				RandomEffectAltSpawnDestroyed()
 				break
@@ -17584,7 +18202,8 @@ function InitSurvival()
 	
 	
 	
-	
+	GameStartMessage()
+	WaitSeconds(1)
 	--transports
 	if TransportFrequency ~= "Off" then
 		if TransportEndTime == "Endless --" then
@@ -17637,7 +18256,7 @@ function InitSurvival()
 		elseif ArtyType == "Hovatham" then
 		ArtyType = "XSB2302"
 		elseif ArtyType == "Guardian (T3 DPS, T4 Range)" then
-		ArtyType = "ARU2401"
+		ArtyType = "GARTY2303"
 	end
 	if NuclearOverwhelm == "1 per 5 Mins" then
 		NuclearOverwhelm = 0.4
@@ -17728,6 +18347,7 @@ function InitSurvival()
 		elseif ErrorMessage == false then
 			PrintText("==NOTICE: HQ Allies Detected. Set Allies as optional Spawn points in MAP OPTIONS==", 28, 'ffffa548', 20, 'center')
 			PrintText("--Check Map Options under HQ SETTINGS or 2ND SPAWN SETTINGS to set Spawns--", 28, 'ffffa548', 20, 'center')
+			AIMessageTo('NOTICE: HQ Allies may be set as aditional Spawn Points in Map Options.', nil)
 		end
 	end	
 	
@@ -17765,10 +18385,11 @@ function InitSurvival()
 	MonitoringFunctionThree() --Enemy Count Scripts
 	MonitoringFunctionFour() --Paragon Count
 	CheckMainGoal() --Monitors HQ
+	CreateRiftTables()
+	CreateRiftSpawnPoints()
 	if RiftUnits ~= "Off --" then --Rift Orb Scripts
 		RiftUnits = tonumber(ScenarioInfo.Options.RiftUnits) 
 		CreateRiftSpawnPoints()
-		CreateRiftTables()
 		MonitorRiftBuildingCount()
 		DetectAndSpawnOrbRiftWaves()
 	end	
@@ -17887,6 +18508,8 @@ function InitSurvival()
 		table.insert(RamboTransTable, 'URL0301_RAMBO')
 		table.insert(RamboTransTable, 'XSL0301_RAMBO')
 	end	
+	SatelliteCountermeasures() --Kills all satellites if HQ under 20% health
+	RandomSatelliteCountermeasures()
 
     repeat
         if GetGameTimeSeconds() < WavesStartTimeAI then
@@ -17894,7 +18517,7 @@ function InitSurvival()
 		end
 		if ParaYoloFlag == false then
 			--EarlyParagonsWillSpeedDifficultyInitialWarning()
-			local timeInMin = (HoldTimeAI / 60 * 0.7)
+			local timeInMin = math.floor(HoldTimeAI / 60 * 0.7)
 			if EndGameYolo == "Yolona Midgame" and EndGameParagon == "Paragon Midgame" then
 					PrintText("Paragons and Yolonas available in " .. timeInMin .. " minutes.", 30, 'ffCBFFFF', 4, 'center')
 				elseif EndGameYolo == "Yolona Midgame" then
