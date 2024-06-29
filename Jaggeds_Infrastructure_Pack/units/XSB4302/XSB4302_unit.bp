@@ -1,0 +1,12 @@
+UnitBlueprint {
+	Merge = true,
+	BlueprintId = "xsb4302",
+	General = {
+		Icon = 'amph',
+	},
+	Physics = {
+		BuildOnLayerCaps = {
+			LAYER_Water = true,
+		},
+	},
+}
