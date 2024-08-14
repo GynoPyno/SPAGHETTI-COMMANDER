@@ -1,0 +1,146 @@
+UnitBlueprint {
+	Merge = true,
+	BlueprintId="ueb5101",# Uef Wall
+
+    Defense = {
+        RegenRate = 20,
+    },
+}
+
+UnitBlueprint {
+	Merge = true,
+	BlueprintId="ueb0304",# Quantum Gate
+    Economy = {
+        BuildableCategory = {
+            'BUILTBYQUANTUMGATE UEF',
+            'TECH3 UEF MOBILE LAND',
+			'UEF COMMAND',
+        },
+    },
+}
+
+#### Allows ACUs to Build T1 stuff
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "ueb1102", #Hydro
+	
+	Categories = {
+        'PRODUCTSC1',
+        'SELECTABLE',
+        'BUILTBYTIER1ENGINEER',
+        'BUILTBYTIER2ENGINEER',
+        'BUILTBYTIER3ENGINEER',
+		'BUILTBYCOMMANDER',
+        'UEF',
+        'STRUCTURE',
+        'ECONOMIC',
+        'TECH1',
+        'ENERGYPRODUCTION',
+        'HYDROCARBON',
+        'SIZE12',
+        'VISIBLETORECON',
+        'RECLAIMABLE',
+        'SORTECONOMY',
+    },
+}
+
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "ueb1105",#Energy Storage
+	
+	Categories = {
+        'PRODUCTSC1',
+        'SELECTABLE',
+        'BUILTBYTIER1ENGINEER',
+        'BUILTBYTIER2ENGINEER',
+        'BUILTBYTIER3ENGINEER',
+		'BUILTBYCOMMANDER',
+        'UEF',
+        'STRUCTURE',
+        'ECONOMIC',
+        'TECH1',
+        'ENERGYSTORAGE',
+        'DRAGBUILD',
+        'SIZE4',
+        'VISIBLETORECON',
+        'RECLAIMABLE',
+        'SORTECONOMY',
+    },
+}
+
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "ueb1106",#Mass Storage
+	
+	Categories = {
+        'PRODUCTSC1',
+        'SELECTABLE',
+        'BUILTBYTIER1ENGINEER',
+        'BUILTBYTIER2ENGINEER',
+        'BUILTBYTIER3ENGINEER',
+		'BUILTBYCOMMANDER',
+        'UEF',
+        'STRUCTURE',
+        'ECONOMIC',
+        'TECH1',
+        'MASSSTORAGE',
+        'DRAGBUILD',
+        'SIZE4',
+        'VISIBLETORECON',
+        'RECLAIMABLE',
+        'SORTECONOMY',
+    },
+}
+
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "ueb3102",#Sonar
+	
+	Categories = {
+        'PRODUCTSC1',
+        'SELECTABLE',
+        'BUILTBYTIER1ENGINEER',
+        'BUILTBYTIER2ENGINEER',
+        'BUILTBYTIER3ENGINEER',
+		'BUILTBYCOMMANDER',
+        'UEF',
+        'STRUCTURE',
+        'INTELLIGENCE',
+        'TECH1',
+        'SONAR',
+        'DRAGBUILD',
+        'SIZE4',
+        'VISIBLETORECON',
+        'RECLAIMABLE',
+        'SHOWQUEUE',
+        'OVERLAYSONAR',
+        'SORTINTEL',
+    },
+}
+
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "ueb3101",#Radar
+	
+	Categories = {
+        'PRODUCTSC1',
+        'SELECTABLE',
+        'BUILTBYTIER1ENGINEER',
+        'BUILTBYTIER2ENGINEER',
+        'BUILTBYTIER3ENGINEER',
+		'BUILTBYCOMMANDER',
+        'UEF',
+        'STRUCTURE',
+        'INTELLIGENCE',
+        'TECH1',
+        'RADAR',
+        'DRAGBUILD',
+        'SIZE4',
+        'VISIBLETORECON',
+        'RECLAIMABLE',
+        'SHOWQUEUE',
+        'OVERLAYRADAR',
+        'SORTINTEL',
+    },
+}
+
