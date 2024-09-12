@@ -99,6 +99,9 @@ HlandHeavy = 0
 MlandHeavy = 0
 LlandHeavy = 0
 RiftUnits = 4
+validWaterPos2nd = 0
+validWaterPosHQ = 0
+NavalFallback = false
 TotalMayhemWaves = "Not Adjustable - Totally Random!"
 TotalMayhemLand = 10
 TotalMayhemAir = 10
@@ -286,6 +289,7 @@ massDamageBoostBoss = 0
 DamageBoost = 1
 DamageBoostMulti = 1
 DoomOrbsFlag = false
+OrbsForWaves = 0
 SecBrain = nil
 SalvationBrain = nil
 AltHQBrain = nil
@@ -298,6 +302,9 @@ SalvationCheck = false
 AltHQCheck = false
 Alt2ndCheck = false
 ErrorMessage = false
+SecondarySpawnError = false
+AltHQSpawnError = false
+Alt2ndSpawnError = false
 AltHQHealth = "Invulnerable --"
 Alt2ndHealth = "Invulnerable --"
 SecondSpawnCheck = false
@@ -3935,29 +3942,29 @@ function TFl4() -- Land Spawn
 		--local count = 0
         --if land4 == 1 then
             WaitTicks(Random(1, 5))
-            if secondaryspawn ~= "Off" and spawnrateland > 0 and SecondarySpawnDead == false then
-					if Alt2ndSpawn ~= "Off" and Alt2ndBuildingDead == false and Random(1, 2) == 1 then
+            if secondaryspawn ~= "Off" and spawnrateland > 0 and SecondarySpawnDead == false and SecondarySpawnError == false then
+					if Alt2ndSpawn ~= "Off" and Alt2ndBuildingDead == false and Random(1, 2) == 1 and Alt2ndSpawnError == false then
 						posX, posZ = Alt2ndBrain:GetArmyStartPos()
 					else
 						posX, posZ = SecBrain:GetArmyStartPos()
 					end	
 				if Random(1, 100) > spawnrateland then
-					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 						posX, posZ = AltHQBrain:GetArmyStartPos()
 					else
 						posX, posZ = aiBrain:GetArmyStartPos()
 					end	
 				end	
 			else
-				if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+				if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 					posX, posZ = AltHQBrain:GetArmyStartPos()
 				else
 					posX, posZ = aiBrain:GetArmyStartPos()
 				end	
 			end	
-			if secondaryspawn ~= "Off" and SecondarySpawnDead == true and spawnrateland > 0 then
+			if secondaryspawn ~= "Off" and SecondarySpawnDead == true and spawnrateland > 0 and SecondarySpawnError == false then
 				if spawnratelandmulti ~= 0 and (spawnratelandmulti + 2) >= Random(1, 100) then
-					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 						posX, posZ = AltHQBrain:GetArmyStartPos()
 					else
 						posX, posZ = aiBrain:GetArmyStartPos()
@@ -4104,6 +4111,15 @@ function TFl4() -- Land Spawn
 							end	
 							hp = unit:GetMaxHealth()
 							unit:SetHealth(self, hp)
+						end
+						if OrbsForWaves > 0 then
+							if OrbsForWaves >= Random(1, 25) then
+								local bonesCount = unit:GetBoneCount()
+								if bonesCount > 1 then
+									AttachedLandUnitSpawn(unit, rspawn, "UNITORB1", Random(1, bonesCount - 1))
+									WaitTicks(1)
+								end
+							end	
 						end	
 						unit:SetReclaimable(false)
 					
@@ -4140,37 +4156,38 @@ function TFl4AIR() -- Air Spawn
 		local posX
 		local posZ
             WaitTicks(Random(1, 5))
-            if secondaryspawn ~= "Off" and spawnrateair > 0 and SecondarySpawnDead == false then
-					if Alt2ndSpawn ~= "Off" and Alt2ndBuildingDead == false and Random(1, 2) == 1 then
+			if secondaryspawn ~= "Off" and spawnrateair > 0 and SecondarySpawnDead == false and SecondarySpawnError == false then
+					if Alt2ndSpawn ~= "Off" and Alt2ndBuildingDead == false and Random(1, 2) == 1 and Alt2ndSpawnError == false then
 						posX, posZ = Alt2ndBrain:GetArmyStartPos()
 					else
 						posX, posZ = SecBrain:GetArmyStartPos()
 					end	
 				if Random(1, 100) > spawnrateair then
-					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 						posX, posZ = AltHQBrain:GetArmyStartPos()
 					else
 						posX, posZ = aiBrain:GetArmyStartPos()
 					end	
 				end	
 			else
-				if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+				if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 					posX, posZ = AltHQBrain:GetArmyStartPos()
 				else
 					posX, posZ = aiBrain:GetArmyStartPos()
-				end		
-			end
-			if secondaryspawn ~= "Off" and SecondarySpawnDead == true and spawnrateair > 0 then
+				end	
+			end	
+			if secondaryspawn ~= "Off" and SecondarySpawnDead == true and spawnrateair > 0 and SecondarySpawnError == false then
 				if spawnrateairmulti ~= 0 and (spawnrateairmulti + 2) >= Random(1, 100) then
-					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 						posX, posZ = AltHQBrain:GetArmyStartPos()
 					else
 						posX, posZ = aiBrain:GetArmyStartPos()
-					end	
+					end
 				else
 					return
 				end	
 			end	
+			
             --if GetGameTimeSeconds() > WavesStartTimeAI then
                 if CrazyModeAir == "Normal Air" then
 					rspawn = GetRandomizedIDforAir()
@@ -4301,6 +4318,15 @@ function TFl4AIR() -- Air Spawn
 							hp = unit:GetMaxHealth()
 							unit:SetHealth(self, hp)
 						end	
+						if OrbsForWaves > 0 then
+							if OrbsForWaves >= Random(1, 25) then
+								local bonesCount = unit:GetBoneCount()
+								if bonesCount > 1 then
+									AttachedAirUnitSpawn(unit, rspawn, "UNITORB1", Random(1, bonesCount - 1))
+									WaitTicks(1)
+								end
+							end	
+						end	
 						unit:SetReclaimable(false)
 					
 						if DamageBoost ~= 'Off - 0' then
@@ -4333,37 +4359,38 @@ function SpawnExtraASF() -- ASF Spawn
 		local posZ
         --if land4 == 1 then
             WaitTicks(Random(1, 5))
-            if secondaryspawn ~= "Off" and spawnrateair > 0 and SecondarySpawnDead == false then
-					if Alt2ndSpawn ~= "Off" and Alt2ndBuildingDead == false and Random(1, 2) == 1 then
+			if secondaryspawn ~= "Off" and spawnrateair > 0 and SecondarySpawnDead == false and SecondarySpawnError == false then
+					if Alt2ndSpawn ~= "Off" and Alt2ndBuildingDead == false and Random(1, 2) == 1 and Alt2ndSpawnError == false then
 						posX, posZ = Alt2ndBrain:GetArmyStartPos()
 					else
 						posX, posZ = SecBrain:GetArmyStartPos()
 					end	
 				if Random(1, 100) > spawnrateair then
-					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 						posX, posZ = AltHQBrain:GetArmyStartPos()
 					else
 						posX, posZ = aiBrain:GetArmyStartPos()
 					end	
 				end	
 			else
-				if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+				if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 					posX, posZ = AltHQBrain:GetArmyStartPos()
 				else
 					posX, posZ = aiBrain:GetArmyStartPos()
-				end		
-			end
-			if secondaryspawn ~= "Off" and SecondarySpawnDead == true and spawnrateair > 0 then
+				end	
+			end	
+			if secondaryspawn ~= "Off" and SecondarySpawnDead == true and spawnrateair > 0 and SecondarySpawnError == false then
 				if spawnrateairmulti ~= 0 and (spawnrateairmulti + 2) >= Random(1, 100) then
-					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 						posX, posZ = AltHQBrain:GetArmyStartPos()
 					else
 						posX, posZ = aiBrain:GetArmyStartPos()
-					end	
+					end
 				else
 					return
 				end	
 			end	
+			
             --if GetGameTimeSeconds() > WavesStartTimeAI then
 					ASFList = {"UEA0303", "URA0303", "UAA0303", "XSA0303"}
 					rspawn = (ASFList)[Random(1, 4)]
@@ -4493,8 +4520,8 @@ function SpawnLandNavy(ship) -- Navy Defense Spawn
 		--local count = 0
         --if land4 == 1 then
             WaitTicks(Random(1, 5))
-            if secondaryspawn ~= "Off" and spawnrateland > 0 and SecondarySpawnDead == false then
-					if Alt2ndSpawn ~= "Off" and Alt2ndBuildingDead == false and Random(1, 2) == 1 then
+            if secondaryspawn ~= "Off" and spawnrateland > 0 and SecondarySpawnDead == false and SecondarySpawnError == false then
+					if Alt2ndSpawn ~= "Off" and Alt2ndBuildingDead == false and Random(1, 2) == 1 and Alt2ndSpawnError == false then
 						local validPosCount = table.getn(validWaterPositions2.positions2)
 						if validPosCount > 0 and Random(1, 4) < 4 then
 							local Position = Random(1, validPosCount)
@@ -4508,7 +4535,7 @@ function SpawnLandNavy(ship) -- Navy Defense Spawn
 						posX, posZ = SecBrain:GetArmyStartPos()
 					end	
 				if Random(1, 100) > spawnrateland then
-					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 						posX, posZ = AltHQBrain:GetArmyStartPos()
 					else
 						local validPosCount = table.getn(validWaterPositions.positions)
@@ -4524,7 +4551,7 @@ function SpawnLandNavy(ship) -- Navy Defense Spawn
 					end	
 				end	
 			else
-				if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+				if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 					posX, posZ = AltHQBrain:GetArmyStartPos()
 				else
 					local validPosCount = table.getn(validWaterPositions.positions)
@@ -4538,11 +4565,12 @@ function SpawnLandNavy(ship) -- Navy Defense Spawn
 					end	
 				end	
 			end	
-			if secondaryspawn ~= "Off" and SecondarySpawnDead == true and spawnrateland > 0 then
-				if spawnratelandmulti ~= 0 and (spawnratelandmulti + 2) >= Random(1, 100) then
-					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+			if secondaryspawn ~= "Off" and SecondarySpawnDead == true and spawnrateland > 0 and SecondarySpawnError == false then
+				if spawnratenavymulti ~= 0 and (spawnratenavymulti + 2) >= Random(1, 100) then
+					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 						posX, posZ = AltHQBrain:GetArmyStartPos()
 					else
+						local validPosCount = table.getn(validWaterPositions.positions)
 						if validPosCount > 0 and Random(1, 4) < 4 then
 							local Position = Random(1, validPosCount)
 							posX = (validWaterPositions.positions)[Position][1]
@@ -4710,33 +4738,33 @@ function ANTIAIRResponseWave() -- AntiAir Spawn
 		local posZ
         --if land4 == 1 then
             WaitTicks(Random(1, 5))
-            if secondaryspawn ~= "Off" and spawnrateair > 0 and SecondarySpawnDead == false then
-					if Alt2ndSpawn ~= "Off" and Alt2ndBuildingDead == false and Random(1, 2) == 1 then
+            if secondaryspawn ~= "Off" and spawnrateair > 0 and SecondarySpawnDead == false and SecondarySpawnError == false then
+					if Alt2ndSpawn ~= "Off" and Alt2ndBuildingDead == false and Random(1, 2) == 1 and Alt2ndSpawnError == false then
 						posX, posZ = Alt2ndBrain:GetArmyStartPos()
 					else
 						posX, posZ = SecBrain:GetArmyStartPos()
 					end	
 				if Random(1, 100) > spawnrateair then
-					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 						posX, posZ = AltHQBrain:GetArmyStartPos()
 					else
 						posX, posZ = aiBrain:GetArmyStartPos()
 					end	
 				end	
 			else
-				if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+				if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 					posX, posZ = AltHQBrain:GetArmyStartPos()
 				else
 					posX, posZ = aiBrain:GetArmyStartPos()
-				end		
-			end
-			if secondaryspawn ~= "Off" and SecondarySpawnDead == true and spawnrateair > 0 then
+				end	
+			end	
+			if secondaryspawn ~= "Off" and SecondarySpawnDead == true and spawnrateair > 0 and SecondarySpawnError == false then
 				if spawnrateairmulti ~= 0 and (spawnrateairmulti + 2) >= Random(1, 100) then
-					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 						posX, posZ = AltHQBrain:GetArmyStartPos()
 					else
 						posX, posZ = aiBrain:GetArmyStartPos()
-					end	
+					end
 				else
 					return
 				end	
@@ -4838,6 +4866,15 @@ function ANTIAIRResponseWave() -- AntiAir Spawn
 							unit:SetHealth(self, hp)
 							unit:SetReclaimable(false)
 						end
+						if OrbsForWaves > 0 then
+							if OrbsForWaves >= Random(1, 25) then
+								local bonesCount = unit:GetBoneCount()
+								if bonesCount > 1 then
+									AttachedAirUnitSpawn(unit, rspawn, "UNITORB1", Random(1, bonesCount - 1))
+									WaitTicks(1)
+								end
+							end	
+						end	
 						unit:SetReclaimable(false)
                    
 						if DamageBoost ~= 'Off - 0' then
@@ -4869,26 +4906,26 @@ function SpawnAIAirUnit() --Minor Air Boss Spawn
         --local isAirUnit = false
         --if land4 == 1 then
             WaitTicks(Random(1, 5))
-            if secondaryspawn ~= "Off" and spawnrateair > 0 and SecondarySpawnDead == false then
-					if Alt2ndSpawn ~= "Off" and Alt2ndBuildingDead == false and Random(1, 2) == 1 then
+			if secondaryspawn ~= "Off" and spawnrateair > 0 and SecondarySpawnDead == false and SecondarySpawnError == false then
+					if Alt2ndSpawn ~= "Off" and Alt2ndBuildingDead == false and Random(1, 2) == 1 and Alt2ndSpawnError == false then
 						posX, posZ = Alt2ndBrain:GetArmyStartPos()
 					else
 						posX, posZ = SecBrain:GetArmyStartPos()
 					end	
 				if Random(1, 100) > spawnrateair then
-					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 						posX, posZ = AltHQBrain:GetArmyStartPos()
 					else
 						posX, posZ = aiBrain:GetArmyStartPos()
 					end	
 				end	
 			else
-				if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+				if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 					posX, posZ = AltHQBrain:GetArmyStartPos()
 				else
 					posX, posZ = aiBrain:GetArmyStartPos()
-				end		
-			end
+				end	
+			end	
             --if GetGameTimeSeconds() > WavesStartTimeAI then
                 if countair > 0 then
                     rspawn = (airUnitsA.Tech4)[Random(1, countair)]
@@ -8948,6 +8985,12 @@ function MonitoringFunctionFive() -- Damage Bonus
 				massDamageBoost = 0
 				massDamageBoostBoss = 0
 			end
+			if totalEnemyMass > (200 * humans) then
+				OrbsForWaves = math.floor(totalEnemyMass / (200 * humans) + 0.1)
+				if OrbsForWaves > 23 then 
+					OrbsForWaves = 23
+				end
+			end
 			--PrintText("Damage Boost is  " .. massDamageBoost .. " !", 28, 'ffCBFFFF', 4, 'center') 
 		until GetGameTimeSeconds() > 20000 or won == true
 	  end)
@@ -8988,6 +9031,22 @@ function MonitoringFunctionSeven() --Navy Counter
 		until GetGameTimeSeconds() > 20000 or won == true
 	  end)
 end
+function NavalWaveFallback() --Activates Naval Response script if insufficient spawn points for Navy Waves
+	local circle = ForkThread(function(self)
+		local totalWaterPos
+		WaitSeconds(600)
+		repeat
+			if GetGameTimeSeconds() > 610 then
+				totalWaterPos = validWaterPos2nd + validWaterPosHQ
+				if totalWaterPos < 5 then
+					AIMessageTo('Insufficient Naval Spawn Points found. Naval Response activated as fallback.', nil)
+					NavalFallback = true
+				end
+			end
+			WaitSeconds(10)
+		until GetGameTimeSeconds() > 631 or won == true or NavalFallback == true
+	end)
+end	
 function MonitoringFunctionSubFleet() --Sub Spam Counter
 	local circle = ForkThread(function(self)
 		repeat
@@ -10017,6 +10076,15 @@ function SpawnAirUnitsForCarrier(RposX, RposZ, SubTotal)
 						end
 						hp = unit:GetMaxHealth()
 						unit:SetHealth(self, hp)
+					end
+					if OrbsForWaves > 0 then
+						if OrbsForWaves >= Random(1, 25) then
+							local bonesCount = unit:GetBoneCount()
+							if bonesCount > 1 then
+								AttachedAirUnitSpawn(unit, rspawn, "UNITORB1", Random(1, bonesCount - 1))
+								WaitTicks(1)
+							end
+						end	
 					end	
 					unit:SetReclaimable(false)
 					if DamageBoost ~= 'Off - 0' then
@@ -10139,6 +10207,15 @@ function SpawnAirUnitsForCruisers(RposX, RposZ)
 						hp = unit:GetMaxHealth()
 						unit:SetHealth(self, hp)
 					end	
+					if OrbsForWaves > 0 then
+						if OrbsForWaves >= Random(1, 25) then
+							local bonesCount = unit:GetBoneCount()
+							if bonesCount > 1 then
+								AttachedAirUnitSpawn(unit, rspawn, "UNITORB1", Random(1, bonesCount - 1))
+								WaitTicks(1)
+							end
+						end	
+					end	
 					unit:SetReclaimable(false)
 					if DamageBoost ~= 'Off - 0' then
 						ModifyWeaponDamageBuffAndRange(unit)
@@ -10251,6 +10328,15 @@ function SpawnLandUnitsForOrb(RposX, RposZ)
 						end
 						hp = unit:GetMaxHealth()
 						unit:SetHealth(self, hp)
+					end
+					if OrbsForWaves > 0 then
+						if OrbsForWaves >= Random(0, 25) then
+							local bonesCount = unit:GetBoneCount()
+							if bonesCount > 1 then
+								AttachedLandUnitSpawn(unit, rspawn, "UNITORB1", Random(1, bonesCount - 1))
+								WaitTicks(1)
+							end
+						end	
 					end	
 					unit:SetReclaimable(false)
 					if DamageBoost ~= 'Off - 0' then
@@ -10362,6 +10448,8 @@ function HoldTimeForArtyNuke()
 			HoldTimeValueX[n] = v
 		end
 		HoldTimeArtyNukes = tonumber(HoldTimeValueX[3]) * 0.01
+		local WeaponsAvailable = math.floor(((HoldTimeAI - (HoldTimeArtyNukes * HoldTimeAI)) / 60) + 0.1)
+		AIMessageTo('Buildable Nukes, Sats, and Artillery at HoldTime Minute: ', WeaponsAvailable)
 	end)
 end
 function WaveSizeMultiForLand()
@@ -11361,7 +11449,7 @@ function ValidWaterPositionsMonitoring()
 		AdjustAIx = math.floor(MapDistanceX * 0.5)
 		AdjustAIz = math.floor(MapDistanceZ * 0.5)
         repeat
-			WaitTicks(20)
+			WaitTicks(10)
             randX = aiPos[1] - AdjustAIx + Random(0, MapDistanceX)
 			if randX <= 0 then
 				DifferenceX = AdjustAIx + aiPos[1]
@@ -11391,8 +11479,8 @@ function ValidWaterPositionsMonitoring()
                     break
                 end
             end
-        until GetGameTimeSeconds() > 900 or won == true
-		
+        until GetGameTimeSeconds() > 600 or won == true
+		validWaterPosHQ = table.getn(validWaterPositions.positions)
     end)
 end
 function ValidWaterPositionsMonitoring2ndSpawn()
@@ -11432,7 +11520,7 @@ function ValidWaterPositionsMonitoring2ndSpawn()
 		AdjustAIx = math.floor(MapDistanceX * 0.5)
 		AdjustAIz = math.floor(MapDistanceZ * 0.5)
         repeat
-			WaitTicks(20)
+			WaitTicks(10)
             randX = aiPos[1] - AdjustAIx + Random(0, MapDistanceX)
 			if randX <= 0 then
 				DifferenceX = AdjustAIx + aiPos[1]
@@ -11462,8 +11550,8 @@ function ValidWaterPositionsMonitoring2ndSpawn()
                     break
                 end
             end
-        until GetGameTimeSeconds() > 900 or won == true
-		
+        until GetGameTimeSeconds() > 600 or won == true
+		validWaterPos2nd = table.getn(validWaterPositions2.positions2)
     end)
 end
 function SpawnEnemyUnitAtPosition(unitId, posX, posZ, minOffset, maxOffset) --Navy Spawn
@@ -11591,6 +11679,15 @@ function SpawnEnemyUnitAtPosition(unitId, posX, posZ, minOffset, maxOffset) --Na
 				end	
 				hp = unit:GetMaxHealth()
 				unit:SetHealth(self, hp)
+			end	
+			if OrbsForWaves > 0 then
+				if OrbsForWaves >= Random(1, 25) then
+					local bonesCount = unit:GetBoneCount()
+					if bonesCount > 1 then
+						AttachedNavyUnitSpawn(unit, rspawn, "UNITORB1", Random(1, bonesCount - 1))
+						WaitTicks(1)
+					end
+				end	
 			end	
 			unit:SetReclaimable(false)
 			unit:SetSpeedMult(1 + (waveNum * SpeedBonus + SpeedBonusOnce) * 0.5)
@@ -12063,7 +12160,7 @@ function HalfSalvation()
             WaitSeconds(2)
 				SuicideList = aiBrain:GetListOfUnits(categories.MOBILE - categories.ENGINEER - categories.COMMAND - (categories.OPERATION * categories.MOBILE * categories.MASSIVE * categories.STRATEGIC * categories.BOT), false)
 				PrintText("HQ Deflecting Damage into Units!", 28, 'ff0914E8', 10, 'center')
-				AIMessageTo('HQ Damage Deflected', nil)
+				AIMessageTo('HQ Damage Deflected to Wave!', nil)
 				local killcount = 0
 				for i, aiUnit in SuicideList do
 					WaitTicks(1)
@@ -13919,26 +14016,26 @@ function CreateACombinedLandBossUnitAroundMainBuildingForAI() --Minor Boss Land
 		--local MapCheck = false
 		local Chance
 		--local count = 0
-			if secondaryspawn ~= "Off" and spawnrateair > 0 and SecondarySpawnDead == false then
-					if Alt2ndSpawn ~= "Off" and Alt2ndBuildingDead == false and Random(1, 2) == 1 then
+			if secondaryspawn ~= "Off" and spawnrateland > 0 and SecondarySpawnDead == false and SecondarySpawnError == false then
+					if Alt2ndSpawn ~= "Off" and Alt2ndBuildingDead == false and Random(1, 2) == 1 and Alt2ndSpawnError == false then
 						posX, posZ = Alt2ndBrain:GetArmyStartPos()
 					else
 						posX, posZ = SecBrain:GetArmyStartPos()
 					end	
-				if Random(1, 100) > spawnrateair then
-					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+				if Random(1, 100) > spawnrateland then
+					if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 						posX, posZ = AltHQBrain:GetArmyStartPos()
 					else
 						posX, posZ = aiBrain:GetArmyStartPos()
 					end	
 				end	
 			else
-				if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+				if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 					posX, posZ = AltHQBrain:GetArmyStartPos()
 				else
 					posX, posZ = aiBrain:GetArmyStartPos()
-				end		
-			end
+				end	
+			end	
         if GetGameTimeSeconds() > WavesStartTimeAI then
             if landUnitsExtremeHeavy and landUnitsExtremeHeavy.Tech4 and exHLand > 0 and Random(1, 16) == 5 then
                 rspawn = (landUnitsExtremeHeavy.Tech4)[Random(1, exHLand)]
@@ -14112,7 +14209,7 @@ function CreateACombinedAirBossUnitAroundMainBuildingForAI()  --Endgame Boss Air
         local unit = nil
         local posX
 		local posZ
-		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 			posX, posZ = AltHQBrain:GetArmyStartPos()
 		else
 			posX, posZ = aiBrain:GetArmyStartPos()
@@ -14253,7 +14350,7 @@ function CreateAirBossUnitForYolonas()  --Endgame Boss for Yolo Script Air
         local unit = nil
         local posX
 		local posZ
-		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 			posX, posZ = AltHQBrain:GetArmyStartPos()
 		else
 			posX, posZ = aiBrain:GetArmyStartPos()
@@ -14394,7 +14491,7 @@ function CreateHugeBossUnitAroundMainBuildingForAI() --EndGame Boss Land
 		--local MapCheck = false
 		local Chance
 		--local count = 0
-		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 			posX, posZ = AltHQBrain:GetArmyStartPos()
 		else
 			posX, posZ = aiBrain:GetArmyStartPos()
@@ -14577,7 +14674,7 @@ function CreateHugeBossForYolonas() -- Endgame Boss for Yolos Land
 		--local MapCheck = false
 		local Chance
 		--local count = 0
-		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 			posX, posZ = AltHQBrain:GetArmyStartPos()
 		else
 			posX, posZ = aiBrain:GetArmyStartPos()
@@ -14759,7 +14856,7 @@ function CreateDoomBoss(DoomMass) --Endgame Doom Boss
 		local Chance
 		local mass = DoomMass
 		--local count = 0
-		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 			posX, posZ = AltHQBrain:GetArmyStartPos()
 		else
 			posX, posZ = aiBrain:GetArmyStartPos()
@@ -15338,6 +15435,15 @@ function CreatUnitForSpirit(SpiritUnit) -- Spirit Spawn
 						end
 						hp = unit:GetMaxHealth()
 						unit:SetHealth(self, hp)
+					end
+					if OrbsForWaves > 0 then
+						if OrbsForWaves >= Random(0, 25) then
+							local bonesCount = unit:GetBoneCount()
+							if bonesCount > 1 then
+								AttachedLandUnitSpawn(unit, rspawn, "UNITORB1", Random(1, bonesCount - 1))
+								WaitTicks(1)
+							end
+						end	
 					end	
 					unit:SetReclaimable(false)
 				
@@ -15367,7 +15473,7 @@ function CreateAndLaunchNukeAtEnemy()
 		--local MapCheck = false
 		local Chance
 		--local count = 0
-		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 then
+		if AltHQSpawn ~= "Off" and HQAltBuildingDead == false and Random(1, 2) == 1 and AltHQSpawnError == false then
 			posX, posZ = AltHQBrain:GetArmyStartPos()
 		else
 			posX, posZ = aiBrain:GetArmyStartPos()
@@ -16359,6 +16465,19 @@ AttachedAirUnitSpawn = function(self, selfId, attachedUnitId, selfBoneId)
     local platOrient = self:GetOrientation()
     local location = self:GetPosition()
     local StellarCore = CreateUnit(attachedUnitId, self:GetArmy(), location[1], location[2], location[3], platOrient[1], platOrient[2], platOrient[3], platOrient[4], 'Air')
+    WaitTicks(2)
+    --IncreaseHPForAUnit(StellarCore)
+	--[[if DamageBoost ~= 'Off - 0' then
+		ModifyWeaponDamageBuffAndRange(StellarCore)
+	end]]--
+    StellarCore:AttachTo(self, selfBoneId)
+    StellarCore:SetCreator(self)
+    self.Trash:Add(StellarCore)
+end
+AttachedNavyUnitSpawn = function(self, selfId, attachedUnitId, selfBoneId)
+    local platOrient = self:GetOrientation()
+    local location = self:GetPosition()
+    local StellarCore = CreateUnit(attachedUnitId, self:GetArmy(), location[1], location[2], location[3], platOrient[1], platOrient[2], platOrient[3], platOrient[4], 'Naval')
     WaitTicks(2)
     --IncreaseHPForAUnit(StellarCore)
 	--[[if DamageBoost ~= 'Off - 0' then
@@ -18704,6 +18823,15 @@ function SpawnInPlatoon(TransportPlatoon)
 					hp = unit:GetMaxHealth()
 					unit:SetHealth(self, hp)
 				end	
+				if OrbsForWaves > 0 then
+					if OrbsForWaves >= Random(1, 25) then
+						local bonesCount = unit:GetBoneCount()
+						if bonesCount > 1 then
+							AttachedLandUnitSpawn(unit, rspawn, "UNITORB1", Random(1, bonesCount - 1))
+							WaitTicks(1)
+						end
+					end	
+				end	
                 unit:SetReclaimable(false)
 				if DamageBoost ~= 'Off - 0' then
 					ModifyWeaponDamageBuffAndRange(unit)
@@ -18834,6 +18962,12 @@ function SpawnInExperimentalPlatoon(TransportPlatoon)
 					hp = unit:GetMaxHealth()
 					unit:SetHealth(self, hp)
 				end	
+				
+				local bonesCount = unit:GetBoneCount()
+				if bonesCount > 1 then
+					AttachedLandUnitSpawn(unit, rspawn, "UNITORB1", Random(1, bonesCount - 1))
+					WaitTicks(1)
+				end
                 unit:SetReclaimable(false)
             
 				if DamageBoost ~= 'Off - 0' then
@@ -19080,6 +19214,7 @@ function HQPlayerNotSetWarning()
 		PrintText("==ERROR: HQ Player not Set. Make sure correct Player Slot is set in Map Options.==", 28, 'ffCC0000', 300, 'center')
 		PrintText("--Check AI Wave Survival Picture Guide on FAF Forums for Setup Help--", 28, 'ffCC0000', 300, 'center')
 		PrintText("https://forum.faforever.com/topic/5563/ai-wave-survival-mod-information", 28, 'ffCC0000', 300, 'center')
+		AIMessageTo('ERROR: HQ Player MUST be for mod to work. Set HQ Player in Map Options.', nil)
 	end
 	KillThread(self)
     end)
@@ -19650,8 +19785,9 @@ function InitSurvival()
 	
 	if secondaryspawn ~= "Off" and SecondSpawnCheck == false then
 		PrintText("==ERROR: 2nd Spawn not Set. Make sure correct Player Slot is set in Map Options.==", 28, 'ffCC0000', 30, 'center')
-		AIMessageTo('ERROR: Set 2nd Spawn in Map Options.', nil)
+		AIMessageTo('ERROR: Set 2nd Spawn in Map Options. 2nd Spawn now Disabled', nil)
 		ErrorMessage = true
+		SecondarySpawnError = true
 	end
 	if salvationspawn ~= "Off" and SalvationCheck == false and salvationspawn ~= "Half of Team" then
 		PrintText("==ERROR: Salvation Player Not Set. Make sure correct Player Slot is set in Map Options.==", 28, 'ffCC0000', 30, 'center')
@@ -19659,13 +19795,15 @@ function InitSurvival()
 	end
 	if AltHQSpawn ~= "Off" and AltHQCheck == false then
 		PrintText("==ERROR: Alternative HQ Spawn not Set. Make sure correct Player Slot is set in Map Options.==", 28, 'ffCC0000', 30, 'center')
-		AIMessageTo('ERROR: Set Alternative HQ Spawn in Map Options.', nil)
-		ErrorMessage = true		
+		AIMessageTo('ERROR: Set Alternative HQ Spawn in Map Options. Spawn now Disabled.', nil)
+		ErrorMessage = true
+		AltHQSpawnError = true
 	end
 	if Alt2ndSpawn ~= "Off" and secondaryspawn ~= "Off" and Alt2ndCheck == false then
 		PrintText("==ERROR: Alternative 2nd Spawn not Set. Make sure correct Player Slot is set in Map Options.==", 28, 'ffCC0000', 30, 'center')
-		AIMessageTo('ERROR: Set Alternative 2nd Spawn Player in Map Options.', nil)
+		AIMessageTo('ERROR: Set Alternative 2nd Spawn Player in Map Options. Spawn now Disabled.', nil)
 		ErrorMessage = true
+		Alt2ndSpawnError = true
 	end
 	
 	if aBrainsHQ > 0 and AIWavePlayer ~= "Random" then 
@@ -19791,6 +19929,7 @@ function InitSurvival()
 		ValidWaterPositionsMonitoring2ndSpawn()
 	end
 	if NavyPerWave > 0 then	
+		NavalWaveFallback()
 		if SubResponseEnabled ~= "Off --" or CarriersSpawnAir ~= "Off --" then
 			MonitoringFunctionSubFleet()
 			if SubResponseEnabled ~= "Off --" then
@@ -19830,7 +19969,9 @@ function InitSurvival()
 	if ArtyNukeEnable ~= "No Restrictions (Buildable Arty/Nukes/Sat)" then --arty/nukes
 		if ArtyNukeEnable ~= "Buildable Arty/Nukes/Sat Disabled" then
 			HoldTimeForArtyNuke()
-		end	
+		else
+			AIMessageTo('Buildable Artillery, Nukes, and Satelite disabled.', nil)
+		end
 		DisableArtilleryNukes()
 		DisableNomadsArtyNuke()
 	end	
@@ -19995,7 +20136,7 @@ function InitSurvival()
 							landcycle = 0
 						end	
 					until Hcount < 1
-					if NavyPerWave == 0 then
+					if NavyPerWave == 0 or NavalFallback == true then
 						local unit
 						if NavalPowerAI > 100 then
 							if HeavyCruMonitior == false then
@@ -20083,72 +20224,74 @@ function InitSurvival()
 			end
 			WaitTicks(30)
 			if (NavyPerWave > 0 and GetGameTimeSeconds() < (HoldTimeAI + WavesStartTimeAI) and GetGameTimeSeconds() > (WavesStartTimeAI + NavyTime))
-			or (NavyPerWave > 0 and GetGameTimeSeconds() > (WavesStartTimeAI + NavyTime) and (Endless == "Land+Air+Navy" or Endless == "Land+Navy" or Endless == "Air+Navy" or Endless == "Navy")) then	
-				local circle = ForkThread(function(self)
-					GetListsOfNavyTargets()
-					local navycycle = 0
-					if NavyTime > 0 and NavyTimeFlag == false then
-						PrintText("Navy Inbound!", 24, 'ffCBFFFF', 4, 'center')
-						NavyTimeFlag = true
-					end
-					repeat
-						if secondaryspawn ~= "Off" and spawnratenavy > 0 and SecondarySpawnDead == false then
-							if Random(1, 100) > spawnratenavy then
-								NavalUnitsSpawnWaves()
-							else
-								NavalUnitsSpawnWaves2ndSpawn()
-							end
-						else
-							if SecondarySpawnDead == false then
-								NavalUnitsSpawnWaves()
-							end
-						end	
-						if secondaryspawn ~= "Off" and SecondarySpawnDead == true and spawnratenavy > 0 then
-							if spawnratenavymulti ~= 0 and (spawnratenavymulti + 2) >= Random(1, 100) then
-								NavalUnitsSpawnWaves()
-							else
-							end	
-						end	
-						Ncount = Ncount - 1
-						navycycle = navycycle + 1
-						if navycycle == 14 then
-							WaitTicks(5)
-							GetListsOfNavyTargets()
-							navycycle = 0
+			or (NavyPerWave > 0 and GetGameTimeSeconds() > (WavesStartTimeAI + NavyTime) and (Endless == "Land+Air+Navy" or Endless == "Land+Navy" or Endless == "Air+Navy" or Endless == "Navy")) then
+				if NavalFallback == false then
+					local circle = ForkThread(function(self)
+						GetListsOfNavyTargets()
+						local navycycle = 0
+						if NavyTime > 0 and NavyTimeFlag == false then
+							PrintText("Navy Inbound!", 24, 'ffCBFFFF', 4, 'center')
+							NavyTimeFlag = true
 						end
-					until Ncount < 1
-					if SubResponseEnabled ~= "Off --" then
-						if SubPower > SubFleet then
-							local SubCount = math.floor((SubPower / 9) * SubResponseEnabled + 0.5)
-							repeat
-								if secondaryspawn ~= "Off" and spawnratenavy > 0 and SecondarySpawnDead == false then
-									if Random(1, 100) > spawnratenavy then
-										SubResponseSpawnHQSubs()
-									else
-										SubResponseSpawn2ndSpawnSubs()
-									end
+						repeat
+							if secondaryspawn ~= "Off" and spawnratenavy > 0 and SecondarySpawnDead == false and SecondarySpawnError == false then
+								if Random(1, 100) > spawnratenavy then
+									NavalUnitsSpawnWaves()
 								else
-									if SecondarySpawnDead == false then
-										SubResponseSpawnHQSubs()
-									end
-								end	
-								if secondaryspawn ~= "Off" and SecondarySpawnDead == true and spawnratenavy > 0 then
-									if spawnratenavymulti ~= 0 and (spawnratenavymulti + 2) >= Random(1, 100) then
-										SubResponseSpawnHQSubs()
-									else
-									end	
-								end	
-								SubCount = SubCount - 1
-								navycycle = navycycle + 1
-								if navycycle == 14 then
-									WaitTicks(5)
-									GetListsOfNavyTargets()
-									navycycle = 0
+									NavalUnitsSpawnWaves2ndSpawn()
 								end
-							until SubCount < 1
-						end
-					end	
-				end)	
+							else
+								if SecondarySpawnDead == false then
+									NavalUnitsSpawnWaves()
+								end
+							end	
+							if secondaryspawn ~= "Off" and SecondarySpawnDead == true and spawnratenavy > 0 and SecondarySpawnError == false then
+								if spawnratenavymulti ~= 0 and (spawnratenavymulti + 2) >= Random(1, 100) then
+									NavalUnitsSpawnWaves()
+								else
+								end	
+							end		
+							Ncount = Ncount - 1
+							navycycle = navycycle + 1
+							if navycycle == 14 then
+								WaitTicks(5)
+								GetListsOfNavyTargets()
+								navycycle = 0
+							end
+						until Ncount < 1
+						if SubResponseEnabled ~= "Off --" then
+							if SubPower > SubFleet then
+								local SubCount = math.floor((SubPower / 9) * SubResponseEnabled + 0.5)
+								repeat
+									if secondaryspawn ~= "Off" and spawnratenavy > 0 and SecondarySpawnDead == false and SecondarySpawnError == false then
+										if Random(1, 100) > spawnratenavy then
+											SubResponseSpawnHQSubs()
+										else
+											SubResponseSpawn2ndSpawnSubs()
+										end
+									else
+										if SecondarySpawnDead == false then
+											SubResponseSpawnHQSubs()
+										end
+									end	
+									if secondaryspawn ~= "Off" and SecondarySpawnDead == true and spawnratenavy > 0 and SecondarySpawnError == false then
+										if spawnratenavymulti ~= 0 and (spawnratenavymulti + 2) >= Random(1, 100) then
+											SubResponseSpawnHQSubs()
+										else
+										end	
+									end		
+									SubCount = SubCount - 1
+									navycycle = navycycle + 1
+									if navycycle == 14 then
+										WaitTicks(5)
+										GetListsOfNavyTargets()
+										navycycle = 0
+									end
+								until SubCount < 1
+							end
+						end	
+					end)
+				end
 			end
 			WaitTicks(5)
 			if GameTime > (0.7 * WaveProgression) and (MinorBossSpawns == "ExtraAir" or MinorBossSpawns == "ExtraLand+ExtraAir" or MinorBossSpawns == "Land+ExtraAir") 

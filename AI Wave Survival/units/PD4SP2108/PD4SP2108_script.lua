@@ -17,5 +17,12 @@ PD4SP2108 = Class(SStructureUnit) {
         CruiseMissile = Class(SLaanseMissileWeapon) {},
 		Missile = Class(SLaanseMissileWeapon2) {},
     },
+	
+	DeathThread = function(self)
+		local position = self:GetPosition()
+		local spiritUnit = CreateUnitHPR('SPIRIT0402', self:GetArmy(), position[1], position[2], position[3], 0, 0, 0)
+		local spiritUnit = CreateUnitHPR('SPIRIT0402', self:GetArmy(), position[1], position[2], position[3], 0, 0, 0)
+		self:Destroy()
+	end,
 }
 TypeClass = PD4SP2108
