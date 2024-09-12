@@ -1,0 +1,10 @@
+UnitBlueprint {
+Merge = true,
+BlueprintId = "xsl0001",    -- sera com 
+    Audio = {
+        Killed = Sound {
+            Bank = 'Oof',
+            Cue = 'oooof',
+    },
+	},
+}
