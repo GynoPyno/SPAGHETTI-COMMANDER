@@ -75,6 +75,16 @@ UnitBlueprint {
             Cue = 'Aeon_Select_Air',
             LodCutoff = 'UnitMove_LodCutoff',
         },
+        ShieldOff = Sound {
+            Bank = 'UAB',
+            Cue = 'UAB4301_Activate',
+            LodCutoff = 'UnitMove_LodCutoff'
+        },
+        ShieldOn = Sound {
+            Bank = 'UAB',
+            Cue = 'UAB4301_Activate',
+            LodCutoff = 'UnitMove_LodCutoff'
+        },
     },
     Buffs = {
         Regen = {
@@ -112,6 +122,7 @@ UnitBlueprint {
         'OVERLAYSONAR',
         'OVERLAYMISC',
         'CANNOTUSEAIRSTAGING',
+        'PERSONALSHIELD',
     },
     CollisionOffsetY = -1.5,
     Defense = {
@@ -121,6 +132,20 @@ UnitBlueprint {
         Health = 48000,
         MaxHealth = 48000,
         RegenRate = 15,
+        Shield = {
+            ImpactEffects = "AeonShieldHit01",
+            ImpactMesh = "/effects/entities/CzarShieldSection/CzarShieldSection_mesh",
+            ImpactMeshBig = "/effects/entities/CzarShieldSection/CzarShieldSectionBig_mesh",
+            Mesh = "/effects/entities/CzarShield/CzarShield_mesh",
+            RegenAssistMult = 60,
+            ShieldEnergyDrainRechargeTime = 5,
+            ShieldMaxHealth = 30000,
+            ShieldRechargeTime = 120,
+            ShieldRegenRate = 180,
+            ShieldRegenStartTime = 2,
+            ShieldSize = 26,
+            ShieldVerticalOffset = -1.25,
+        },
         SubThreatLevel = 30,
         SurfaceThreatLevel = 500,
     },
@@ -137,7 +162,7 @@ UnitBlueprint {
             '<LOC ability_cleanse>Planetary Cleansing Mode',
         },
         AnimationOpen = '/units/UAA0310/UAA0310_aopen.sca',
-        AnimationActivate = '/hook/units/UAA0310/UAA0310_AOpen.sca',
+        AnimationActivate = '/mods/BlackOpsFAF-Unleashed/hook/units/UAA0310/UAA0310_AOpen.sca',
         Mesh = {
             IconFadeInZoom = 130,
             LODs = {
@@ -197,13 +222,14 @@ UnitBlueprint {
         TechLevel = 'RULEUTL_Secret',
         ToggleCaps = {
             RULEUTC_WeaponToggle = true,
+            RULEUTC_ShieldToggle = true
         },
         UnitName = '<LOC uaa0310_name>CZAR',
         UnitWeight = 1,
     },
     Intel = {
         RadarRadius = 200,
-        SonarRadius = 150,
+        SonarRadius = 152,
         VisionRadius = 70,
     },
     Interface = {

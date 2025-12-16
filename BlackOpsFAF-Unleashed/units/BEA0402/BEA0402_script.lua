@@ -2,7 +2,7 @@
 -- File     :  /cdimage/units/BEA0402/BEA0402_script.lua
 -- Author(s):  John Comes, David Tomandl, Gordon Duclos
 -- Summary  :  UEF Mobile Factory Script
--- Copyright © 2005 Gas Powered Games, Inc.  All rights reserved.
+-- Copyright ï¿½ 2005 Gas Powered Games, Inc.  All rights reserved.
 -----------------------------------------------------------------
 
 local TAirUnit = import('/lua/terranunits.lua').TAirUnit
@@ -13,9 +13,12 @@ local CitadelHVMWeapon = import('/mods/BlackOpsFAF-Unleashed/lua/BlackOpsWeapons
 local CitadelPlasmaGatlingCannonWeapon = import('/mods/BlackOpsFAF-Unleashed/lua/BlackOpsWeapons.lua').CitadelPlasmaGatlingCannonWeapon
 local EffectUtils = import('/lua/effectutilities.lua')
 local Effects = import('/lua/effecttemplates.lua')
+local DummyWeapon = import("/lua/aeonweapons.lua").AAASonicPulseBatteryWeapon
 
+---@class BEA0402 : TAirUnit
 BEA0402 = Class(TAirUnit) {
     Weapons = {
+        GuidanceSystem = ClassWeapon(DummyWeapon) {},
         MainTurret01 = Class(RailGunWeapon02) {},
         MainTurret02 = Class(RailGunWeapon02) {},
         HVMTurret01 = Class(CitadelHVMWeapon) {},
@@ -102,6 +105,9 @@ BEA0402 = Class(TAirUnit) {
     DestroyNoFallRandomChance = 1.1,
     FxDamageScale = 2.5,
 
+    ---@param self BEA0402
+    ---@param builder Unit
+    ---@param layer Layer
     OnStopBeingBuilt = function(self, builder, layer)
         self.AirPadTable = {}
         TAirUnit.OnStopBeingBuilt(self, builder, layer)

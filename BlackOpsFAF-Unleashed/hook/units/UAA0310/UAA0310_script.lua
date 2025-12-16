@@ -2,10 +2,10 @@
 -- File     :  /cdimage/units/UAA0310/UAA0310_script.lua
 -- Author(s):  John Comes
 -- Summary  :  Aeon CZAR Script
--- Copyright © 2006 Gas Powered Games, Inc.  All rights reserved.
+-- Copyright ï¿½ 2006 Gas Powered Games, Inc.  All rights reserved.
 -----------------------------------------------------------------
 
-local AAirUnit = import('/lua/aeonunits.lua').AAirUnit
+local AAirUnit = import("/lua/aeonunits.lua").AAirUnit
 local aWeapons = import('/lua/aeonweapons.lua')
 local WeaponsFile = import('/mods/BlackOpsFAF-Unleashed/lua/BlackOpsWeapons.lua')
 local AQuantumBeamGenerator = aWeapons.AQuantumBeamGenerator
@@ -14,8 +14,11 @@ local AANDepthChargeBombWeapon = aWeapons.AANDepthChargeBombWeapon
 local AAATemporalFizzWeapon = aWeapons.AAATemporalFizzWeapon
 local explosion = import('/lua/defaultexplosions.lua')
 local SuperQuantumBeamGenerator = WeaponsFile.SuperQuantumBeamGenerator
+local CzarShield = import("/lua/shield.lua").CzarShield
 
+---@class UAA0310 : AAirUnit
 UAA0310 = Class(AAirUnit) {
+    BuildAttachBone = 'UAA0310',
     DestroyNoFallRandomChance = 1.1,
     Weapons = {
         QuantumBeamGeneratorWeapon = Class(AQuantumBeamGenerator){},
@@ -30,13 +33,31 @@ UAA0310 = Class(AAirUnit) {
         AAFizz02 = Class(AAATemporalFizzWeapon) {},
     },
 
+    ---@param self UAA0310
+    ---@param bpShield Blueprint
+    CreateShield = function(self, bpShield)
+        local bpShield = table.deepcopy(bpShield)
+        local trash = self.Trash
+        self:DestroyShield()
+
+        self.MyShield = CzarShield(bpShield, self)
+
+        self:SetFocusEntity(self.MyShield)
+        self:EnableShield()
+        TrashBag.Add(trash,self.MyShield)
+    end,
+
+    ---@param self UAA0310
+    ---@param instigator Unit
+    ---@param type string
+    ---@param overkillRatio number
     OnKilled = function(self, instigator, type, overkillRatio)
         local wep = self:GetWeaponByLabel('QuantumBeamGeneratorWeapon')
-        for k, v in wep.Beams do
+        for _, v in wep.Beams do
             v.Beam:Disable()
         end
         local wep = self:GetWeaponByLabel('SuperQuantumBeamGeneratorWeapon')
-        for k, v in wep.Beams do
+        for _, v in wep.Beams do
             v.Beam:Disable()
         end
 
@@ -56,13 +77,20 @@ UAA0310 = Class(AAirUnit) {
         AAirUnit.OnKilled(self, instigator, type, overkillRatio)
     end,
 
+    ---@param self UAA0310
+    ---@param bone Bone
+    ---@param x number
+    ---@param y number
+    ---@param z number
     OnAnimTerrainCollision = function(self, bone,x,y,z)
         DamageArea(self, {x,y,z}, 5, 1000, 'Default', true, false)
         explosion.CreateDefaultHitExplosionAtBone(self, bone, 5.0)
         explosion.CreateDebrisProjectiles(self, explosion.GetAverageBoundingXYZRadius(self), {self:GetUnitSizes()})
     end,
-    BuildAttachBone = 'UAA0310',
 
+    ---@param self UAA0310
+    ---@param builder Unit
+    ---@param layer Layer
     OnStopBeingBuilt = function(self,builder,layer)
         AAirUnit.OnStopBeingBuilt(self,builder,layer)
         ChangeState(self, self.IdleState)
@@ -70,6 +98,7 @@ UAA0310 = Class(AAirUnit) {
         self:ForkThread(self.CheckAIThread)
     end,
 
+    ---@param self UAA0310
     CheckAIThread = function(self)
         if not self.AnimationManipulator then
             self.AnimationManipulator = CreateAnimator(self)
@@ -84,6 +113,7 @@ UAA0310 = Class(AAirUnit) {
         end
     end,
 
+    ---@param self UAA0310
     OnFailedToBuild = function(self)
         AAirUnit.OnFailedToBuild(self)
         ChangeState(self, self.IdleState)
@@ -137,6 +167,8 @@ UAA0310 = Class(AAirUnit) {
         end,
     },
 
+    ---@param self UAA0310
+    ---@param bit number
     OnScriptBitSet = function(self, bit)
         AAirUnit.OnScriptBitSet(self, bit)
         if bit == 1 then
@@ -162,6 +194,8 @@ UAA0310 = Class(AAirUnit) {
         end
     end,
 
+    ---@param self UAA0310
+    ---@param bit number
     OnScriptBitClear = function(self, bit)
         AAirUnit.OnScriptBitClear(self, bit)
         if bit == 1 then
@@ -180,7 +214,6 @@ UAA0310 = Class(AAirUnit) {
             end)
         end
     end,
-
 }
 
 TypeClass = UAA0310

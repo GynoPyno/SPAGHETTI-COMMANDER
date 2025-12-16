@@ -193,9 +193,9 @@ UnitBlueprint {
         UnitWeight = 1,
     },
     Intel = {
-        RadarRadius = 190,
+        RadarRadius = 192,
         VisionRadius = 70,
-        WaterVisionRadius = 50,
+        WaterVisionRadius = 64,
     },
     Interface = {
         HelpText = '<LOC BES0402_help>Experimental Dreadnaught',
@@ -241,8 +241,9 @@ UnitBlueprint {
     SelectionSizeX = 4,
     SelectionSizeZ = 17,
     SelectionThickness = 0.16,
+    CollisionOffsetY = -1,
     SizeX = 5.5,
-    SizeY = 3,
+    SizeY = 4,
     SizeZ = 25,
     StrategicIconName = 'icon_experimental_generic',
     StrategicIconSortPriority = 145,
