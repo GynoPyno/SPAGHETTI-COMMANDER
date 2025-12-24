@@ -37,22 +37,22 @@ UnitBlueprint {
     },
     BuildIconSortPriority = 140,
     Categories = {
+        'SERAPHIM',
         'PRODUCTMK',
         'SELECTABLE',
         'BUILTBYTIER3ENGINEER',
         'BUILTBYTIER3COMMANDER',
-        'SERAPHIM',
         'STRUCTURE',
-        'STRATEGIC',
+        'DEFENSE',
         'TECH3',
-        'INDIRECTFIRE',
-        'ARTILLERY',
+        'DIRECTFIRE',
         'DRAGBUILD',
-        'SIZE6',
+        'SIZE8',
         'VISIBLETORECON',
         'RECLAIMABLE',
         'OVERLAYANTINAVY',
-        'SORTSTRATEGIC',
+        'SORTDEFENSE',
+        'CQUEMOV', --"CQUEMOV" enables the selection and move commands during construction
     },
     CollisionOffsetY = -0.25,
     Defense = {
@@ -81,7 +81,7 @@ UnitBlueprint {
             },
         },
         PlaceholderMeshName = 'UXB0004',
-        SpawnRandomRotation = true,
+        SpawnRandomRotation = false,
         Tarmacs = {
             {
                 Albedo = 'Tarmacs/Tar12x_seraphim_01_albedo',
@@ -110,8 +110,8 @@ UnitBlueprint {
         },
     },
     Footprint = {
-        SizeX = 9,
-        SizeZ = 9,
+        SizeX = 8,
+        SizeZ = 8,
     },
     General = {
         Category = 'Strategic',
@@ -164,10 +164,10 @@ UnitBlueprint {
         MeshExtentsZ = 8,
         MinSpeedPercent = 0,
         MotionType = 'RULEUMT_None',
-        SkirtOffsetX = 0,
-        SkirtOffsetZ = 0,
-        SkirtSizeX = 4,
-        SkirtSizeZ = 4,
+        SkirtOffsetX = -0.5,
+        SkirtOffsetZ = -0.5,
+        SkirtSizeX = 8,
+        SkirtSizeZ = 8,
         TurnRate = 0,
     },
     SelectionSizeX = 3.1,
@@ -188,8 +188,9 @@ UnitBlueprint {
     },
     Weapon = {
         {
+			AutoInitiateAttackCommand = true,
             AboveWaterTargetsOnly = true,
-            ArtilleryShieldBlocks = true,
+            AlwaysRecheckTarget = false,
             Audio = {
                 Fire = Sound {
                     Bank = 'XSB_Weapon',

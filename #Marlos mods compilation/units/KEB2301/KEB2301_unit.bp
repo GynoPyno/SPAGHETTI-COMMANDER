@@ -23,11 +23,11 @@ UnitBlueprint {
     },
     Buffs = {
         Regen = {
-            Level1 = 3,
-            Level2 = 6,
-            Level3 = 9,
-            Level4 = 12,
-            Level5 = 15,
+            Level1 = 10,
+            Level2 = 20,
+            Level3 = 30,
+            Level4 = 40,
+            Level5 = 50,
         },
     },
     BuildIconSortPriority = 140,
@@ -38,23 +38,22 @@ UnitBlueprint {
         'BUILTBYTIER3COMMANDER',
         'UEF',
         'STRUCTURE',
-        'STRATEGIC',
+        'DEFENSE',
         'TECH3',
-        'INDIRECTFIRE',
-        'ARTILLERY',
+        'DIRECTFIRE',
         'DRAGBUILD',
         'SIZE8',
         'VISIBLETORECON',
         'RECLAIMABLE',
         'OVERLAYANTINAVY',
-        'SORTSTRATEGIC',
+        'SORTDEFENSE',
         'CQUEMOV', --"CQUEMOV" enables the selection and move commands during construction
     },
     CollisionOffsetY = -0.25,
     Defense = {
         AirThreatLevel = 0,
         ArmorType = 'Structure',
-        EconomyThreatLevel = 350,
+        EconomyThreatLevel = 590,
         Health = 20000,
         MaxHealth = 20000,
         RegenRate = 0,
@@ -76,7 +75,7 @@ UnitBlueprint {
             },
         },
         PlaceholderMeshName = 'UXB0004',
-        SpawnRandomRotation = true,
+        SpawnRandomRotation = false,
         Tarmacs = {
             {
                 Albedo = 'Tarmacs/Tar12x_01_albedo',
@@ -183,8 +182,9 @@ UnitBlueprint {
     },
     Weapon = {
         {
+			AutoInitiateAttackCommand = true,
             AboveWaterTargetsOnly = true,
-            ArtilleryShieldBlocks = true,
+            AlwaysRecheckTarget = false,
             Audio = {
                 BarrelLoop = Sound {
                     Bank = 'UEB',

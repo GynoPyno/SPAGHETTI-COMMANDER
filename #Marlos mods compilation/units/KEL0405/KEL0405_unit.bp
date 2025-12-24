@@ -254,7 +254,7 @@ UnitBlueprint {
         { -- Weapon is here to align the bot properly
             AboveWaterFireOnly = true,
             AboveWaterTargetsOnly = true,
-            AutoInitiateAttackCommand = true,
+            -- AutoInitiateAttackCommand = true,
             Audio = {
                 Fire = Sound {
                     Bank = 'UELWeapon',

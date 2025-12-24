@@ -32,22 +32,21 @@ UnitBlueprint {
     },
     BuildIconSortPriority = 140,
     Categories = {
+        'CYBRAN',
         'PRODUCTMK',
         'SELECTABLE',
         'BUILTBYTIER3ENGINEER',
         'BUILTBYTIER3COMMANDER',
-        'CYBRAN',
         'STRUCTURE',
-        'STRATEGIC',
+        'DEFENSE',
         'TECH3',
-        'INDIRECTFIRE',
-        'ARTILLERY',
+        'DIRECTFIRE',
         'DRAGBUILD',
         'SIZE8',
         'VISIBLETORECON',
         'RECLAIMABLE',
         'OVERLAYANTINAVY',
-        'SORTSTRATEGIC',
+        'SORTDEFENSE',
         'CQUEMOV', --"CQUEMOV" enables the selection and move commands during construction
     },
     CollisionOffsetY = -0.25,
@@ -76,7 +75,7 @@ UnitBlueprint {
             },
         },
         PlaceholderMeshName = 'UXB0004',
-        SpawnRandomRotation = true,
+        SpawnRandomRotation = false,
         Tarmacs = {
             {
                 Albedo = 'Tarmacs/Tar12x_cybran_01_albedo',
@@ -183,8 +182,9 @@ UnitBlueprint {
     },
     Weapon = {
         {
+			AutoInitiateAttackCommand = true,
             AboveWaterTargetsOnly = true,
-            ArtilleryShieldBlocks = true,
+            AlwaysRecheckTarget = false,
             Audio = {
                 BarrelLoop = Sound {
                     Bank = 'URB',
@@ -266,7 +266,11 @@ UnitBlueprint {
             TargetCheckInterval = 3,
             TargetPriorities = {
                 'SPECIALHIGHPRI',
-                '(ALLUNITS - SPECIALLOWPRI)',
+                'TECH3 MOBILE',
+                'STRUCTURE DEFENSE',
+                'STRUCTURE',
+                'SPECIALLOWPRI',
+                'ALLUNITS',
             },
             TargetRestrictDisallow = 'UNTARGETABLE',
             TurretBoneMuzzle = 'Turret_Muzzle_011',
