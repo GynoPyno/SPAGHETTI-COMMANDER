@@ -1,5 +1,5 @@
-name = "Antares Unit Pack"
-uid = "6aa65d2a-5926-11dc-8314-0800200c9a08"
+name = "Antares Unit Pack MAXI"
+uid = "6aa65d2a-5926-11dc-8314-0800200c9a08-MAXI"
 version = 2.5
 description = "Adds few more T3 and T4 units."
 author = "(edit by)AntaresOne"

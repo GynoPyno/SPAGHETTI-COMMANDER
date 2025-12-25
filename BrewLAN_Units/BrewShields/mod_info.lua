@@ -1,5 +1,5 @@
-name = "BrewLAN: Bubble Tea"
-uid = "25D57D85-9JA7-D842-BREW-SHIELDS000006"
+name = "BrewLAN: Bubble Tea MAXI"
+uid = "25D57D85-9JA7-D842-BREW-SHIELDS000006-MAXI"
 version = 0.6
 copyright = "© 2017–2018 Sean Wheeldon"
 description = "Adds UEF, Aeon, and Seraphim experimental shields."

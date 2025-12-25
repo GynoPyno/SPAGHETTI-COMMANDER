@@ -1,5 +1,5 @@
-name = "BlackOps FAF: EXUnits"
-uid = "9e8ee941-c406-4751-b367-e10000022000"
+name = "BlackOps FAF: EXUnits MAXI"
+uid = "9e8ee941-c406-4751-b367-e10000022000-MAXI"
 version = 22
 copyright = "2009 Exavier Macbeth"
 description = "The ultimate unit pack, re-engineered for FAF 3680 or later"

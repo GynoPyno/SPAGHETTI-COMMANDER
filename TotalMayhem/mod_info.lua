@@ -1,5 +1,5 @@
-name = "Total Mayhem"
-uid = "62e2j64a-TOMA-3652-01370-146as555a8u3"
+name = "Total Mayhem MAXI"
+uid = "62e2j64a-TOMA-3652-01370-146as555a8u3-MAXI"
 version = 137
 copyright = "Burnie"
 description = "(For all gameversions) This mod adds alot more units with full AI support. Prepare for mayhem!"

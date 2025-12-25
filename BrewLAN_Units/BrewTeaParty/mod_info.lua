@@ -1,5 +1,5 @@
-name = "BrewLAN: Tea Party"
-uid = "25D57D85-9JA7-D842-BREW-BOATS00000001"
+name = "BrewLAN: Tea Party MAXI"
+uid = "25D57D85-9JA7-D842-BREW-BOATS00000001-MAXI"
 version = 1
 copyright = "© 2020–2020 Sean Wheeldon"
 description = "Adds an Aeon Experimental Battlecruiser."

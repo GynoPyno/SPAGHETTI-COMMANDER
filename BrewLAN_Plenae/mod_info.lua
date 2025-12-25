@@ -1,5 +1,5 @@
-name = "BrewLAN: Plenae"
-uid = "190261d0-4bb0-11e2-bcSC-BLPLENUS0002"
+name = "BrewLAN: Plenae MAXI"
+uid = "190261d0-4bb0-11e2-bcSC-BLPLENUS0002-MAXI"
 version = 2
 copyright = "© 2009–2022 Sean Wheeldon"
 description = "Container for BrewLAN aesthetic mods, including; Damage Numbers, Baristas, and Spomeniki."

@@ -1,5 +1,5 @@
-name = "BrewLAN: Caffe Corretto"
-uid = "25D57D85-9JA7-D842-BREW-TURRETS000004"
+name = "BrewLAN: Caffe Corretto MAXI"
+uid = "25D57D85-9JA7-D842-BREW-TURRETS000004-MAXI"
 version = 0.4
 copyright = "© 2017–2022 Sean Wheeldon"
 description = "Coffee with a shot; adds turrets and buff nodes. All units built by BrewLAN field engineers."

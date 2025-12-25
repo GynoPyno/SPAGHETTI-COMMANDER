@@ -1,5 +1,5 @@
-name = "BrewLAN: Magnum Dong"
-uid = "25D57D85-9JA7-D842-BREW-MAGNUMD000002"
+name = "BrewLAN: Magnum Dong MAXI"
+uid = "25D57D85-9JA7-D842-BREW-MAGNUMD000002-MAXI"
 version = 2
 copyright = "© 2018–2021 Sean Wheeldon"
 description = "Adds a Cybran experimental mobile artillery."

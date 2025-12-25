@@ -1,5 +1,5 @@
-name = "BrewLAN: Bletchley Park"
-uid = "25D57D85-9JA7-D842-BREW-INTEL00000003"
+name = "BrewLAN: Bletchley Park MAXI"
+uid = "25D57D85-9JA7-D842-BREW-INTEL00000003-MAXI"
 version = 3
 copyright = "© 2018–2022 Sean Wheeldon"
 description = "Adds additional intelligence options."

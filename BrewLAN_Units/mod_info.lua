@@ -1,5 +1,5 @@
-name = "BrewLAN: Additional unit mods"
-uid = "190261d0-4bb0-11e2-bcSC-BLNEWUNITS02"
+name = "BrewLAN: Additional unit mods MAXI"
+uid = "190261d0-4bb0-11e2-bcSC-BLNEWUNITS02-MAXI"
 version = 2
 copyright = "© 2009–2022 Sean Wheeldon"
 description = "Container for the BrewLAN extra unit sub-mods; Bubble Tea, Caffe Corretto, and Research and Daiquiris."

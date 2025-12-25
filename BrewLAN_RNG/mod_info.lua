@@ -1,5 +1,5 @@
-name = "BrewLAN: RNG mods"
-uid = "190261d0-4bb0-11e2-bcSC-BLRNGMODSS02"
+name = "BrewLAN: RNG mods MAXI"
+uid = "190261d0-4bb0-11e2-bcSC-BLRNGMODSS02-MAXI"
 version = 2
 copyright = "© 2009–2022 Sean Wheeldon"
 description = "Container for the BrewLAN extra unit sub-mods; Cost Variance, Crate Drop, Lucky Dip, and others."

@@ -1,5 +1,5 @@
-name = "BrewLAN"
-uid = "25D57D85-7D84-27HT-A501-BR3WL4N00008991" -- this is UID hard coded in the brew_AI mod_info.lua
+name = "BrewLAN MAXI"
+uid = "25D57D85-7D84-27HT-A501-BR3WL4N00008991-MAXI" -- this is UID hard coded in the brew_AI mod_info.lua
 version = 0.8991
 copyright = "© 2009–2022 Sean Wheeldon"
 description = "Adds a large number of units and changes a number of existing units."

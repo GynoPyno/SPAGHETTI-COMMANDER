@@ -1,5 +1,5 @@
-name = "BlackOps FAF: ACUs"
-uid = "9e8ea941-c306-4751-b367-a00000020000"
+name = "BlackOps FAF: ACUs MAXI"
+uid = "9e8ea941-c306-4751-b367-a00000020000-MAXI"
 version = 20
 copyright = "2009 Exavier Macbeth, lt_hawkeye, orangeknight, IceDreamer"
 description = "The ultimate ACU upgrade pack, re-engineered for FAF 3680 or later"
