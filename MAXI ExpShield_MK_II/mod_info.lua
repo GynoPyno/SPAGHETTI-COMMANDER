@@ -1,0 +1,17 @@
+name = "MAXI Experimental Shield Generator MK II MAXI"
+uid = "a91ab4c2-9f36-11ed-8272-cfcdde452428-MAXI"
+version = 14
+copyright = ""
+description = "Adds experimental shield generators for all factions. Check readme for changelog and more informations"
+author = "Mr_Winterbottom"
+url = ""
+icon = "/mods/ExpShield_MK_II/icon.png"
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+requires = { }
+requiresNames = { }
+conflicts = { }
+before = { }
+after = { }
