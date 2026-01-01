@@ -1,0 +1,14 @@
+MeshBlueprint {
+    IconFadeInZoom = 130,
+    LODs = {
+        {
+            MeshName = '/mods/Antares Unit Pack/units/XSOW1102/XSOW1102_lod0.scm',
+            AlbedoName = '/Units/xss0302/xss0302_albedo.dds',
+            NormalsName = '/Units/xss0302/xss0302_normals.dds',
+            SpecularName = '/Units/xss0302/xss0302_specteam.dds',
+            LookupName = '/effects/entities/PhaseShield/PhaseShieldLookup.dds',
+            ShaderName = 'PhaseShield',
+            LODCutoff = 195,
+        },
+    },
+}

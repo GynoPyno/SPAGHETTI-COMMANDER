@@ -1,0 +1,17 @@
+Shield = {
+            ImpactEffects = 'AeonShieldHit01',
+           ImpactMesh = '/mods/ArtyShields/effects/entities/SquareShields/BoxShieldSection01_mesh',
+        	Mesh = '/mods/ArtyShields/effects/entities/SquareShields/AeonShield02_mesh',
+        	MeshZ = '/mods/ArtyShields/effects/entities/SquareShields/Shield02z_mesh',
+        	RegenAssistMult = 1, --cost multiplier for shield repair
+            ShieldEnergyDrainRechargeTime = 2, --if shield is turned off, how long to turn back on
+            ShieldMaxHealth = 35000,
+            ShieldRechargeTime = 24, --time if assisted or goes offline to fully recharge
+            ShieldRegenRate = 700,
+            ShieldRegenStartTime = 5, --how long after last attack before applying regen rate
+            ShieldSize = 24,
+            ShieldVerticalOffset = -1,
+	    PassOverkillDamage = false,
+            ShieldSpillOverDamageMod= 0.1, --game default is 0.15 (15% of damage goes to touching shields)
+	    ShieldDamageThresholdToSpillOver=9001,
+        },

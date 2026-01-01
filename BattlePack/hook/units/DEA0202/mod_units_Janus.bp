@@ -1,0 +1,38 @@
+UnitBlueprint {
+	Merge = true,
+	BlueprintId="dea0202",# T2 Fighter/Bomber
+    Weapon = {
+	{
+            Audio = {
+                Fire = Sound {
+                    Bank = 'UELWeapon',
+                    Cue = 'UEB2304_Missile_Flayer',
+                    LodCutoff = 'Weapon_LodCutoff',
+                },
+            },
+            Damage = 33,
+            MuzzleSalvoDelay = 0.1,
+            MuzzleSalvoSize = 2,
+            MuzzleVelocity = 30,
+            ProjectileId = '/mods/BattlePack/projectiles/UAntiAirMissile01/UAntiAirMissile01_proj.bp',
+        },
+        {
+            Audio = {
+                Fire = Sound {
+                    Bank = 'UELWeapon',
+                    Cue = 'UEB2304_Missile_Flayer',
+                    LodCutoff = 'Weapon_LodCutoff',
+                },
+            },
+            Damage = 33,
+            MuzzleSalvoDelay = 0.1,
+            MuzzleSalvoSize = 2,
+            MuzzleVelocity = 30,
+            ProjectileId = '/mods/BattlePack/projectiles/UAntiAirMissile01/UAntiAirMissile01_proj.bp',
+        },
+        {
+        },
+        {
+        },
+    },
+}
