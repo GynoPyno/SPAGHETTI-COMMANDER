@@ -1,5 +1,5 @@
-name = "MAXI BlackOps FAF: Unleashed MAXI"
-uid = "9e8ea941-c306-aaaf-b367-u00000026000-MAXI"
+name = "BlackOps FAF: Unleashed"
+uid = "9e8ea941-c306-aaaf-b367-u00000026000"
 version = 26
 copyright = "2009 Exavier Macbeth, lt_hawkeye, orangeknight"
 description = "The ultimate unit pack, re-engineered for FAF 3680 or later"
