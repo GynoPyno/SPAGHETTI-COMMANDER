@@ -1,0 +1,27 @@
+Antares Unit Pack Mod v2.5_beta. Made only to have more fun. No credential meaning. No harmfull actions or prejudice intent.
+
+Supreme Commander - Forged Alliance Mod. 
+
+Description: this mod represents a large collection of powerful T3 and T4 units and buildings. The actual mod has been united with previous releases, it is including Normalius and Global War mods, as result adds more than 100 units and buildings.  
+
+Requires the Global Icon Support mod (Current Version: 5.0) in order to work properly.
+
+Incompatible with FA Forever (probably need to update "script" files - any helpfull info is always welcome).
+ 
+Note: Errors encountered while playing with several other mods (game not running or suddenly leaving after some time), so better to keep other mods deactivated (if available) or to try running together one by one.
+
+Install: extract the rar archive in the mods folder of your SC-FA:
+(ex: X:\Games\Supreme Commander FA\Supreme Commander - Forged Alliance\mods).
+
+Changes since v2.3:
+- jump directly from v2.3 to v2.5_beta (no any v2.4 made by me!);
+- no AI support, unit will not be build by CPU-players, will try to implement this into the future;
+- almost all units from Normalius and Global War mods included here;
+- additional units have been implemented since v2.3;
+- better re-balance attempt (there is still a lot of work to be done); 
+- modify to fire correct projectile(s) for most of the units;
+- implemented adjacency bonus for relevant buildings;
+- implemented prototype "mini" experimental units factory build;
+- add crash-damage for most of the air units;
+- remain to fix several skirt / mesh / size values.
+
