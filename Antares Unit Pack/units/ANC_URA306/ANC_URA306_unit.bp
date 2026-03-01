@@ -125,6 +125,20 @@ UnitBlueprint {
         Health = 5000,
         MaxHealth = 5000,
         RegenRate = 10,
+        Shield = {
+            ImpactEffects = 'CybranShieldHit01',
+            ImpactMesh = '/effects/entities/ShieldSection01/ShieldSection01b_mesh',
+            Mesh = '/effects/entities/CybranShield01/CybranShield01_mesh',
+            MeshZ = '/effects/entities/Shield01/Shield01z_mesh',
+            RegenAssistMult = 60,
+            ShieldEnergyDrainRechargeTime = 10,
+            ShieldMaxHealth = 3000,
+            ShieldRechargeTime = 35,
+            ShieldRegenRate = 30,
+            ShieldRegenStartTime = 1,
+            ShieldSize = 11.5,
+            ShieldVerticalOffset = -1,
+        },
     },
     Description = '<LOC ANC_URA306_desc>Assault Mass Transport',
     Display = {
@@ -206,7 +220,7 @@ UnitBlueprint {
         BuildCostEnergy = 72800,
         BuildCostMass = 2240,
         BuildTime = 4000,
-        MaintenanceConsumptionPerSecondEnergy = 180,
+        MaintenanceConsumptionPerSecondEnergy = 550,
     },
     Footprint = {
         MaxSlope = 0.25,
@@ -233,9 +247,16 @@ UnitBlueprint {
         },
         FactionName = 'Cybran',
         Icon = 'air',
+        OrderOverrides = {
+            RULEUTC_ShieldToggle = {
+                bitmapId = 'shield-dome',
+                helpText = 'toggle_shield_dome',
+            },
+        },
         TechLevel = 'RULEUTL_Advanced',
         ToggleCaps = {
             RULEUTC_StealthToggle = true,
+            RULEUTC_ShieldToggle = true,
         },
         UnitName = '<LOC ANC_URA306_name>Griffen',
         UnitWeight = 1,

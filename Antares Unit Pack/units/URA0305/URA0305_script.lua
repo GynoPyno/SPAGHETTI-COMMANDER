@@ -1,291 +1,396 @@
-local CAirUnit = import('/lua/cybranunits.lua').CAirUnit
-
-local Weapon = import('/lua/sim/Weapon.lua').Weapon
-local WeaponFile = import('/lua/sim/defaultweapons.lua')
-local CybranWeaponsFile = import('/lua/cybranweapons.lua')
-
-local CDFElectronBolterWeapon = import('/lua/cybranweapons.lua').CDFElectronBolterWeapon
-local CAAMissileNaniteWeapon = import('/lua/cybranweapons.lua').CAAMissileNaniteWeapon
-local DroneWeapon  = import('/lua/cybranweapons.lua').CIFMissileLoaTacticalWeapon
-
-local explosion = import('/lua/defaultexplosions.lua')
-
-local util = import('/lua/utilities.lua')
-local utilities = import('/lua/Utilities.lua')
-local fxutil = import('/lua/effectutilities.lua')
-local Effects = import('/lua/effecttemplates.lua')
-local EffectTemplate = import('/lua/EffectTemplates.lua')
+#****************************************************************************
+#**
+#**  File     :  URA0305_script.lua
+#**  Author   :  Resin_Smoker, Optimus Prime
+#**  
+#**  Summary  :  Cybran Retribution, Airborne Drone Carrier
+#**
+#**  Special Thanks to :  ChirmayaWrongEmail, Eni, Neruz, Goom, Gilbot-X
+#**  Copyright � 2008
+#****************************************************************************
+#### Localy imported files ####
+local Unit = import('/lua/sim/Unit.lua').Unit
+#### Thrust effect locals called
 local EffectUtil = import('/lua/EffectUtilities.lua')
+#### Death effects locals called
+local utilities = import('/lua/utilities.lua')
+local RandomFloat = utilities.GetRandomFloat
+local explosion = import('/lua/defaultexplosions.lua')
+local EffectTemplate = import('/lua/EffectTemplates.lua')
+local CreateDeathExplosion = explosion.CreateDefaultHitExplosionAtBone
 
-URA0305 = Class(CAirUnit) {
-	DestroyNoFallRandomChance = 1.1,
+#### Weapon local files ####
+local CollisionBeamFile = import('/mods/Antares Unit Pack/hook/lua/ura0305_defaultcollisionbeams.lua')
+local DefaultBeamWeapon = import('/lua/sim/defaultweapons.lua').DefaultBeamWeapon
+LaserBeamWeapon = Class(DefaultBeamWeapon) {
+    BeamType = CollisionBeamFile.RetributionGreenLaserCollisionBeam,
+    FxMuzzleFlash = {},
+}
+local CDFProtonCannonWeapon = import('/lua/cybranweapons.lua').CDFProtonCannonWeapon
+local CAAMissileNaniteWeapon = import('/lua/cybranweapons.lua').CAAMissileNaniteWeapon
+local AIFBombQuarkWeapon = import('/lua/aeonweapons.lua').AIFBombQuarkWeapon
+
+URA0305 = Class(Unit) {
+
     Weapons = {
-        Missile_Turret = Class(CAAMissileNaniteWeapon) {},           
-        DualCannon_L = Class(CDFElectronBolterWeapon) {},
-        DualCannon_R = Class(CDFElectronBolterWeapon) {},
-        Launchbay_01 = Class(DroneWeapon) {},
-        Launchbay_02 = Class(DroneWeapon) {},
-        Launchbay_03 = Class(DroneWeapon) {},
-        Launchbay_04 = Class(DroneWeapon) {},
-        Launchbay_05 = Class(DroneWeapon) {},
-        Launchbay_06 = Class(DroneWeapon) {},
-        Launchbay_07 = Class(DroneWeapon) {},
-        Launchbay_08 = Class(DroneWeapon) {},                                                     
+        GreenLaser = Class(LaserBeamWeapon) {},
+        FrontCannon = Class(CDFProtonCannonWeapon) {},
+        AA_Front_L = Class(CAAMissileNaniteWeapon) {},
+        AA_Front_R = Class(CAAMissileNaniteWeapon) {},
+        AA_Rear_L = Class(CAAMissileNaniteWeapon) {},
+        AA_Rear_R = Class(CAAMissileNaniteWeapon) {},
+        #Flare_Left = Class(AIFBombQuarkWeapon) {},
+        #Flare_Right = Class(AIFBombQuarkWeapon) {},
     },
-                                           
-OnStopBeingBuilt = function(self,builder,layer)
-    CAirUnit.OnStopBeingBuilt(self,builder,layer)   
-    -- landing animations   
-    self.AnimManip = CreateAnimator(self)
-    self.Trash:Add(self.AnimManip)
-       
-    -- Drone Globals
-    self.ActiveBay = 0
-    self.DroneTable = {}
-   
-    -- spawning a number of drones times equal to the number preset by numcreate
-    self.Numcreate = 8     
 
-    -- Globals used for target assists and counter attacks
-    self.CurrentTarget = nil
-    self.OldTarget = nil
-    self.MyAttacker = nil
-    self.Retaliation = false
-   
-    -- Globals used for Drone spawn
+    ExhaustBones = {
+                    'engine_center01','engine_center02','engine_center03','engine_center04','engine_center05','engine_center06',
+                    'engine_left01','engine_left02','engine_left03','engine_left04','engine_left05','engine_left06',
+                    'engine_right01','engine_right02','engine_right03','engine_right04','engine_right05','engine_right06',
+                   },
+
+    BeamExhaustCruise = '/effects/emitters/gunship_thruster_beam_01_emit.bp',
+    BeamExhaustIdle = '/effects/emitters/gunship_thruster_beam_01_emit.bp',
+
+OnStopBeingBuilt = function(self,builder,layer)
+    Unit.OnStopBeingBuilt(self,builder,layer)
+
+    ### Initializes Drone spawn sequence and radar jammer energy useage
+    self:ForkThread(self.InitialDroneSpawn)
+    self:SetMaintenanceConsumptionInactive()
+    self:SetScriptBit('RULEUTC_StealthToggle', true)
+    self:SetScriptBit('RULEUTC_ProductionToggle', false)
+    self:RequestRefreshUI()
     self.UnitComplete = true
     self.Army = self:GetArmy()
-    self.InitialSpawn = true
-   
-    -- Set the drone launch flag on as default
-    self:SetScriptBit('RULEUTC_SpecialToggle', true)
-       
-    -- Initializes Drone spawn sequence 
-    self:ForkThread(self.InitialDroneSpawn)           
+
+    ### Global Varibles###
+    self.HitsTaken = 0
+    self.DmgTotal = 0
+    self.Side = 0
+    self.TargetElevation = nil
+    self.DroneTable = {}
+    self.EffectsBag = {} 
+
+end,
+
+OnIntelEnabled = function(self)
+    Unit.OnIntelEnabled(self)
+    ### Radar rotation on jammer activation
+    if not self:IsDead() and not self.SpinManip then 
+        self.SpinManip = CreateRotator(self, 'radar_dish', 'y', nil, 0, 20, 100)
+        self.Trash:Add(self.SpinManip)
+    end
+    if not self:IsDead() and self.SpinManip then
+        self.SpinManip:SetTargetSpeed(100)
+    end
+end,
+
+OnIntelDisabled = function(self)
+    Unit.OnIntelDisabled(self)
+    ### Radar rotation halt on jammer de-activation
+    if not self:IsDead() and self.SpinManip then
+        self.SpinManip:SetTargetSpeed(0)
+    end
 end,
 
 InitialDroneSpawn = function(self)
- 
-    -- Randomly determines which launch bay will be the first to spawn a drone
-    self.ActiveBay = Random(1,8)
-     
-    -- Short delay after the carrier has been built
-    WaitSeconds(3)
-   
-    -- Are we dead yet, if not spawn drones
+    ### spawning a number of drones times equal to the number preset by numcreate
+    local numcreate = 8
+
+    ### Randomly determines which launch bay will be the first to spawn a drone
+    self.Side = Random(1,2) 
+
+    ### Short delay after the carrier has been built
+    WaitSeconds(2)
+
+    ### Are we dead yet, if not spawn drones
     if not self:IsDead() then
-        for i = 1, self.Numcreate do
-            if not self:IsDead() then
-                self:ForkThread(self.SpawnDrone)
-                -- Short delay between spawns to spread them out
+        for i = 0, (numcreate -1) do
+            if not self:IsDead() then 
+                self:ForkThread(self.SpawnDrone) 
+                ### Short delay between spawns to spread them out
                 WaitSeconds(1)
             end
         end
-        self.InitialSpawn = false             
-       
-        -- Runs assist commands only after all of the drones have been built
-        self:DroneCheckHeartBeat()
     end
 end,
-
-LaunchBays = {
-            'Launchbay_01','Launchbay_02','Launchbay_03','Launchbay_04',
-            'Launchbay_05','Launchbay_06','Launchbay_07','Launchbay_08',
-             }, 
 
 SpawnDrone = function(self)
-    -- Only fires the drones if the parent unit is not dead
+    ### Small respawn delay so the drones are not instantly respawned after death
+    WaitSeconds(1)
+
+    ### Only respawns the drones if the parent unit is not dead
     if not self:IsDead() then 
-           
-        -- Fires the drone out of the specific launch bay
-        self:GetWeaponByLabel(self.LaunchBays[self.ActiveBay]):FireWeapon()
-                             
-        -- changes to next launch bay in sequence
-        if self.ActiveBay >= 8 then
-            self.ActiveBay = 1
-        else
-            self.ActiveBay = self.ActiveBay + 1
-        end       
-    end
-end,
 
-DroneCheckHeartBeat = function(self)
-    while not self:IsDead() do                       
-        if not self:IsDead() and self:GetScriptBit('RULEUTC_SpecialToggle') == true then
-            if self:GetTacticalSiloAmmoCount() >= 1 and table.getn(self.DroneTable) < self.Numcreate then
-                -- Spawn a single drone only if the above conditions are met
-                self:ForkThread(self.SpawnDrone)
-            end
-        end     
-        if not self:IsDead() and self.Retaliation == true and self.MyAttacker != nil then
-            -- Clears flags if there is no longer a target to retaliate against thats in range
-            if self.MyAttacker:IsDead() or self:GetDistanceToAttacker() > 30 then
-                -- Clears flag to allow retaliation on another attacker
-                self.MyAttacker = nil
-                self.Retaliation = false
-            end
-        end
-        if not self:IsDead() and self.Retaliation == false and self.MyAttacker and self:GetDistanceToAttacker() <= 30 then
-            if not self.MyAttacker:IsDead() then
-                -- Issues the retaliation command to each of the drones on the carriers table
-                if table.getn(self.DroneTable) > 0 then
-                    for k, v in self.DroneTable do
-                        IssueClearCommands({self.DroneTable[k]})
-                        IssueAttack({self.DroneTable[k]}, self.MyAttacker)
-                    end
-                    -- Sets retaliation flag
-                    self.Retaliation = true     
-                end
-            end
-        elseif not self:IsDead() and self.Retaliation == false and self:GetTargetEntity() then
-            -- Updates variable with latest targeting info
-            self.CurrentTarget = self:GetTargetEntity()     
-            -- Verifies that the carrier is not dead and that it has a target
-            -- Ensures that either there hasnt been a target before or that its new
-            -- To prevent the same retargeting command from being given out multible times
-            if self.OldTarget == nil or self.OldTarget != self.CurrentTarget then   
-                -- Updates the OldTarget to match CurrentTarget
-                self.OldTarget = self.CurrentTarget       
-                -- Issues the attack command to each of the drones on the carriers table
-                if table.getn(self.DroneTable) > 0 then
-                    for k, v in self.DroneTable do
-                        IssueClearCommands({self.DroneTable[k]})
-                        IssueAttack({self.DroneTable[k]}, self.CurrentTarget)
-                    end
-                end
-            end
-        end
-        -- Short delay between checks
-        WaitSeconds(1)       
-    end
-end,
-
-GetDistanceToAttacker = function(self)
-    local tpos = self.MyAttacker:GetPosition()
-    local mpos = self:GetPosition()
-    local dist = VDist2(mpos[1], mpos[3], tpos[1], tpos[3])
-    return dist
-end,
-
-OnKilledUnit = function(self, unitKilled)
-    CAirUnit.OnKilledUnit(self, unitKilled)     
-    if not self:IsDead() and table.getn(self.DroneTable) > 0 then
-        self:ForkThread(self.UpdateDroneKills)
-    end
-end,   
-
-ReceiveKills = function(self, unitKills)
-    if not self:IsDead() then
-        self.AddKills(self, unitKills)
-        self:ForkThread(self.UpdateDroneKills)
-    end   
-end,
-
-UpdateDroneKills = function(self)
-    -- Updates the drone veterancy to match that of the carrier
-    if table.getn(self.DroneTable) > 0 then
-        for k, v in self.DroneTable do
-            if not v:BeenDestroyed() then
-               local carrierKills = self:GetStat('KILLS', 0).Value
-               local droneKills = self.DroneTable[k]:GetStat('KILLS', 0).Value
-               if carrierKills > droneKills then
-                   local unitKills = carrierKills - droneKills
-                   self.DroneTable[k].ReceiveKills(self.DroneTable[k], unitKills)
-               end
-           end
-        end
-    end   
-end,
-
-OnDamage = function(self, instigator, amount, vector, damagetype)
-    -- Check to make sure that the carrier isnt already dead and what just damaged it is a unit we can attack
-    if self:IsDead() == false and damagetype == 'Normal' and self.MyAttacker == nil then
-        -- only attack if retaliation not already active
-        if IsUnit(instigator) then
-            self.MyAttacker = instigator
-        end
-    end
-    CAirUnit.OnDamage(self, instigator, amount, vector, damagetype)
-end,
-
-ExhaustBones = {'engine_exhaust01','engine_exhaust02',},         
-BeamExhaustCruise = '/effects/emitters/missile_exhaust_fire_beam_03_emit.bp',
-BeamExhaustIdle = '/effects/emitters/gunship_thruster_beam_01_emit.bp',
-
-OnMotionVertEventChange = function(self, new, old)
-    CAirUnit.OnMotionVertEventChange(self, new, old)
-    if ((new == 'Top' or new == 'Up') and old == 'Down') then
-        self.AnimManip:SetRate(-0.1)
-    elseif (new == 'Down') then
-        self.AnimManip:PlayAnim(self:GetBlueprint().Display.AnimationLand, false):SetRate(0.5)
-    elseif (new == 'Up') then
-        self.AnimManip:PlayAnim(self:GetBlueprint().Display.AnimationLand, false):SetRate(-0.1)
-    end
-end,
-
-OnMotionHorzEventChange = function(self, new, old )
-    CAirUnit.OnMotionHorzEventChange(self, new, old)   
-    if self.ThrustExhaustTT1 == nil then
-        if self.MovementAmbientExhaustEffectsBag then
-            fxutil.CleanupEffectBag(self,'MovementAmbientExhaustEffectsBag')
-        else
-            self.MovementAmbientExhaustEffectsBag = {}
-        end
-        self.ThrustExhaustTT1 = self:ForkThread(self.MovementAmbientExhaustThread)
-    end
+        ### Sets up local Variables used and spawns a drone at the parents location 
+        local myOrientation = self:GetOrientation()
       
-    if new == 'Stopped' and self.ThrustExhaustTT1 != nil then
-        KillThread(self.ThrustExhaustTT1)
-        fxutil.CleanupEffectBag(self,'MovementAmbientExhaustEffectsBag')
-        self.ThrustExhaustTT1 = nil
-    end      
+        if self.Side == 1 then
+            ### Gets the current position of the carrier launch bay in the game world
+            local location = self:GetPosition('drone_launch_left')
+
+            ### Creates our drone in the left launch bay and directs the unit to face the same direction as its parent unit
+            local drone = CreateUnit('ura0106', self:GetArmy(), location[1], location[2], location[3], myOrientation[1], myOrientation[2], myOrientation[3], myOrientation[4], 'Air') 
+
+            ### Adds the newly created drone to the parent carriers drone table
+            table.insert (self.DroneTable, drone)
+
+            ### Sets the Carrier unit as the drones parent
+            drone:SetParent(self, 'ura0305')
+            drone:SetCreator(self)  
+
+            ### Issues the guard command
+            IssueClearCommands({drone})
+            IssueGuard({drone}, self)
+
+            ### Flips from the left to the right self.Side after a drone has been spawned
+            self.Side = 2
+
+            ###Drone clean up scripts
+            self.Trash:Add(drone)
+
+        elseif self.Side == 2 then
+            ### Gets the current position of the carrier launch bay in the game world
+            local location = self:GetPosition('drone_launch_right')
+
+            ### Creates our drone in the right launch bay and directs the unit to face the same direction as its parent unit
+            local drone = CreateUnit('ura0106', self:GetArmy(), location[1], location[2], location[3], myOrientation[1], myOrientation[2], myOrientation[3], myOrientation[4], 'Air') 
+
+            ### Adds the newly created drone to the parent carriers drone table
+            table.insert (self.DroneTable, drone)
+
+            ### Sets the Carrier unit as the drones parent
+            drone:SetParent(self, 'ura0305')
+            drone:SetCreator(self)
+
+            ### Issues the guard command
+            IssueClearCommands({drone})
+            IssueGuard({drone}, self)
+
+            ### Flips from the right to the left self.Side after a drone has been spawned
+            self.Side = 1
+
+            ###Drone clean up scripts
+            self.Trash:Add(drone)
+        end
+    end
 end,
 
-MovementAmbientExhaustBones = {
-    'left_effects_front',
-    'left_effects_mid_1',
-    'left_effects_mid_2',
-    'left_effects_rear',
-    'right_effects_front',
-    'right_effects_mid_1',
-    'right_effects_mid_2',
-    'right_effects_rear',      
-},
+NotifyOfDroneDeath = function(self) 
+    ### Only respawns the drones if the parent unit is not dead 
+    if not self:IsDead() then
+        local mass = self:GetAIBrain():GetEconomyStored('Mass')
+        local energy = self:GetAIBrain():GetEconomyStored('Energy')
 
-MovementAmbientExhaustThread = function(self)
-    while not self:IsDead() do
-        local ExhaustEffects = {
-            '/effects/emitters/dirty_exhaust_smoke_01_emit.bp',
-            '/effects/emitters/dirty_exhaust_sparks_01_emit.bp',         
-        }
-        local ExhaustBeam = '/effects/emitters/missile_exhaust_fire_beam_03_emit.bp'   
-         
-        for kE, vE in ExhaustEffects do
-            for kB, vB in self.MovementAmbientExhaustBones do
-                table.insert( self.MovementAmbientExhaustEffectsBag, CreateAttachedEmitter(self, vB, self.Army, vE ))
-                table.insert( self.MovementAmbientExhaustEffectsBag, CreateBeamEmitterOnEntity( self, vB, self.Army, ExhaustBeam ))
-            end
-        end         
-        WaitSeconds(2)
-        fxutil.CleanupEffectBag(self,'MovementAmbientExhaustEffectsBag')                     
-        WaitSeconds(util.GetRandomFloat(1,7))
-    end   
+        ### Check to see if the player has enough mass / energy
+        ### And that the production is enabled.
+        if self:GetScriptBit('RULEUTC_ProductionToggle') == false and mass >= 50 and energy >= 100 then 
+
+            ###Remove the resources and spawn a single drone
+            self:GetAIBrain():TakeResource('Mass',100) 
+            self:GetAIBrain():TakeResource('Energy',1000)
+            self:ForkThread(self.SpawnDrone) 
+
+        else
+            ### If the above conditions are not met the carrier will wait a short time and try again
+            self:ForkThread(self.EconomyWait)
+        end
+    end    
+end,
+
+EconomyWait = function(self)
+    if not self:IsDead() then
+    WaitSeconds(5)
+        if not self:IsDead() then
+            self:ForkThread(self.NotifyOfDroneDeath)
+        end
+    end
+end,
+
+OnDamage = function(self, instigator, amount, vector, damagetype) 
+    ### Check to make sure that the carrier isn't already dead and what just damaged it is a unit we can attack
+    if self:IsDead() == false and IsUnit(instigator) then 
+
+        ### Update of global Variables 
+
+        self.HitsTaken = self.HitsTaken + 1 
+        self.DmgTotal = self.DmgTotal + amount 
+
+        ### Attack trigger command 
+        if self.DmgTotal >= 500 or self.HitsTaken >= 10 then
+ 
+            ###Issues the retaliation command to each of the drones on the carriers table 
+            if table.getn({self.DroneTable}) > 0 then
+                for k, v in self.DroneTable do 
+                    IssueClearCommands({self.DroneTable[k]})
+                    IssueAttack({self.DroneTable[k]}, instigator)
+                end 
+            end 
+
+            ### Reset of global Variables 
+            self.HitsTaken = 0 
+            self.DmgTotal = 0 
+
+        end
+    end 
+Unit.OnDamage(self, instigator, amount, vector, damagetype) 
 end,
 
 OnKilled = function(self, instigator, type, overkillRatio)
-    -- Disables weapons after death
-    self:SetWeaponEnabledByLabel('DualCannon_L', false)
-    self:SetWeaponEnabledByLabel('DualCannon_R', false)
-    self:SetWeaponEnabledByLabel('Missile_Turret', false)   
-    -- Small bit of table manipulation to sort thru all of the avalible drones and remove them after the carrier is dead
-    if table.getn(self.DroneTable) > 0 then
-        for k, v in self.DroneTable do
-            IssueClearCommands({self.DroneTable[k]})
-            IssueKillSelf({self.DroneTable[k]})
-        end
+    ### Disables the laser beam after death
+    local wep = self:GetWeaponByLabel('GreenLaser')
+    for k, v in wep.Beams do
+        v.Beam:Disable()
     end
-    -- Final command to finish off the carriers death event
-    CAirUnit.OnKilled(self, instigator, type, overkillRatio)
+    if self.BeamFX then
+       self.BeamFX:Destroy()
+    end
+    ### Disables weapons after death
+    self:SetWeaponEnabledByLabel('GreenLaser', false)
+    self:SetWeaponEnabledByLabel('FrontCannon', false)
+    self:SetWeaponEnabledByLabel('AA_Front_L', false)
+    self:SetWeaponEnabledByLabel('AA_Front_R', false)
+    self:SetWeaponEnabledByLabel('AA_Rear_L', false)
+    self:SetWeaponEnabledByLabel('AA_Rear_R', false)    
+    self:SetWeaponEnabledByLabel('Flare_Left', false)
+    self:SetWeaponEnabledByLabel('Flare_Right', false)
+
+    ###Disables all engine steering effects
+    if self.RightExhaustEffectsBag then
+        EffectUtil.CleanupEffectBag(self,'RightExhaustEffectsBag')
+    end
+
+    if self.LeftExhaustEffectsBag then
+        EffectUtil.CleanupEffectBag(self,'LeftExhaustEffectsBag')
+    end
+
+    ### Small bit of table manipulation to sort thru all of the avalible drones and remove them after the carrier is dead
+    if table.getn({self.DroneTable}) > 0 then
+        for k, v in self.DroneTable do 
+            IssueClearCommands({self.DroneTable[k]}) 
+            IssueKillSelf({self.DroneTable[k]})
+        end 
+    end
+
+    #Removes radar spin effects
+    if self.SpinManip then 
+        self.Trash:Add(self.SpinManip)
+    end
+ 
+    ### Final command to finish off the carriers death event
+    Unit.OnKilled(self, instigator, type, overkillRatio)
 end,
+
+    DestructionEffectBones = {
+        'steering_exhaust_back_left','steering_exhaust_back_right',
+        'missile_front_left','missile_front_right','missile_rear_right','missile_rear_left',
+        'engine_center01','engine_center03','engine_center05',
+        'engine_left01','engine_left03','engine_left05',
+        'radar_dish','turret_cannon','front_turret_barrels','beam_muzzle', 
+        'engine_right01','engine_right03','engine_right05', 
+        'drone_launch_right','drone_launch_left','anti_missile_left','anti_missile_right',
+        'steering_exhaust_front_left','steering_exhaust_front_right',
+    },
+
+    CreateDamageEffects = function(self, bone, Army )
+        for k, v in EffectTemplate.CEMPGrenadeHit01 do   
+            CreateAttachedEmitter( self, bone, Army, v ):ScaleEmitter(1.5)
+        end
+    end,
+
+    CreateExplosionDebris = function( self, bone, Army )
+        for k, v in EffectTemplate.ExplosionEffectsSml01 do
+            CreateAttachedEmitter( self, bone, Army, v ):ScaleEmitter(1.5)
+        end
+    end,
+    
+    CreateFirePlumes = function( self, Army, bones, yBoneOffset )
+        ### Fire plume effects
+        local basePosition = self:GetPosition()
+        for k, vBone in bones do
+            local position = self:GetPosition(vBone)
+            local offset = utilities.GetDifferenceVector( position, basePosition )
+            velocity = utilities.GetDirectionVector( position, basePosition ) 
+            velocity.x = velocity.x + utilities.GetRandomFloat(-0.45, 0.45)
+            velocity.z = velocity.z + utilities.GetRandomFloat(-0.45, 0.45)
+            velocity.y = velocity.y + utilities.GetRandomFloat(0.0, 0.9)
+            local proj = self:CreateProjectile('/effects/entities/DestructionFirePlume01/DestructionFirePlume01_proj.bp', offset.x, offset.y + yBoneOffset, offset.z, velocity.x, velocity.y, velocity.z)
+            proj:SetBallisticAcceleration(utilities.GetRandomFloat(-1, 1)):SetVelocity(utilities.GetRandomFloat(1, 2)):SetCollision(false)
+            local emitter = CreateEmitterOnEntity(proj, Army, '/effects/emitters/destruction_explosion_fire_plume_01_emit.bp')
+            local lifetime = utilities.GetRandomFloat( 10, 30 )
+        end
+    end,
+
+    InitialRandomExplosionsCybrans = function(self)
+        local position = self:GetPosition()
+        local numExplosions =  math.floor( table.getn( self.DestructionEffectBones ) * 0.5)
+        # Create small explosions effects all over
+        for i = 0, numExplosions do
+            local ranBone = utilities.GetRandomInt( 1, numExplosions )
+            local duration = utilities.GetRandomFloat( 0.25, 0.5 )
+            self:PlayUnitSound('SmExplosion')
+            self:ShakeCamera(2, 0.5, 0.25, duration)
+            self:CreateDamageEffects( ranBone, self.Army )
+            self:CreateExplosionDebris( ranBone, self.Army )
+            self:CreateFirePlumes( self.Army, {ranBone}, Random(0,2) )
+            WaitSeconds( duration )
+        end
+
+    end,
+
+	NukeExplosion = function(self)
+        local position = self:GetPosition()
+
+        # Create full-screen glow flash
+        self:PlayUnitSound('Nuke')
+        CreateAttachedEmitter(self, 'ura0305', self.Army, '/effects/emitters/destruction_explosion_concussion_ring_03_emit.bp')
+        self:ForkThread(self.CreateOuterRingWaveSmokeRing)
+        CreateLightParticle(self, -1, self.Army, 4, 4, 'glow_03', 'ramp_purple_01')
+        WaitSeconds( 0.25 )
+        CreateLightParticle(self, -1, self.Army, 6, 20, 'glow_03', 'ramp_fire_06')
+        WaitSeconds( 0.50 )       
+        CreateLightParticle(self, -1, self.Army, 8, 180, 'glow_03', 'ramp_nuke_04')
+       
+        # Create ground decals
+        local orientation = RandomFloat( 0, 2 * math.pi )
+        CreateDecal(position, orientation, 'Crater01_albedo', '', 'Albedo', 10, 10, 600, 0, self.Army)
+        CreateDecal(position, orientation, 'Crater01_normals', '', 'Normals', 10, 10, 600, 0, self.Army)       
+        CreateDecal(position, orientation, 'nuke_scorch_003_albedo', '', 'Albedo', 10, 10, 600, 0, self.Army)
+   
+   # Knockdown force rings
+        DamageRing(self, position, 0.1, 6, 1, 'Normal', false)
+        WaitSeconds(0.1)
+
+        #Nuke damage and camera shake
+        DamageRing(self, position, 0.1, 5, 5000, 'Normal', true)
+        self:ShakeCamera(5, 4, 2, 1)   
+    end,
+
+    DeathThread = function( self, overkillRatio , instigator)
+        ### Create Initial explosion effects
+        self:InitialRandomExplosionsCybrans() 
+        WaitSeconds(0.1)
+
+        ### Nuke detonation
+        self:NukeExplosion()
+
+        ### Starts the corpse effects
+        if( self.ShowUnitDestructionDebris and overkillRatio ) then
+           if overkillRatio <= 1 then
+               self.CreateUnitDestructionDebris( self, true, true, false )
+           elseif overkillRatio <= 2 then
+               self.CreateUnitDestructionDebris( self, true, true, false )
+           elseif overkillRatio <= 3 then
+               self.CreateUnitDestructionDebris( self, true, true, true )
+           else #VAPORIZED
+               self.CreateUnitDestructionDebris( self, true, true, true )
+           end
+        end
+        self:CreateWreckage(1)
+        self:Destroy()
+    end,
+
 }
-TypeClass = URA0305 
+
+TypeClass = URA0305

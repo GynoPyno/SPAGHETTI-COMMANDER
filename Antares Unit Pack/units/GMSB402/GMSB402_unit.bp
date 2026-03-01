@@ -1,4 +1,4 @@
-UnitBlueprint {
+ UnitBlueprint {
     AI = {
         InitialAutoMode = true,
     },
@@ -110,8 +110,7 @@ UnitBlueprint {
     Economy = {
         BuildCostEnergy = 275000,
         BuildCostMass = 52500,
-        BuildTime = 32500,
-        MaintenanceConsumptionPerSecondEnergy = 12500,
+        BuildTime = 32500, 
         RebuildBonusIds = {
             'GMSB402',
         },
@@ -140,17 +139,8 @@ UnitBlueprint {
         },
         FactionName = 'Seraphim',
         Icon = 'land',
-        OrderOverrides = {
-            RULEUTC_ShieldToggle = {
-                bitmapId = 'shield-personal',
-                helpText = 'toggle_shield_personal',
-            },
-        },
         SelectionPriority = 5,
         TechLevel = 'RULEUTL_Secret',
-        ToggleCaps = {
-            RULEUTC_ShieldToggle = true,
-        },
         UnitName = '<LOC GMSB402_name>Rezta-ueo',
         UnitWeight = 1,
     },

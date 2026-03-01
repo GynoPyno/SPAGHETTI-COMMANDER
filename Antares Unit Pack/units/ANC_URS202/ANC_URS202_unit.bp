@@ -188,6 +188,7 @@ UnitBlueprint {
         },
         FactionName = 'Cybran',
         TechLevel = 'RULEUTL_Advanced',
+        Icon= 'sea',
         UnitName = '<LOC ANC_URS202_name>Defender Class',
         UnitWeight = 1,
     },

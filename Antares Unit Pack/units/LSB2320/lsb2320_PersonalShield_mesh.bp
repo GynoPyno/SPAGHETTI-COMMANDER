@@ -1,0 +1,13 @@
+MeshBlueprint {
+    IconFadeInZoom = 130,
+    LODs = {
+        {
+            MeshName = '/mods/Antares Unit Pack/units/lsb2320/lsb2320_lod0.scm',
+            AlbedoName = '/mods/Antares Unit Pack/units/lsb2320/lsb2320_albedo.dds',
+            SpecularName = '/mods/Antares Unit Pack/units/lsb2320/lsb2320_specteam.dds',
+            LookupName = '/effects/entities/PhaseShield/PhaseShieldLookup.dds',
+            ShaderName = 'PhaseShield',
+            LODCutoff = 195,
+        },
+    },
+}

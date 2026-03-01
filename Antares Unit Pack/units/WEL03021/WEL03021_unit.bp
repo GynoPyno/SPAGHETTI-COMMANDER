@@ -53,7 +53,7 @@ UnitBlueprint {
         'UEF',
         'MOBILE',
         'LAND',
-        'EXPERIMENTAL',
+        'TECH3',
         'DIRECTFIRE',
         'SHIELD',
         'VISIBLETORECON',

@@ -54,7 +54,7 @@ UnitBlueprint {
         'UEF',
         'MOBILE',
         'LAND',
-        'EXPERIMENTAL',
+        'TECH3',
         'ANTIAIR',
         'DIRECTFIRE',
         'SHIELD',

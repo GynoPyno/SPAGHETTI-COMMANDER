@@ -1,3 +1,13 @@
+#****************************************************************************
+#**
+#**  File     :  /units/XSAEW0002/XSAEW0002_script.lua
+#**  Author(s):  Greg Kohne, Aaron Lundquist
+#**
+#**  Summary  : Seraphim T2 Transport Script
+#**
+#**  Copyright © 2007 Gas Powered Games, Inc.  All rights reserved.
+#****************************************************************************
+
 local SAirUnit = import('/lua/seraphimunits.lua').SAirUnit
 local explosion = import('/lua/defaultexplosions.lua')
 local util = import('/lua/utilities.lua')

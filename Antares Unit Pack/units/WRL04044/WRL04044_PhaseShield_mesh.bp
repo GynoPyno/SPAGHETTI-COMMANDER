@@ -1,0 +1,14 @@
+MeshBlueprint {
+    IconFadeInZoom = 130,
+    LODs = {
+        {
+            MeshName = '/mods/Antares Unit Pack/units/WRL04044/WRL04044_lod0.scm',
+            AlbedoName = '/mods/Antares Unit Pack/units/WRL04044/WRL04044_albedo.dds',
+            NormalsName = '/mods/Antares Unit Pack/units/WRL04044/WRL04044_normalsTS.dds',
+            SpecularName = '/mods/Antares Unit Pack/units/WRL04044/WRL04044_specteam.dds',
+            LookupName = '/effects/entities/PhaseShield/PhaseShieldLookup.dds',
+            ShaderName = 'PhaseShield',
+            LODCutoff = 195,
+        },
+    },
+}

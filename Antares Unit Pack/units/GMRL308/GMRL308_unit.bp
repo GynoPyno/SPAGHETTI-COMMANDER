@@ -134,7 +134,7 @@ UnitBlueprint {
             RULEUCC_Repair = false,
             RULEUCC_RetaliateToggle = true,
             RULEUCC_Stop = true,
-            RULEUCC_Transport = false,
+            RULEUCC_Transport = true,
         },
         FactionName = 'Cybran',
         Icon = 'land',

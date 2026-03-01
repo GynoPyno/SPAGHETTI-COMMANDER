@@ -43,7 +43,7 @@ UnitBlueprint {
         'AEON',
         'MOBILE',
         'LAND',
-        'TECH3',
+        'EXPERIMENTAL',
         'INDIRECTFIRE',
         'ARTILLERY',
         'VISIBLETORECON',

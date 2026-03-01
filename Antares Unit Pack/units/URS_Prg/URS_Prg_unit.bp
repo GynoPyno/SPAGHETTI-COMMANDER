@@ -68,7 +68,7 @@ UnitBlueprint {
         SubThreatLevel = 0,
         SurfaceThreatLevel = 225,
     },
-    Description = 'Support Battleship',
+    Description = 'Assault Warship',
     Display = {
         AnimationDeath = {
             {
@@ -178,7 +178,7 @@ UnitBlueprint {
         FactionName = 'Cybran',
         Icon = 'sea',
         TechLevel = 'RULEUTL_Advanced',
-        UnitName = 'Progenitor Class',
+        UnitName = 'Deviater Class',
         UnitWeight = 1,
     },
     Intel = {
