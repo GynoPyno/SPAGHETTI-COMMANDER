@@ -1,0 +1,9 @@
+name = "Calibers Mass Extractor Icons"
+uid = "11811-55555-32833_77744"
+description = "Changes mass extractor icons so they are much easier to identify by tech level, standard version."
+copyright = "Caliber"
+author = "Caliber"
+icon = "/mods/Calibersmassicons/icon.png"
+version = 4
+exclusive = false
+ui_only = true
