@@ -1,4 +1,8 @@
-local function ModBlueprints(all_bps)
+local BaseModBlueprints = ModBlueprints
+
+function ModBlueprints(all_bps)
+    BaseModBlueprints(all_bps)
+    LOG('[OrbitalWarsMod-child] ModBlueprints: hook attivo, applicazione fix spaceship')
     for id, bp in pairs(all_bps.Unit) do
 
         -- =====================================================================
