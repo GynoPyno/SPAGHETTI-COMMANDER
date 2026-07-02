@@ -34,9 +34,6 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             -- Legge da OWPlusSubBases (tabella custom sul brain, immune a DeadBaseMonitor).
             -- BuilderManagers NON viene usato: i manager vuoti vengono rimossi dopo 5s.
             targetPos = aiBrain.OWPlusSubBases and aiBrain.OWPlusSubBases[targetLocType]
-            LOG('[OWPlus-DBG] OWPlusDispersedBuildAI: targetLocType=' .. targetLocType
-                .. ' subBases=' .. tostring(aiBrain.OWPlusSubBases ~= nil)
-                .. ' targetPos=' .. tostring(targetPos ~= nil))
         end
 
         if not targetPos then
@@ -92,7 +89,15 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
         end
 
         if not eng.Dead and not eng:IsUnitState('Building') then
-            self.ProcessBuildCommand(eng, false)
+            -- FindPlaceToBuild fallito: terreno non valido alla sub-location.
+            -- Attendi 30s prima di disbandare per evitare spam di retry (~10/s → 1/30s).
+            LOG('[OWPlus] OWPlusDispersedBuildAI: ' .. tostring(targetLocType)
+                .. ' terreno non valido, throttle 30s')
+            WaitSeconds(30)
+            self:PlatoonDisband()
+            return
         end
+        LOG('[OWPlus] OWPlusDispersedBuildAI: OK, build avviato a ' .. tostring(targetLocType))
+        self.ProcessBuildCommand(eng, false)
     end,
 }
