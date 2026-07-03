@@ -1,9 +1,16 @@
 -- Uveso Forward Base OverwhelmPlus.lua
 -- Template per la base avanzata direzionale (OWPlusForwardBase).
--- Viene selezionato da ExpansionFunction quando un marker 'Expansion Area'
--- si trova in direzione del nemico e a distanza ragionevole da MAIN.
+-- Viene selezionato da ExpansionFunction quando un marker 'Expansion Area' o
+-- 'Large Expansion Area' si trova in direzione del nemico e a distanza
+-- ragionevole da MAIN.
 -- Contiene solo fabbriche terra (per unita' da combattimento) + difese.
 -- Gli ingegneri vengono inviati da MAIN, non nascono qui.
+--
+-- Fase 9-F5 (2026-07-03): markerType allargato da solo 'Expansion Area' (2 sulla
+-- mappa scmp_009) anche a 'Large Expansion Area' (8 sulla mappa) — prima questi
+-- ultimi finivano tutti gestiti dal template stock UvesoExpansionAreaLarge (nessun
+-- filtro direzionale, produzione non coordinata con la nostra strategia). Aggiunto
+-- anche un cap MAX_FORWARD_BASES per evitare dispersione eccessiva di risorse.
 
 BaseBuilderTemplate {
     BaseTemplateName = 'OWPlusForwardBase',
@@ -74,20 +81,40 @@ BaseBuilderTemplate {
         },
     },
 
-    -- ExpansionFunction: chiamata per ogni marker 'Expansion Area' sulla mappa.
+    -- ExpansionFunction: chiamata per ogni marker 'Expansion Area' / 'Large Expansion Area' sulla mappa.
     -- Restituisce 2000 (> 1000 di UvesoExpansionArea) solo per marker che sono:
     --   1. In direzione del nemico piu' vicino (dot product > 0.3, angolo < ~72 deg)
     --   2. A distanza ragionevole da MAIN (60-220 unita')
+    --   3. Non fanno superare il cap MAX_FORWARD_BASES di basi forward gia' accettate
     -- Per tutti gli altri marker restituisce -1 (UvesoExpansionArea li gestisce).
     ExpansionFunction = function(aiBrain, location, markerType)
         if not aiBrain.Uveso then return -1 end
-        if markerType ~= 'Expansion Area' then return -1 end
+        if markerType ~= 'Expansion Area' and markerType ~= 'Large Expansion Area' then return -1 end
 
         local myX, myZ = aiBrain:GetArmyStartPos()
         local markerX = location.x or location[1]
         local markerZ = location.z or location[3]
         if not markerX or not markerZ then
             LOG('[OWPlus] ForwardBase ExpansionFunction: location senza coordinate, skip')
+            return -1
+        end
+
+        -- Cap sul numero di basi forward: una volta accettato, un marker resta
+        -- accettato per sempre (la base e' gia' in costruzione li') — il cap si
+        -- applica solo a NUOVI marker candidati.
+        local MAX_FORWARD_BASES = 2
+        local markerKey = math.floor(markerX) .. '_' .. math.floor(markerZ)
+        aiBrain.OWPlusForwardBaseMarkers = aiBrain.OWPlusForwardBaseMarkers or {}
+
+        if aiBrain.OWPlusForwardBaseMarkers[markerKey] then
+            return 2000
+        end
+
+        local acceptedCount = 0
+        for _ in pairs(aiBrain.OWPlusForwardBaseMarkers) do
+            acceptedCount = acceptedCount + 1
+        end
+        if acceptedCount >= MAX_FORWARD_BASES then
             return -1
         end
 
@@ -129,10 +156,14 @@ BaseBuilderTemplate {
         -- Rifiuta marker troppo vicini a MAIN o troppo lontani
         if markerDist < 60 or markerDist > 220 then return -1 end
 
-        LOG('[OWPlus] ForwardBase: marker ACCETTATO ('
-            .. math.floor(markerX) .. ',' .. math.floor(markerZ)
+        -- Marker accettato: registra per sempre (cap si applica solo a nuovi marker)
+        aiBrain.OWPlusForwardBaseMarkers[markerKey] = true
+
+        LOG('[OWPlus] ForwardBase: marker ACCETTATO tipo=' .. tostring(markerType)
+            .. ' (' .. math.floor(markerX) .. ',' .. math.floor(markerZ)
             .. ') dot=' .. string.format('%.2f', dot)
-            .. ' dist=' .. math.floor(markerDist))
+            .. ' dist=' .. math.floor(markerDist)
+            .. ' basi accettate=' .. (acceptedCount + 1) .. '/' .. MAX_FORWARD_BASES)
 
         -- 2000 > 1000 (UvesoExpansionArea) -> questo template vince il marker
         return 2000
