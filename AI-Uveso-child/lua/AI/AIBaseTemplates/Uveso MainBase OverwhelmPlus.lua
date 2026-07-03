@@ -65,10 +65,13 @@ BaseBuilderTemplate {
 
         -----------------------------------------------------------------------------
         -- ==== Land Units BUILDER ==== --
+        -- Rimossi (Fase 9-F4, riequilibrio MAIN): 'U123 Land Builders Panic',
+        -- 'U123 Land Builders ADAPTIVE', 'OWPlus Land T2T3'.
+        -- Le fabbriche terra a MAIN producono ora solo ingegneri (OWPlus Engineer Builders)
+        -- ed experimental (OWPlus Experimental Land) — nessuna unità T1/T2/T3 da combattimento.
+        -- Gli stessi 3 builder restano attivi nel template FORWARD
+        -- (Uveso Forward Base OverwhelmPlus.lua), che ha la sua lista Builders indipendente.
         -----------------------------------------------------------------------------
-        'U123 Land Builders Panic',
-        'U123 Land Builders ADAPTIVE',
-        'OWPlus Land T2T3',             -- priority 18100/18200: T2/T3 factories producono T2/T3 (sopra Uveso 150-350)
 
         -----------------------------------------------------------------------------
         -- ==== Land Units FORMER ==== --
