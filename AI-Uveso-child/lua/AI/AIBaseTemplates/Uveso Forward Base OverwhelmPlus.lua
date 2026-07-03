@@ -102,7 +102,7 @@ BaseBuilderTemplate {
         -- Cap sul numero di basi forward: una volta accettato, un marker resta
         -- accettato per sempre (la base e' gia' in costruzione li') — il cap si
         -- applica solo a NUOVI marker candidati.
-        local MAX_FORWARD_BASES = 2
+        local MAX_FORWARD_BASES = 4
         local markerKey = math.floor(markerX) .. '_' .. math.floor(markerZ)
         aiBrain.OWPlusForwardBaseMarkers = aiBrain.OWPlusForwardBaseMarkers or {}
 
