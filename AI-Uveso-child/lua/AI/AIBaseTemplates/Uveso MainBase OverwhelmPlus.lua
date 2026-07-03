@@ -15,6 +15,7 @@ BaseBuilderTemplate {
         -- ==== Expansion Builders ==== --
         -----------------------------------------------------------------------------
         'U1 Expansion Builder',
+        'OWPlus Vacant Expansion Area',     -- Fase 9-F6: +3 tentativi paralleli oltre allo slot stock (InstanceCount=1)
 
         -----------------------------------------------------------------------------
         -- ==== SCU ==== --

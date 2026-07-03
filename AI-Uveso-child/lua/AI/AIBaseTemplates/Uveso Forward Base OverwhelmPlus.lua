@@ -118,21 +118,19 @@ BaseBuilderTemplate {
             return -1
         end
 
-        -- Trova il nemico piu' vicino (qualsiasi army marcato come nemico)
-        local enemyX, enemyZ = nil, nil
-        local bestDistSq = math.huge
-        for _, army in pairs(ArmyBrains) do
-            if IsEnemy(aiBrain:GetArmyIndex(), army:GetArmyIndex()) then
-                local ex, ez = army:GetArmyStartPos()
-                local d = (ex - myX)^2 + (ez - myZ)^2
-                if d < bestDistSq then
-                    bestDistSq = d
-                    enemyX, enemyZ = ex, ez
-                end
-            end
+        -- Nemico corrente: usa aiBrain:GetCurrentEnemy() (stesso meccanismo di
+        -- CanPathToCurrentEnemy in MiscBuildConditions.lua di Uveso) invece di un
+        -- ciclo manuale su ArmyBrains+IsEnemy — piu' robusto e gia' testato/attivo
+        -- in questa stessa run (CanPathToCurrentEnemy ha trovato il nemico correttamente
+        -- per entrambe le AI in un test FFA dove il ciclo manuale falliva).
+        local currentEnemy = aiBrain:GetCurrentEnemy()
+        if not currentEnemy then
+            LOG('[OWPlus] ForwardBase ExpansionFunction: GetCurrentEnemy() nil, skip')
+            return -1
         end
-        if not enemyX then
-            LOG('[OWPlus] ForwardBase ExpansionFunction: nessun nemico trovato, skip')
+        local enemyX, enemyZ = currentEnemy:GetArmyStartPos()
+        if not enemyX or not enemyZ then
+            LOG('[OWPlus] ForwardBase ExpansionFunction: nemico senza start pos, skip')
             return -1
         end
 
