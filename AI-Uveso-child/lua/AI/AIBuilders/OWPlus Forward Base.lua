@@ -6,6 +6,7 @@
 local categories = categories
 local UCBC = '/lua/editor/UnitCountBuildConditions.lua'
 local EBC  = '/lua/editor/EconomyBuildConditions.lua'
+local OWPlusLogCond = '/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua'
 
 local MaxCapFactory = 0.024  -- 2.4% del cap totale (stesso limite di Uveso)
 
@@ -29,6 +30,7 @@ BuilderGroup {
             -- Max 2 fabbriche terra qui (una e' gia' sufficiente per iniziare)
             { UCBC, 'UnitsLessAtLocation', { 'LocationType', 2, categories.STRUCTURE * categories.FACTORY * categories.LAND } },
             { UCBC, 'HaveUnitRatioVersusCap', { MaxCapFactory, '<', categories.STRUCTURE * categories.FACTORY * categories.LAND } },
+            { OWPlusLogCond, 'OWPlusLogForwardExpansion', { 'OWPlus Forward T1 Land Factory' } },
         },
         BuilderType = 'Any',
         BuilderData = {
