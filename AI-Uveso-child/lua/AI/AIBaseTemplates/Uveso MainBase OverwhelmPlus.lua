@@ -68,12 +68,20 @@ BaseBuilderTemplate {
         -----------------------------------------------------------------------------
         -- ==== Land Units BUILDER ==== --
         -- Rimossi (Fase 9-F4, riequilibrio MAIN): 'U123 Land Builders Panic',
-        -- 'U123 Land Builders ADAPTIVE', 'OWPlus Land T2T3'.
-        -- Le fabbriche terra a MAIN producono ora solo ingegneri (OWPlus Engineer Builders)
-        -- ed experimental (OWPlus Experimental Land) — nessuna unità T1/T2/T3 da combattimento.
-        -- Gli stessi 3 builder restano attivi nel template FORWARD
-        -- (Uveso Forward Base OverwhelmPlus.lua), che ha la sua lista Builders indipendente.
+        -- 'U123 Land Builders ADAPTIVE'. Le fabbriche terra a MAIN producono
+        -- PRIMARIAMENTE ingegneri (OWPlus Engineer Builders, priority 18400-19100)
+        -- ed experimental (OWPlus Experimental Land) — non unità T1 generiche da combattimento.
+        --
+        -- Fase 9-F15: 'OWPlus Land T2T3' riaggiunto come FALLBACK (priority 18100-18200,
+        -- piu' bassa di tutti i builder ingegneri) — osservato in gioco che con economia
+        -- abbondante (Paragon) le fabbriche restavano ferme una volta raggiunto il cap
+        -- ingegneri (MaxCapEngineers in OWPlus Engineer Builders.lua) invece di produrre
+        -- qualcos'altro. Ora, solo quando NESSUN builder ingegnere ha condizioni valide
+        -- (cap raggiunto), le fabbriche T2/T3 di MAIN passano a costruire unità da
+        -- combattimento invece di restare ferme. Stesso BuilderGroup gia' usato in FORWARD
+        -- (Uveso Forward Base OverwhelmPlus.lua, lista Builders indipendente).
         -----------------------------------------------------------------------------
+        'OWPlus Land T2T3',
 
         -----------------------------------------------------------------------------
         -- ==== Land Units FORMER ==== --

@@ -171,7 +171,10 @@ BuilderGroup {
         BuilderConditions = {
             { UCBC, 'BuildOnlyOnLocation', { 'LocationType', 'MAIN' } },
             { UCBC, 'EngineerCapCheck', { 'LocationType', 'Tech3' } },
-            { UCBC, 'LocationFactoriesBuildingLess', { 'LocationType', 2, categories.ENGINEER * categories.TECH3 } },
+            -- Fase 9-F15: 2 -> 6, permette a piu' fabbriche di costruire ingegneri T3
+            -- in parallelo invece di saturarsi dopo sole 2 (osservato in gioco con
+            -- economia abbondante/Paragon: fabbriche libere restavano ferme).
+            { UCBC, 'LocationFactoriesBuildingLess', { 'LocationType', 6, categories.ENGINEER * categories.TECH3 } },
         },
         BuilderType = 'Land',
     },
@@ -182,7 +185,8 @@ BuilderGroup {
         BuilderConditions = {
             { UCBC, 'BuildOnlyOnLocation', { 'LocationType', 'MAIN' } },
             { UCBC, 'PoolLessAtLocation', { 'LocationType', 1, categories.MOBILE * categories.ENGINEER * categories.TECH3 - categories.SUBCOMMANDER - categories.STATIONASSISTPOD } },
-            { UCBC, 'LocationFactoriesBuildingLess', { 'LocationType', 1, categories.ENGINEER * categories.TECH3 } },
+            -- Fase 9-F15: 1 -> 6, stesso motivo del builder precedente.
+            { UCBC, 'LocationFactoriesBuildingLess', { 'LocationType', 6, categories.ENGINEER * categories.TECH3 } },
         },
         BuilderType = 'Land',
     },
@@ -194,7 +198,9 @@ BuilderGroup {
             { UCBC, 'BuildOnlyOnLocation', { 'LocationType', 'MAIN' } },
             { EBC, 'GreaterThanEconTrend', { 0.0, 0.0 } },
             { EBC, 'GreaterThanEconStorageRatio', { 0.30, 0.30 } },
-            { UCBC, 'PoolLessAtLocation', { 'LocationType', 3, categories.MOBILE * categories.ENGINEER * categories.TECH3 - categories.SUBCOMMANDER - categories.STATIONASSISTPOD } },
+            -- Fase 9-F15: 3 -> 10, il buffer di ingegneri T3 "in attesa" non deve
+            -- fermare la produzione quando l'economia (es. Paragon) puo' sostenerne di piu'.
+            { UCBC, 'PoolLessAtLocation', { 'LocationType', 10, categories.MOBILE * categories.ENGINEER * categories.TECH3 - categories.SUBCOMMANDER - categories.STATIONASSISTPOD } },
             { UCBC, 'HaveUnitRatioVersusCap', { MaxCapEngineers / 3 , '<', categories.MOBILE * categories.ENGINEER * categories.TECH3 } },
         },
         BuilderType = 'Land',
@@ -206,7 +212,8 @@ BuilderGroup {
         BuilderConditions = {
             { EBC, 'GreaterThanEconTrend', { 0.0, 0.0 } },
             { EBC, 'GreaterThanEconStorageRatio', { 0.40, 0.40 } },
-            { UCBC, 'PoolLessAtLocation', { 'LocationType', 3, categories.MOBILE * categories.ENGINEER * categories.TECH3 - categories.SUBCOMMANDER - categories.STATIONASSISTPOD } },
+            -- Fase 9-F15: 3 -> 10, stesso motivo del builder Land precedente.
+            { UCBC, 'PoolLessAtLocation', { 'LocationType', 10, categories.MOBILE * categories.ENGINEER * categories.TECH3 - categories.SUBCOMMANDER - categories.STATIONASSISTPOD } },
             { UCBC, 'HaveUnitRatioVersusCap', { MaxCapEngineers / 3 , '<', categories.MOBILE * categories.ENGINEER * categories.TECH3 } },
         },
         BuilderType = 'Air',
