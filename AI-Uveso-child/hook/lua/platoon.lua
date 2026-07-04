@@ -88,6 +88,31 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             end
         end
 
+        -- Fase 9-F14: NON controllare IsUnitState('Building') subito dopo aver
+        -- messo in coda il comando — l'ingegnere deve prima CAMMINARE fino a
+        -- targetPos (puo' essere a 500 unita' di distanza dopo la 9-F13), quindi
+        -- un check immediato lo vede sempre "non ancora in costruzione" e
+        -- dichiara un falso "terreno non valido". Confermato in test: fallimento
+        -- dichiarato al 100% ma ZERO warning "FindPlaceToBuild() failed" di Uveso
+        -- in tutta la partita — la ricerca del posto non falliva mai davvero.
+        -- Aspettiamo finche' l'ingegnere si muove (sta ancora camminando verso il
+        -- target); se si ferma senza aver iniziato a costruire, e' un fallimento
+        -- vero (bloccato o comando mai partito). Cap di sicurezza a 180s.
+        local maxWaitSeconds = 180
+        local waited = 0
+        while waited < maxWaitSeconds and aiBrain:PlatoonExists(self) and not eng.Dead do
+            if eng:IsUnitState('Building') then
+                break
+            end
+            if not eng:IsUnitState('Moving') then
+                WaitSeconds(3)
+                waited = waited + 3
+                break
+            end
+            WaitSeconds(3)
+            waited = waited + 3
+        end
+
         if not eng.Dead and not eng:IsUnitState('Building') then
             -- Fase 9-F12: nome army nei log per distinguere piu' AI in parallelo.
             local ownerName = (ArmyBrains[aiBrain:GetArmyIndex()] and ArmyBrains[aiBrain:GetArmyIndex()].Nickname) or tostring(aiBrain:GetArmyIndex())
@@ -98,7 +123,8 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                 .. ' terreno non valido, throttle 30s')
 
             -- Fase 9-F11: reroll per gli slot forward base (FWD1-4). Dopo 3
-            -- fallimenti consecutivi (~90s) sullo stesso slot, lo liberiamo cosi'
+            -- fallimenti veri consecutivi (ognuno fino a ~210s con l'attesa 9-F14)
+            -- sullo stesso slot, lo liberiamo cosi'
             -- ExpansionFunction (Uveso Forward Base OverwhelmPlus.lua) puo' accettare
             -- un marker diverso nello stesso settore. Il marker fallito viene marcato
             -- 'REJECTED' per sempre cosi' non si ripropone.
