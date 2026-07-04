@@ -1,8 +1,7 @@
 -- OWPlusLogConditions.lua
--- Funzioni BuildCondition che stampano un LOG diagnostico e restituiscono sempre true.
--- Usate come ultima condizione in BuilderConditions per confermare quando un builder
--- supera tutte le condizioni reali e sta per tentare la costruzione — senza alterare
--- la logica del builder (return true = condizione neutra, non blocca mai).
+-- Piccole funzioni BuildCondition custom usate dai builder OWPlus per la forward base:
+-- alcune sono diagnostiche (LOG + return true, condizione neutra), altre sono
+-- condizioni reali (verificano stato su aiBrain.OWPlusSubBases/OWPlusForwardBaseMarkers).
 
 -- Log quando la forward base tenta di espandersi con una nuova fabbrica terra.
 function OWPlusLogForwardExpansion(aiBrain, label)
@@ -15,4 +14,17 @@ end
 -- Factory' per sapere se un dato slot (FWD1..FWD4) e' gia' stato assegnato.
 function OWPlusForwardSlotExists(aiBrain, slotKey)
     return aiBrain.OWPlusSubBases ~= nil and aiBrain.OWPlusSubBases[slotKey] ~= nil
+end
+
+-- Fase 9-F9: quante basi forward sono gia' state accettate (aiBrain.OWPlusForwardBaseMarkers,
+-- popolato da ExpansionFunction). Usata per il trigger a due livelli di
+-- 'OWPlus Vacant Expansion Area': prima base con soglia bassa, 2a-4a con soglia piu' alta.
+function OWPlusForwardCountInRange(aiBrain, minCount, maxCount)
+    local count = 0
+    if aiBrain.OWPlusForwardBaseMarkers then
+        for _ in pairs(aiBrain.OWPlusForwardBaseMarkers) do
+            count = count + 1
+        end
+    end
+    return count >= minCount and count < maxCount
 end
