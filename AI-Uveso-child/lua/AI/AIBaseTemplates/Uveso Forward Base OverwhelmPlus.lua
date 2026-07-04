@@ -157,6 +157,21 @@ BaseBuilderTemplate {
         -- Rifiuta marker troppo vicini a MAIN o troppo lontani
         if markerDist < 60 or markerDist > 220 then return -1 end
 
+        -- Fase 9-F8: verifica validita' del terreno PRIMA di accettare definitivamente
+        -- il marker — altrimenti uno slot su MAX_FORWARD_BASES resterebbe sprecato per
+        -- sempre su una posizione mai costruibile (visto in gioco: marker accettato ma
+        -- 'terreno non valido' ripetuto ogni 30s per tutta la partita). Se surfaceHeight
+        -- e terrainHeight divergono di oltre 0.5, il punto e' probabilmente acqua o
+        -- terreno troppo irregolare — scarta e lascia che un altro marker venga provato.
+        local terrainH = GetTerrainHeight(markerX, markerZ)
+        local surfaceH = GetSurfaceHeight(markerX, markerZ)
+        if math.abs(surfaceH - terrainH) > 0.5 then
+            LOG('[OWPlus] ForwardBase: marker (' .. math.floor(markerX) .. ',' .. math.floor(markerZ)
+                .. ') scartato, terreno non valido (terrainH=' .. string.format('%.1f', terrainH)
+                .. ' surfaceH=' .. string.format('%.1f', surfaceH) .. ')')
+            return -1
+        end
+
         -- Marker accettato: registra per sempre (cap si applica solo a nuovi marker)
         aiBrain.OWPlusForwardBaseMarkers[markerKey] = true
 
@@ -167,7 +182,7 @@ BaseBuilderTemplate {
         -- che non trovava mai un ingegnere disponibile (EngineerCount=0 alla forward base).
         local slotKey = 'FWD' .. (acceptedCount + 1)
         aiBrain.OWPlusSubBases = aiBrain.OWPlusSubBases or {}
-        aiBrain.OWPlusSubBases[slotKey] = { markerX, GetSurfaceHeight(markerX, markerZ), markerZ }
+        aiBrain.OWPlusSubBases[slotKey] = { markerX, surfaceH, markerZ }
         LOG('[OWPlus] ForwardBase: registrato slot ' .. slotKey .. ' in OWPlusSubBases per costruzione da MAIN')
 
         LOG('[OWPlus] ForwardBase: marker ACCETTATO tipo=' .. tostring(markerType)
