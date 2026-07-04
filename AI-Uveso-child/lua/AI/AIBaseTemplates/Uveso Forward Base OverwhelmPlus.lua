@@ -161,10 +161,16 @@ BaseBuilderTemplate {
         local markerDist = math.sqrt(mx*mx + mz*mz)
         if markerDist < 1 then return -1 end
 
-        -- Rifiuta marker troppo vicini a MAIN o troppo lontani (invariato dalla 9-F5)
-        if markerDist < 60 or markerDist > 220 then
+        -- Rifiuta marker troppo vicini a MAIN o troppo lontani. Range differenziato
+        -- per tipo (Fase 9-F13): i marker 'Large Expansion Area' sono pensati da
+        -- Uveso per stare tra basi alleate su mappe team grandi (visto in test su
+        -- Setons/scmp_009: tutti gli 8 marker Large Expansion Area erano a 300-945
+        -- unita', ben oltre il vecchio limite 220 unico) — range massimo piu' ampio
+        -- solo per quel tipo. 'Expansion Area' resta 60-220 (gia' testato, funziona).
+        local maxDist = (markerType == 'Large Expansion Area') and 500 or 220
+        if markerDist < 60 or markerDist > maxDist then
             LOG('[OWPlus] ForwardBase ExpansionFunction (' .. ownerName .. '): marker (' .. math.floor(markerX) .. ',' .. math.floor(markerZ)
-                .. ') fuori range distanza (dist=' .. math.floor(markerDist) .. ', richiesto 60-220), scartato')
+                .. ') fuori range distanza (dist=' .. math.floor(markerDist) .. ', richiesto 60-' .. maxDist .. '), scartato')
             return -1
         end
 

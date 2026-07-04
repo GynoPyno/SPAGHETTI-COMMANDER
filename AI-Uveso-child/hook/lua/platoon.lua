@@ -101,21 +101,31 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             -- fallimenti consecutivi (~90s) sullo stesso slot, lo liberiamo cosi'
             -- ExpansionFunction (Uveso Forward Base OverwhelmPlus.lua) puo' accettare
             -- un marker diverso nello stesso settore. Il marker fallito viene marcato
-            -- 'REJECTED' per sempre cosi' non si ripropone. Non tocca le sub-location
-            -- di MAIN (BASE_NE/SE/SW/NW), solo gli slot 'FWD*'.
-            if targetLocType and string.sub(targetLocType, 1, 3) == 'FWD' then
+            -- 'REJECTED' per sempre cosi' non si ripropone.
+            --
+            -- Fase 9-F13: stesso meccanismo esteso alle sub-location di MAIN
+            -- (BASE_NE/SE/SW/NW). Qui non esiste un marker da rifiutare (sono
+            -- coordinate fisse validate a init in overwhelmplusai.lua, non marker
+            -- di scena) — dopo 3 fallimenti ci limitiamo a liberare lo slot per
+            -- fermare lo spam di retry infiniti (visto in test: 100% fallimento
+            -- per tutta la partita su Setons/scmp_009).
+            if targetLocType and (string.sub(targetLocType, 1, 3) == 'FWD' or string.sub(targetLocType, 1, 5) == 'BASE_') then
                 aiBrain.OWPlusForwardFailCount = aiBrain.OWPlusForwardFailCount or {}
                 aiBrain.OWPlusForwardFailCount[targetLocType] = (aiBrain.OWPlusForwardFailCount[targetLocType] or 0) + 1
                 LOG('[OWPlus] OWPlusDispersedBuildAI (' .. ownerName .. '): ' .. targetLocType .. ' fallimento #'
                     .. aiBrain.OWPlusForwardFailCount[targetLocType] .. '/3')
                 if aiBrain.OWPlusForwardFailCount[targetLocType] >= 3 then
-                    local markerKey = math.floor(targetPos[1]) .. '_' .. math.floor(targetPos[3])
-                    aiBrain.OWPlusForwardBaseMarkers = aiBrain.OWPlusForwardBaseMarkers or {}
-                    aiBrain.OWPlusForwardBaseMarkers[markerKey] = 'REJECTED'
+                    if string.sub(targetLocType, 1, 3) == 'FWD' then
+                        local markerKey = math.floor(targetPos[1]) .. '_' .. math.floor(targetPos[3])
+                        aiBrain.OWPlusForwardBaseMarkers = aiBrain.OWPlusForwardBaseMarkers or {}
+                        aiBrain.OWPlusForwardBaseMarkers[markerKey] = 'REJECTED'
+                        LOG('[OWPlus] OWPlusDispersedBuildAI (' .. ownerName .. '): ' .. targetLocType .. ' liberato dopo 3 fallimenti, marker ('
+                            .. markerKey .. ') rifiutato per sempre')
+                    else
+                        LOG('[OWPlus] OWPlusDispersedBuildAI (' .. ownerName .. '): ' .. targetLocType .. ' disabilitato dopo 3 fallimenti (nessun fallback disponibile)')
+                    end
                     aiBrain.OWPlusSubBases[targetLocType] = nil
                     aiBrain.OWPlusForwardFailCount[targetLocType] = nil
-                    LOG('[OWPlus] OWPlusDispersedBuildAI (' .. ownerName .. '): ' .. targetLocType .. ' liberato dopo 3 fallimenti, marker ('
-                        .. markerKey .. ') rifiutato per sempre')
                 end
             end
 

@@ -5,6 +5,26 @@
 
 local UvesoAIBrainClass = import('/mods/AI-Uveso/lua/ai/uveso-ai.lua').AIBrain
 
+-- Fase 9-F13: cerca un punto valido lungo la diagonale (segnoX, segnoZ) partendo
+-- da (startX, startZ), provando piu' distanze finche' il terreno non supera il check
+-- (stesso usato in ExpansionFunction: divergenza surfaceHeight/terrainHeight <= 0.5).
+-- Necessario perche' l'offset fisso originale (d=46, nessun check) falliva il 100%
+-- delle volte su Setons/scmp_009 per entrambe le AI, per tutta la partita — la
+-- diagonale cadeva ripetutamente in acqua/terreno irregolare senza alcun fallback.
+local function OWPlusFindValidDispersedOffset(startX, startZ, signX, signZ)
+    local distances = {46, 30, 60, 20, 76, 90}
+    for _, d in distances do
+        local x = startX + signX * d
+        local z = startZ + signZ * d
+        local terrainH = GetTerrainHeight(x, z)
+        local surfaceH = GetSurfaceHeight(x, z)
+        if math.abs(surfaceH - terrainH) <= 0.5 then
+            return { x, surfaceH, z }
+        end
+    end
+    return nil
+end
+
 local function PatchGetScoutTable()
     local mod = import('/mods/AI-Uveso/lua/AI/AITargetManager.lua')
     -- rawget bypassa __index del modulo (strict mode FAF) per campi inesistenti
@@ -42,16 +62,21 @@ AIBrain = Class(UvesoAIBrainClass) {
         -- che non ha ingegneri né fabbriche — le nostre sub-location vuote verrebbero eliminate.
         -- OWPlusDispersedBuildAI legge da aiBrain.OWPlusSubBases[locType] direttamente.
         local startX, startZ = self:GetArmyStartPos()
-        local d = 46
-        self.OWPlusSubBases = {
-            BASE_NE = {startX + d, 0, startZ - d},
-            BASE_SE = {startX + d, 0, startZ + d},
-            BASE_SW = {startX - d, 0, startZ + d},
-            BASE_NW = {startX - d, 0, startZ - d},
+        self.OWPlusSubBases = {}
+        local diagonals = {
+            BASE_NE = { 1, -1 },
+            BASE_SE = { 1, 1 },
+            BASE_SW = { -1, 1 },
+            BASE_NW = { -1, -1 },
         }
-        for name, pos in self.OWPlusSubBases do
-            pos[2] = GetSurfaceHeight(pos[1], pos[3])
-            LOG('[OWPlus] OWPlusSubBases: ' .. name .. string.format(' = (%.0f, %.0f, %.0f)', pos[1], pos[2], pos[3]))
+        for name, signs in diagonals do
+            local pos = OWPlusFindValidDispersedOffset(startX, startZ, signs[1], signs[2])
+            if pos then
+                self.OWPlusSubBases[name] = pos
+                LOG('[OWPlus] OWPlusSubBases: ' .. name .. string.format(' = (%.0f, %.0f, %.0f)', pos[1], pos[2], pos[3]))
+            else
+                LOG('[OWPlus] OWPlusSubBases: ' .. name .. ' nessuna distanza valida trovata (terreno non valido su tutte le prove), slot non impostato')
+            end
         end
     end,
 
