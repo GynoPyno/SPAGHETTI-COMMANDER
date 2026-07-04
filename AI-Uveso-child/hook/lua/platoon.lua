@@ -93,6 +93,29 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             -- Attendi 30s prima di disbandare per evitare spam di retry (~10/s → 1/30s).
             LOG('[OWPlus] OWPlusDispersedBuildAI: ' .. tostring(targetLocType)
                 .. ' terreno non valido, throttle 30s')
+
+            -- Fase 9-F11: reroll per gli slot forward base (FWD1-4). Dopo 3
+            -- fallimenti consecutivi (~90s) sullo stesso slot, lo liberiamo cosi'
+            -- ExpansionFunction (Uveso Forward Base OverwhelmPlus.lua) puo' accettare
+            -- un marker diverso nello stesso settore. Il marker fallito viene marcato
+            -- 'REJECTED' per sempre cosi' non si ripropone. Non tocca le sub-location
+            -- di MAIN (BASE_NE/SE/SW/NW), solo gli slot 'FWD*'.
+            if targetLocType and string.sub(targetLocType, 1, 3) == 'FWD' then
+                aiBrain.OWPlusForwardFailCount = aiBrain.OWPlusForwardFailCount or {}
+                aiBrain.OWPlusForwardFailCount[targetLocType] = (aiBrain.OWPlusForwardFailCount[targetLocType] or 0) + 1
+                LOG('[OWPlus] OWPlusDispersedBuildAI: ' .. targetLocType .. ' fallimento #'
+                    .. aiBrain.OWPlusForwardFailCount[targetLocType] .. '/3')
+                if aiBrain.OWPlusForwardFailCount[targetLocType] >= 3 then
+                    local markerKey = math.floor(targetPos[1]) .. '_' .. math.floor(targetPos[3])
+                    aiBrain.OWPlusForwardBaseMarkers = aiBrain.OWPlusForwardBaseMarkers or {}
+                    aiBrain.OWPlusForwardBaseMarkers[markerKey] = 'REJECTED'
+                    aiBrain.OWPlusSubBases[targetLocType] = nil
+                    aiBrain.OWPlusForwardFailCount[targetLocType] = nil
+                    LOG('[OWPlus] OWPlusDispersedBuildAI: ' .. targetLocType .. ' liberato dopo 3 fallimenti, marker ('
+                        .. markerKey .. ') rifiutato per sempre')
+                end
+            end
+
             WaitSeconds(30)
             self:PlatoonDisband()
             return

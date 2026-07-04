@@ -11,6 +11,17 @@
 -- ultimi finivano tutti gestiti dal template stock UvesoExpansionAreaLarge (nessun
 -- filtro direzionale, produzione non coordinata con la nostra strategia). Aggiunto
 -- anche un cap MAX_FORWARD_BASES per evitare dispersione eccessiva di risorse.
+--
+-- Fase 9-F11 (2026-07-04): sostituito il cono singolo "verso il nemico" con 4
+-- settori angolari fissi relativi alla direzione del nemico (FRONTE/DESTRA/
+-- SINISTRA/RETROVIA), ciascuno legato a uno slot fisso (FWD1-4). Motivazione
+-- utente: un solo cono produce basi allineate e prevedibili; i 4 settori
+-- sparpagliano gli avamposti intorno a MAIN dando controllo mappa reale, pur
+-- mantenendo FWD1 (il primo, quello che scatta piu' veloce via Tier1) rivolto
+-- verso il nemico per valore tattico immediato. Aggiunto anche il reroll: se
+-- uno slot fallisce ripetutamente per terreno non valido (vedi hook/lua/
+-- platoon.lua), lo slot si libera e un marker diverso nello stesso settore
+-- puo' prendere il suo posto — il marker fallito resta rifiutato per sempre.
 
 BaseBuilderTemplate {
     BaseTemplateName = 'OWPlusForwardBase',
@@ -86,9 +97,10 @@ BaseBuilderTemplate {
 
     -- ExpansionFunction: chiamata per ogni marker 'Expansion Area' / 'Large Expansion Area' sulla mappa.
     -- Restituisce 2000 (> 1000 di UvesoExpansionArea) solo per marker che sono:
-    --   1. In direzione del nemico piu' vicino (dot product > 0.3, angolo < ~72 deg)
-    --   2. A distanza ragionevole da MAIN (60-220 unita')
-    --   3. Non fanno superare il cap MAX_FORWARD_BASES di basi forward gia' accettate
+    --   1. A distanza ragionevole da MAIN (60-220 unita')
+    --   2. In un settore (FRONTE/DESTRA/SINISTRA/RETROVIA, 90 gradi ciascuno)
+    --      relativo alla direzione del nemico, il cui slot FWD1-4 e' ancora libero
+    --   3. Su terreno che supera il check di validita' (Fase 9-F8)
     -- Per tutti gli altri marker restituisce -1 (UvesoExpansionArea li gestisce).
     ExpansionFunction = function(aiBrain, location, markerType)
         if not aiBrain.Uveso then
@@ -109,24 +121,18 @@ BaseBuilderTemplate {
             return -1
         end
 
-        -- Cap sul numero di basi forward: una volta accettato, un marker resta
-        -- accettato per sempre (la base e' gia' in costruzione li') — il cap si
-        -- applica solo a NUOVI marker candidati.
-        local MAX_FORWARD_BASES = 4
+        -- Un marker gia' valutato in precedenza: se accettato (true) mantiene il
+        -- template vincente; se rifiutato per fallimento costruzione (vedi reroll
+        -- in hook/lua/platoon.lua) non viene mai piu' riconsiderato.
         local markerKey = math.floor(markerX) .. '_' .. math.floor(markerZ)
         aiBrain.OWPlusForwardBaseMarkers = aiBrain.OWPlusForwardBaseMarkers or {}
 
-        if aiBrain.OWPlusForwardBaseMarkers[markerKey] then
-            return 2000
-        end
-
-        local acceptedCount = 0
-        for _ in pairs(aiBrain.OWPlusForwardBaseMarkers) do
-            acceptedCount = acceptedCount + 1
-        end
-        if acceptedCount >= MAX_FORWARD_BASES then
-            LOG('[OWPlus] ForwardBase ExpansionFunction: cap MAX_FORWARD_BASES raggiunto (' .. acceptedCount .. '/' .. MAX_FORWARD_BASES .. '), scarto nuovo marker (' .. math.floor(markerX) .. ',' .. math.floor(markerZ) .. ')')
+        local markerState = aiBrain.OWPlusForwardBaseMarkers[markerKey]
+        if markerState == 'REJECTED' then
             return -1
+        end
+        if markerState then
+            return 2000
         end
 
         -- Nemico corrente: usa aiBrain:GetCurrentEnemy() (stesso meccanismo di
@@ -145,31 +151,44 @@ BaseBuilderTemplate {
             return -1
         end
 
-        -- Vettore verso il nemico
-        local dx = enemyX - myX
-        local dz = enemyZ - myZ
-        local enemyDist = math.sqrt(dx*dx + dz*dz)
-
         -- Vettore verso il marker
         local mx = markerX - myX
         local mz = markerZ - myZ
         local markerDist = math.sqrt(mx*mx + mz*mz)
         if markerDist < 1 then return -1 end
 
-        -- Dot product: coseno dell'angolo tra direzione-nemico e direzione-marker
-        local dot = (dx*mx + dz*mz) / (enemyDist * markerDist)
-
-        -- Rifiuta marker fuori dal cono "forward" (angolo > ~72 deg = cos < 0.3)
-        if dot < 0.3 then
-            LOG('[OWPlus] ForwardBase ExpansionFunction: marker (' .. math.floor(markerX) .. ',' .. math.floor(markerZ)
-                .. ') fuori dal cono direzionale (dot=' .. string.format('%.2f', dot) .. ' < 0.3), scartato')
-            return -1
-        end
-
-        -- Rifiuta marker troppo vicini a MAIN o troppo lontani
+        -- Rifiuta marker troppo vicini a MAIN o troppo lontani (invariato dalla 9-F5)
         if markerDist < 60 or markerDist > 220 then
             LOG('[OWPlus] ForwardBase ExpansionFunction: marker (' .. math.floor(markerX) .. ',' .. math.floor(markerZ)
                 .. ') fuori range distanza (dist=' .. math.floor(markerDist) .. ', richiesto 60-220), scartato')
+            return -1
+        end
+
+        -- Fase 9-F11: settore angolare relativo alla direzione del nemico, invece
+        -- del vecchio cono singolo. atan2 in gradi, poi differenza normalizzata
+        -- in [-180, 180] tra angolo-marker e angolo-nemico.
+        local enemyAngleDeg = math.deg(math.atan2(enemyZ - myZ, enemyX - myX))
+        local markerAngleDeg = math.deg(math.atan2(mz, mx))
+        local diffDeg = markerAngleDeg - enemyAngleDeg
+        while diffDeg > 180 do diffDeg = diffDeg - 360 end
+        while diffDeg < -180 do diffDeg = diffDeg + 360 end
+
+        local sector, slotKey
+        if math.abs(diffDeg) <= 45 then
+            sector, slotKey = 'FRONTE', 'FWD1'
+        elseif diffDeg > 45 and diffDeg <= 135 then
+            sector, slotKey = 'DESTRA', 'FWD2'
+        elseif diffDeg < -45 and diffDeg >= -135 then
+            sector, slotKey = 'SINISTRA', 'FWD3'
+        else
+            sector, slotKey = 'RETROVIA', 'FWD4'
+        end
+
+        -- Lo slot di questo settore e' gia' occupato da un'altra base (in
+        -- costruzione o completata)? Lascia che un altro template/marker gestisca
+        -- questo punto invece di competere per lo stesso settore.
+        aiBrain.OWPlusSubBases = aiBrain.OWPlusSubBases or {}
+        if aiBrain.OWPlusSubBases[slotKey] then
             return -1
         end
 
@@ -188,7 +207,8 @@ BaseBuilderTemplate {
             return -1
         end
 
-        -- Marker accettato: registra per sempre (cap si applica solo a nuovi marker)
+        -- Marker accettato: registra per sempre (il reroll in caso di fallimento
+        -- costruzione lo marchera' 'REJECTED' da hook/lua/platoon.lua)
         aiBrain.OWPlusForwardBaseMarkers[markerKey] = true
 
         -- Fase 9-F7: registra la posizione anche in OWPlusSubBases (stessa tabella
@@ -196,16 +216,13 @@ BaseBuilderTemplate {
         -- 'OWPlus Forward Extra Factory' (builder a MAIN) puo' inviare un ingegnere
         -- qui riusando il Plan gia' collaudato, invece del builder locale generico
         -- che non trovava mai un ingegnere disponibile (EngineerCount=0 alla forward base).
-        local slotKey = 'FWD' .. (acceptedCount + 1)
-        aiBrain.OWPlusSubBases = aiBrain.OWPlusSubBases or {}
         aiBrain.OWPlusSubBases[slotKey] = { markerX, surfaceH, markerZ }
-        LOG('[OWPlus] ForwardBase: registrato slot ' .. slotKey .. ' in OWPlusSubBases per costruzione da MAIN')
 
         LOG('[OWPlus] ForwardBase: marker ACCETTATO tipo=' .. tostring(markerType)
             .. ' (' .. math.floor(markerX) .. ',' .. math.floor(markerZ)
-            .. ') dot=' .. string.format('%.2f', dot)
+            .. ') settore=' .. sector .. ' (diff=' .. string.format('%.0f', diffDeg) .. ' deg)'
             .. ' dist=' .. math.floor(markerDist)
-            .. ' basi accettate=' .. (acceptedCount + 1) .. '/' .. MAX_FORWARD_BASES)
+            .. ' -> slot ' .. slotKey)
 
         -- 2000 > 1000 (UvesoExpansionArea) -> questo template vince il marker
         return 2000
