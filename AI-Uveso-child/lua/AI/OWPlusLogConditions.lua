@@ -9,3 +9,10 @@ function OWPlusLogForwardExpansion(aiBrain, label)
     LOG('[OWPlus] ForwardBase: espansione in corso — builder "' .. tostring(label) .. '" ha superato tutte le condizioni, avvio costruzione')
     return true
 end
+
+-- Verifica se uno slot forward base esiste in aiBrain.OWPlusSubBases (registrato da
+-- ExpansionFunction quando un marker viene accettato). Usata da 'OWPlus Forward Extra
+-- Factory' per sapere se un dato slot (FWD1..FWD4) e' gia' stato assegnato.
+function OWPlusForwardSlotExists(aiBrain, slotKey)
+    return aiBrain.OWPlusSubBases ~= nil and aiBrain.OWPlusSubBases[slotKey] ~= nil
+end

@@ -57,6 +57,7 @@ BaseBuilderTemplate {
         'U1 Factory Builders 1st',
         'OWPlus Factory Builders',          -- CDR: 1 land factory al centro (MAIN). Air/land extra → dispersed.
         'OWPlus Dispersed Base',            -- schema 'x': 4 land + 4 air factory ai nodi NE/SE/SW/NW (46 unità in diagonale)
+        'OWPlus Forward Extra Factory',     -- Fase 9-F7: fabbrica terra alle forward base (slot FWD1-4), stesso Plan collaudato dei nodi dispersi
         'OWPlus Factory Builders RECOVER',  -- rimpiazza RECOVER: stessa logica, usa FACTORY*LAND senza -SUPPORTFACTORY
         'U1 Gate Builders',
         'U123 Factory Upgrader Rush',

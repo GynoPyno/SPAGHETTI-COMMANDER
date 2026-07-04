@@ -23,10 +23,13 @@ BaseBuilderTemplate {
         'U123 Engineer Transfer To MainBase',
 
         -----------------------------------------------------------------------------
-        -- Fabbriche: solo terra. Builder personalizzato (solo T1LandFactory).
+        -- Fabbriche: costruite da MAIN via OWPlus Forward Extra Factory (Fase 9-F7),
+        -- che riusa il Plan OWPlusDispersedBuildAI gia' collaudato per i nodi dispersi.
+        -- 'OWPlus Forward Land Factory' (EngineerBuilder generico Uveso) rimosso:
+        -- non trovava mai un ingegnere disponibile in loco (EngineerCount=0 qui),
+        -- causava spam infinito di "espansione in corso" senza mai costruire nulla.
         -- U123 Factory Upgrader Rush aggiorna T1->T2->T3.
         -----------------------------------------------------------------------------
-        'OWPlus Forward Land Factory',
         'U123 Factory Upgrader Rush',
 
         -----------------------------------------------------------------------------
@@ -156,6 +159,16 @@ BaseBuilderTemplate {
 
         -- Marker accettato: registra per sempre (cap si applica solo a nuovi marker)
         aiBrain.OWPlusForwardBaseMarkers[markerKey] = true
+
+        -- Fase 9-F7: registra la posizione anche in OWPlusSubBases (stessa tabella
+        -- gia' usata da OWPlusDispersedBuildAI per i nodi NE/SE/SW/NW) cosi'
+        -- 'OWPlus Forward Extra Factory' (builder a MAIN) puo' inviare un ingegnere
+        -- qui riusando il Plan gia' collaudato, invece del builder locale generico
+        -- che non trovava mai un ingegnere disponibile (EngineerCount=0 alla forward base).
+        local slotKey = 'FWD' .. (acceptedCount + 1)
+        aiBrain.OWPlusSubBases = aiBrain.OWPlusSubBases or {}
+        aiBrain.OWPlusSubBases[slotKey] = { markerX, GetSurfaceHeight(markerX, markerZ), markerZ }
+        LOG('[OWPlus] ForwardBase: registrato slot ' .. slotKey .. ' in OWPlusSubBases per costruzione da MAIN')
 
         LOG('[OWPlus] ForwardBase: marker ACCETTATO tipo=' .. tostring(markerType)
             .. ' (' .. math.floor(markerX) .. ',' .. math.floor(markerZ)
