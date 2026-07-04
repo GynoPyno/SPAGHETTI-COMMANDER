@@ -91,8 +91,15 @@ BaseBuilderTemplate {
     --   3. Non fanno superare il cap MAX_FORWARD_BASES di basi forward gia' accettate
     -- Per tutti gli altri marker restituisce -1 (UvesoExpansionArea li gestisce).
     ExpansionFunction = function(aiBrain, location, markerType)
-        if not aiBrain.Uveso then return -1 end
-        if markerType ~= 'Expansion Area' and markerType ~= 'Large Expansion Area' then return -1 end
+        if not aiBrain.Uveso then
+            LOG('[OWPlus] ForwardBase ExpansionFunction: aiBrain.Uveso assente, skip (markerType=' .. tostring(markerType) .. ')')
+            return -1
+        end
+        if markerType ~= 'Expansion Area' and markerType ~= 'Large Expansion Area' then
+            LOG('[OWPlus] ForwardBase ExpansionFunction: markerType "' .. tostring(markerType) .. '" non gestito da noi, skip')
+            return -1
+        end
+        LOG('[OWPlus] ForwardBase ExpansionFunction: valutazione marker tipo=' .. tostring(markerType) .. ' avviata')
 
         local myX, myZ = aiBrain:GetArmyStartPos()
         local markerX = location.x or location[1]
@@ -118,6 +125,7 @@ BaseBuilderTemplate {
             acceptedCount = acceptedCount + 1
         end
         if acceptedCount >= MAX_FORWARD_BASES then
+            LOG('[OWPlus] ForwardBase ExpansionFunction: cap MAX_FORWARD_BASES raggiunto (' .. acceptedCount .. '/' .. MAX_FORWARD_BASES .. '), scarto nuovo marker (' .. math.floor(markerX) .. ',' .. math.floor(markerZ) .. ')')
             return -1
         end
 
@@ -152,10 +160,18 @@ BaseBuilderTemplate {
         local dot = (dx*mx + dz*mz) / (enemyDist * markerDist)
 
         -- Rifiuta marker fuori dal cono "forward" (angolo > ~72 deg = cos < 0.3)
-        if dot < 0.3 then return -1 end
+        if dot < 0.3 then
+            LOG('[OWPlus] ForwardBase ExpansionFunction: marker (' .. math.floor(markerX) .. ',' .. math.floor(markerZ)
+                .. ') fuori dal cono direzionale (dot=' .. string.format('%.2f', dot) .. ' < 0.3), scartato')
+            return -1
+        end
 
         -- Rifiuta marker troppo vicini a MAIN o troppo lontani
-        if markerDist < 60 or markerDist > 220 then return -1 end
+        if markerDist < 60 or markerDist > 220 then
+            LOG('[OWPlus] ForwardBase ExpansionFunction: marker (' .. math.floor(markerX) .. ',' .. math.floor(markerZ)
+                .. ') fuori range distanza (dist=' .. math.floor(markerDist) .. ', richiesto 60-220), scartato')
+            return -1
+        end
 
         -- Fase 9-F8: verifica validita' del terreno PRIMA di accettare definitivamente
         -- il marker — altrimenti uno slot su MAX_FORWARD_BASES resterebbe sprecato per
