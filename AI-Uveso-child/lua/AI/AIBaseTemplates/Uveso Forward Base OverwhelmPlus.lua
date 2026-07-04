@@ -103,21 +103,25 @@ BaseBuilderTemplate {
     --   3. Su terreno che supera il check di validita' (Fase 9-F8)
     -- Per tutti gli altri marker restituisce -1 (UvesoExpansionArea li gestisce).
     ExpansionFunction = function(aiBrain, location, markerType)
+        -- Fase 9-F12: nome army nei log, per distinguere piu' AI OverwhelmPlus i
+        -- cui log si intrecciano nello stesso file quando girano in parallelo.
+        local ownerName = (ArmyBrains[aiBrain:GetArmyIndex()] and ArmyBrains[aiBrain:GetArmyIndex()].Nickname) or tostring(aiBrain:GetArmyIndex())
+
         if not aiBrain.Uveso then
-            LOG('[OWPlus] ForwardBase ExpansionFunction: aiBrain.Uveso assente, skip (markerType=' .. tostring(markerType) .. ')')
+            LOG('[OWPlus] ForwardBase ExpansionFunction (' .. ownerName .. '): aiBrain.Uveso assente, skip (markerType=' .. tostring(markerType) .. ')')
             return -1
         end
         if markerType ~= 'Expansion Area' and markerType ~= 'Large Expansion Area' then
-            LOG('[OWPlus] ForwardBase ExpansionFunction: markerType "' .. tostring(markerType) .. '" non gestito da noi, skip')
+            LOG('[OWPlus] ForwardBase ExpansionFunction (' .. ownerName .. '): markerType "' .. tostring(markerType) .. '" non gestito da noi, skip')
             return -1
         end
-        LOG('[OWPlus] ForwardBase ExpansionFunction: valutazione marker tipo=' .. tostring(markerType) .. ' avviata')
+        LOG('[OWPlus] ForwardBase ExpansionFunction (' .. ownerName .. '): valutazione marker tipo=' .. tostring(markerType) .. ' avviata')
 
         local myX, myZ = aiBrain:GetArmyStartPos()
         local markerX = location.x or location[1]
         local markerZ = location.z or location[3]
         if not markerX or not markerZ then
-            LOG('[OWPlus] ForwardBase ExpansionFunction: location senza coordinate, skip')
+            LOG('[OWPlus] ForwardBase ExpansionFunction (' .. ownerName .. '): location senza coordinate, skip')
             return -1
         end
 
@@ -142,12 +146,12 @@ BaseBuilderTemplate {
         -- per entrambe le AI in un test FFA dove il ciclo manuale falliva).
         local currentEnemy = aiBrain:GetCurrentEnemy()
         if not currentEnemy then
-            LOG('[OWPlus] ForwardBase ExpansionFunction: GetCurrentEnemy() nil, skip')
+            LOG('[OWPlus] ForwardBase ExpansionFunction (' .. ownerName .. '): GetCurrentEnemy() nil, skip')
             return -1
         end
         local enemyX, enemyZ = currentEnemy:GetArmyStartPos()
         if not enemyX or not enemyZ then
-            LOG('[OWPlus] ForwardBase ExpansionFunction: nemico senza start pos, skip')
+            LOG('[OWPlus] ForwardBase ExpansionFunction (' .. ownerName .. '): nemico senza start pos, skip')
             return -1
         end
 
@@ -159,7 +163,7 @@ BaseBuilderTemplate {
 
         -- Rifiuta marker troppo vicini a MAIN o troppo lontani (invariato dalla 9-F5)
         if markerDist < 60 or markerDist > 220 then
-            LOG('[OWPlus] ForwardBase ExpansionFunction: marker (' .. math.floor(markerX) .. ',' .. math.floor(markerZ)
+            LOG('[OWPlus] ForwardBase ExpansionFunction (' .. ownerName .. '): marker (' .. math.floor(markerX) .. ',' .. math.floor(markerZ)
                 .. ') fuori range distanza (dist=' .. math.floor(markerDist) .. ', richiesto 60-220), scartato')
             return -1
         end
@@ -201,7 +205,7 @@ BaseBuilderTemplate {
         local terrainH = GetTerrainHeight(markerX, markerZ)
         local surfaceH = GetSurfaceHeight(markerX, markerZ)
         if math.abs(surfaceH - terrainH) > 0.5 then
-            LOG('[OWPlus] ForwardBase: marker (' .. math.floor(markerX) .. ',' .. math.floor(markerZ)
+            LOG('[OWPlus] ForwardBase (' .. ownerName .. '): marker (' .. math.floor(markerX) .. ',' .. math.floor(markerZ)
                 .. ') scartato, terreno non valido (terrainH=' .. string.format('%.1f', terrainH)
                 .. ' surfaceH=' .. string.format('%.1f', surfaceH) .. ')')
             return -1
@@ -218,7 +222,7 @@ BaseBuilderTemplate {
         -- che non trovava mai un ingegnere disponibile (EngineerCount=0 alla forward base).
         aiBrain.OWPlusSubBases[slotKey] = { markerX, surfaceH, markerZ }
 
-        LOG('[OWPlus] ForwardBase: marker ACCETTATO tipo=' .. tostring(markerType)
+        LOG('[OWPlus] ForwardBase (' .. ownerName .. '): marker ACCETTATO tipo=' .. tostring(markerType)
             .. ' (' .. math.floor(markerX) .. ',' .. math.floor(markerZ)
             .. ') settore=' .. sector .. ' (diff=' .. string.format('%.0f', diffDeg) .. ' deg)'
             .. ' dist=' .. math.floor(markerDist)

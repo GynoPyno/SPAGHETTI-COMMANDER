@@ -89,9 +89,12 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
         end
 
         if not eng.Dead and not eng:IsUnitState('Building') then
+            -- Fase 9-F12: nome army nei log per distinguere piu' AI in parallelo.
+            local ownerName = (ArmyBrains[aiBrain:GetArmyIndex()] and ArmyBrains[aiBrain:GetArmyIndex()].Nickname) or tostring(aiBrain:GetArmyIndex())
+
             -- FindPlaceToBuild fallito: terreno non valido alla sub-location.
             -- Attendi 30s prima di disbandare per evitare spam di retry (~10/s → 1/30s).
-            LOG('[OWPlus] OWPlusDispersedBuildAI: ' .. tostring(targetLocType)
+            LOG('[OWPlus] OWPlusDispersedBuildAI (' .. ownerName .. '): ' .. tostring(targetLocType)
                 .. ' terreno non valido, throttle 30s')
 
             -- Fase 9-F11: reroll per gli slot forward base (FWD1-4). Dopo 3
@@ -103,7 +106,7 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             if targetLocType and string.sub(targetLocType, 1, 3) == 'FWD' then
                 aiBrain.OWPlusForwardFailCount = aiBrain.OWPlusForwardFailCount or {}
                 aiBrain.OWPlusForwardFailCount[targetLocType] = (aiBrain.OWPlusForwardFailCount[targetLocType] or 0) + 1
-                LOG('[OWPlus] OWPlusDispersedBuildAI: ' .. targetLocType .. ' fallimento #'
+                LOG('[OWPlus] OWPlusDispersedBuildAI (' .. ownerName .. '): ' .. targetLocType .. ' fallimento #'
                     .. aiBrain.OWPlusForwardFailCount[targetLocType] .. '/3')
                 if aiBrain.OWPlusForwardFailCount[targetLocType] >= 3 then
                     local markerKey = math.floor(targetPos[1]) .. '_' .. math.floor(targetPos[3])
@@ -111,7 +114,7 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                     aiBrain.OWPlusForwardBaseMarkers[markerKey] = 'REJECTED'
                     aiBrain.OWPlusSubBases[targetLocType] = nil
                     aiBrain.OWPlusForwardFailCount[targetLocType] = nil
-                    LOG('[OWPlus] OWPlusDispersedBuildAI: ' .. targetLocType .. ' liberato dopo 3 fallimenti, marker ('
+                    LOG('[OWPlus] OWPlusDispersedBuildAI (' .. ownerName .. '): ' .. targetLocType .. ' liberato dopo 3 fallimenti, marker ('
                         .. markerKey .. ') rifiutato per sempre')
                 end
             end
