@@ -15,6 +15,19 @@
 -- hook/lua/platoon.lua). Preleva un ingegnere idle da MAIN e lo invia direttamente
 -- alle coordinate registrate in OWPlusSubBases['FWDn'], bypassando del tutto la
 -- risoluzione location-by-name di Uveso che falliva.
+--
+-- Fase 9-F16 (B10): aggiunte difese (T1GroundDefense, T1AADefense) e scudo
+-- (T2ShieldDefense) alla stessa BuildStructures — stesso motivo per cui la
+-- fabbrica funziona: gli avamposti forward bypassano aiBrain.BuilderManagers
+-- (vedi Conoscenze_AI_27 sez. 27.9, DeadBaseMonitor), quindi i builder difesa/
+-- scudo gia' elencati in Uveso Forward Base OverwhelmPlus.lua ('U23 Shields
+-- Builder', 'U123 Defense Anti Air/Ground Builders') non venivano mai attaccati
+-- a queste location — gli avamposti restavano completamente indifesi. Stringhe
+-- verificate in AI-Uveso/lua/AI/AIBuilders/Base Defense.lua (BuildStructures
+-- reale usata da 'U23 Shields Builder'/'U123 Defense Anti Air/Ground Builders').
+-- Il builder si ritrigghera' periodicamente finche' lo slot esiste (stesso
+-- comportamento gia' osservato per la fabbrica, che infatti si accumula nel
+-- tempo) — quindi le difese si accumulano insieme, non e' un one-shot.
 
 local categories = categories
 local UCBC = '/lua/editor/UnitCountBuildConditions.lua'
@@ -42,7 +55,7 @@ BuilderGroup {
             Construction = {
                 LocationType    = 'FWD1',
                 BuildClose      = true,
-                BuildStructures = { 'T1LandFactory' },
+                BuildStructures = { 'T1LandFactory', 'T1GroundDefense', 'T1AADefense', 'T2ShieldDefense' },
             }
         },
     },
@@ -61,7 +74,7 @@ BuilderGroup {
             Construction = {
                 LocationType    = 'FWD2',
                 BuildClose      = true,
-                BuildStructures = { 'T1LandFactory' },
+                BuildStructures = { 'T1LandFactory', 'T1GroundDefense', 'T1AADefense', 'T2ShieldDefense' },
             }
         },
     },
@@ -80,7 +93,7 @@ BuilderGroup {
             Construction = {
                 LocationType    = 'FWD3',
                 BuildClose      = true,
-                BuildStructures = { 'T1LandFactory' },
+                BuildStructures = { 'T1LandFactory', 'T1GroundDefense', 'T1AADefense', 'T2ShieldDefense' },
             }
         },
     },
@@ -99,7 +112,7 @@ BuilderGroup {
             Construction = {
                 LocationType    = 'FWD4',
                 BuildClose      = true,
-                BuildStructures = { 'T1LandFactory' },
+                BuildStructures = { 'T1LandFactory', 'T1GroundDefense', 'T1AADefense', 'T2ShieldDefense' },
             }
         },
     },
