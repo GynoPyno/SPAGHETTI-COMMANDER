@@ -201,7 +201,7 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
         -- di produzione di MAIN (solo ingegneri, 9-F4) invece della lista Builders
         -- del template Uveso Forward Base OverwhelmPlus.lua (mai attaccata per FWD*
         -- per lo stesso motivo per cui fabbrica/difese richiedevano un workaround).
-        if targetLocType and (string.sub(targetLocType, 1, 3) == 'FWD' or string.sub(targetLocType, 1, 5) == 'BASE_' or string.sub(targetLocType, 1, 3) == 'OUT') then
+        if targetLocType and (string.sub(targetLocType, 1, 3) == 'FWD' or string.sub(targetLocType, 1, 5) == 'BASE_') then
             ForkThread(function()
                 WaitSeconds(60)
                 local nearby = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE * categories.FACTORY * categories.LAND, targetPos, 15, 'Ally')
@@ -212,6 +212,38 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                     elseif not u.Dead then
                         LOG('[OWPlus] Diagnostica manager: fabbrica ' .. tostring(u.UnitId) .. ' a ' .. tostring(targetLocType)
                             .. ' SENZA BuilderManagerData (orfana)')
+                    end
+                end
+            end)
+        end
+
+        -- Fase 9-F19: per gli avamposti OUT#, cattura il riferimento alla PRIMA
+        -- fabbrica costruita e la registra in un BuilderManager vero tramite
+        -- AddFactoryToClosestManager (funzione globale di Uveso, aiarchetype-
+        -- managerloader.lua) — crea il manager E aggiunge la fabbrica nello stesso
+        -- istante, quindi DeadBaseMonitor non lo trova mai vuoto. Da quel momento
+        -- i builder standard di Uveso (produzione ingegneri con gate di tech,
+        -- upgrade fabbrica, difese) iniziano a funzionare su questa fabbrica senza
+        -- bisogno di comandi grezzi scritti da noi (vedi B11, AI_Mod_Spec.md, per
+        -- l'idea di unificare anche i nodi dispersi di MAIN a questo approccio).
+        if targetLocType and string.sub(targetLocType, 1, 3) == 'OUT'
+            and not (aiBrain.OWPlusOutpostFactories and aiBrain.OWPlusOutpostFactories[targetLocType]) then
+            ForkThread(function()
+                local waitedBuild = 0
+                while eng and not eng.Dead and eng:IsUnitState('Building') and waitedBuild < 300 do
+                    WaitSeconds(5)
+                    waitedBuild = waitedBuild + 5
+                end
+                WaitSeconds(2)
+                local nearby = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE * categories.FACTORY, targetPos, 15, 'Ally')
+                for _, u in nearby or {} do
+                    if not u.Dead and not u.BuilderManagerData then
+                        aiBrain.OWPlusOutpostFactories = aiBrain.OWPlusOutpostFactories or {}
+                        aiBrain.OWPlusOutpostFactories[targetLocType] = u
+                        AddFactoryToClosestManager(aiBrain, u)
+                        LOG('[OWPlus] Outpost: prima fabbrica (' .. tostring(u.UnitId) .. ') a ' .. targetLocType
+                            .. ' registrata in un BuilderManager reale')
+                        break
                     end
                 end
             end)

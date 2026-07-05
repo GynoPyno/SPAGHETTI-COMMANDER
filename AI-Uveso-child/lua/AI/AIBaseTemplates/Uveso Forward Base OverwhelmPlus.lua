@@ -111,6 +111,15 @@ BaseBuilderTemplate {
     --   3. Su terreno che supera il check di validita' (Fase 9-F8)
     -- Per tutti gli altri marker restituisce -1 (UvesoExpansionArea li gestisce).
     ExpansionFunction = function(aiBrain, location, markerType)
+        -- Fase 9-F19: disattivata. Da quando gli avamposti (OUT#) vengono
+        -- registrati in un BuilderManager reale via AddFactoryToClosestManager,
+        -- questa ExpansionFunction e' di nuovo raggiungibile (quella funzione
+        -- crea marker sintetici e rivaluta ExpansionFunction su tutti i template)
+        -- — rischiava di vincere al posto dei template stock di Uveso, che hanno
+        -- gia' una produzione ingegneri funzionante che questo template FORWARD
+        -- non ha mai avuto. Meglio lasciar vincere sempre lo stock.
+        return -1
+
         -- Fase 9-F12: nome army nei log, per distinguere piu' AI OverwhelmPlus i
         -- cui log si intrecciano nello stesso file quando girano in parallelo.
         local ownerName = (ArmyBrains[aiBrain:GetArmyIndex()] and ArmyBrains[aiBrain:GetArmyIndex()].Nickname) or tostring(aiBrain:GetArmyIndex())
