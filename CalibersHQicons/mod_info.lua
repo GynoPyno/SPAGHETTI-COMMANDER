@@ -1,9 +1,0 @@
-name = "Calibers HQ icons"
-uid = "11511-22722-33663_22545"
-description = "Highlights HQ Factories"
-copyright = "Caliber"
-author = "Caliber"
-icon = "/mods/CalibersHQicons/icon.png"
-version = 3
-exclusive = false
-ui_only = true
