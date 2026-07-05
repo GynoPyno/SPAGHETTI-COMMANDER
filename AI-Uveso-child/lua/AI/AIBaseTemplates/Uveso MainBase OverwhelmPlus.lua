@@ -14,10 +14,14 @@ BaseBuilderTemplate {
         -----------------------------------------------------------------------------
         -- ==== Expansion Builders ==== --
         -----------------------------------------------------------------------------
-        'U1 Expansion Builder',
         -- Fase 9-F18: 'OWPlus Vacant Expansion Area' (Tier1/2/1b/2b, ricerca marker
         -- di scena) rimosso — sostituito dal generatore avamposti indipendente
         -- (OWPlusOutpostGenerator.lua), vedi 'OWPlus Outpost Factory' sotto ==Factory==.
+        -- Fase 9-F20: rimosso anche 'U1 Expansion Builder' (stock Uveso) — e' il
+        -- builder che rivendica gli slot ARMY_X vuoti di altri giocatori come "big
+        -- expansion", producendo le basi enormi e senza controllo di dimensione
+        -- ("blob" da 20+ fabbriche osservati in test) di cui l'utente non vuole
+        -- piu' — ora abbiamo il nostro sistema avamposti dedicato.
 
         -----------------------------------------------------------------------------
         -- ==== SCU ==== --

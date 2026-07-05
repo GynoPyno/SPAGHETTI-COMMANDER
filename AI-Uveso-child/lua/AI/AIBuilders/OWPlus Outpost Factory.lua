@@ -41,7 +41,13 @@ BuilderGroup {
                 BuildClose      = true,
                 -- Solo le difese: la ricetta di fabbriche viene anteposta
                 -- dinamicamente da OWPlusDispersedBuildAI in base allo slot scelto.
-                BuildStructures = { 'T1GroundDefense', 'T1AADefense', 'T2ShieldDefense' },
+                -- Fase 9-F20: 'T2ShieldDefense' rimosso — richiede un ingegnere T2
+                -- (confermato in log: "TECH1 Unit assigned to build TECH2
+                -- buildplatoon! FAILED"), ma l'ingegnere inviato da MAIN e' sempre
+                -- T1. Lo scudo arrivera' dopo, quando il BuilderManager dedicato
+                -- (9-F19/20) e' agganciato correttamente e la fabbrica sale di
+                -- tech producendo un proprio ingegnere T2.
+                BuildStructures = { 'T1GroundDefense', 'T1AADefense' },
             }
         },
     },

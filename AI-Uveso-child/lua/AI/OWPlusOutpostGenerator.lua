@@ -72,6 +72,15 @@ function OWPlusOutpostScanThread(aiBrain)
     aiBrain.OWPlusOutpostChecked = aiBrain.OWPlusOutpostChecked or {}
     local outpostCount = 0
 
+    -- Fase 9-F20: aggiunta un'attesa tra un check e il successivo. Prima
+    -- (9-F18) il primo giro copriva TUTTO il range (90-500, passo 10) su tutte
+    -- le 8 direzioni praticamente in un colpo solo (nessuna attesa interna al
+    -- doppio ciclo) — confermato in test: gia' a 4 minuti di gioco erano stati
+    -- generati 100+ avamposti, che competevano tutti insieme per i soli 6
+    -- ingegneri paralleli e la massa di MAIN (causa reale delle fabbriche ferme
+    -- osservate, non un problema di soglie economiche). Ora un'attesa di 10s tra
+    -- ogni singolo check rende la crescita davvero graduale nel corso della
+    -- partita, come voluto originariamente.
     while true do
         for _, angleDeg in angles do
             local rad = math.rad(angleDeg)
@@ -103,6 +112,7 @@ function OWPlusOutpostScanThread(aiBrain)
                     end
                 end
                 dist = dist + 10
+                WaitSeconds(10)
             end
         end
         WaitSeconds(300)
