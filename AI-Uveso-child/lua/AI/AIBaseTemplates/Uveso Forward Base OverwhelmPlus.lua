@@ -22,6 +22,14 @@
 -- uno slot fallisce ripetutamente per terreno non valido (vedi hook/lua/
 -- platoon.lua), lo slot si libera e un marker diverso nello stesso settore
 -- puo' prendere il suo posto — il marker fallito resta rifiutato per sempre.
+--
+-- SUPERATO (Fase 9-F18, 2026-07-05): il sistema a marker/settori sopra descritto
+-- e' stato sostituito da OWPlusOutpostGenerator.lua, che genera avamposti lungo
+-- 8 direzioni fisse senza dipendere da marker di scena (niente piu' vincolo dei
+-- 2 estrattori vicini, niente piu' rischio di finire su spawn vuoti di altri
+-- giocatori — bug scoperto in sess.64). Questo file resta intatto per
+-- reversibilita' ma la sua ExpansionFunction non e' piu' raggiungibile in pratica:
+-- nessun builder attivo cerca piu' marker 'Expansion Area'/'Large Expansion Area'.
 
 BaseBuilderTemplate {
     BaseTemplateName = 'OWPlusForwardBase',

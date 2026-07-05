@@ -15,7 +15,9 @@ BaseBuilderTemplate {
         -- ==== Expansion Builders ==== --
         -----------------------------------------------------------------------------
         'U1 Expansion Builder',
-        'OWPlus Vacant Expansion Area',     -- Fase 9-F6: +3 tentativi paralleli oltre allo slot stock (InstanceCount=1)
+        -- Fase 9-F18: 'OWPlus Vacant Expansion Area' (Tier1/2/1b/2b, ricerca marker
+        -- di scena) rimosso — sostituito dal generatore avamposti indipendente
+        -- (OWPlusOutpostGenerator.lua), vedi 'OWPlus Outpost Factory' sotto ==Factory==.
 
         -----------------------------------------------------------------------------
         -- ==== SCU ==== --
@@ -57,7 +59,7 @@ BaseBuilderTemplate {
         'U1 Factory Builders 1st',
         'OWPlus Factory Builders',          -- CDR: 1 land factory al centro (MAIN). Air/land extra → dispersed.
         'OWPlus Dispersed Base',            -- schema 'x': 4 land + 4 air factory ai nodi NE/SE/SW/NW (46 unità in diagonale)
-        'OWPlus Forward Extra Factory',     -- Fase 9-F7: fabbrica terra alle forward base (slot FWD1-4), stesso Plan collaudato dei nodi dispersi
+        'OWPlus Outpost Factory',           -- Fase 9-F18: rivendica avamposti OUT# generati da OWPlusOutpostGenerator.lua (8 direzioni fisse, nessun marker)
         'OWPlus Factory Builders RECOVER',  -- rimpiazza RECOVER: stessa logica, usa FACTORY*LAND senza -SUPPORTFACTORY
         'U1 Gate Builders',
         'U123 Factory Upgrader Rush',

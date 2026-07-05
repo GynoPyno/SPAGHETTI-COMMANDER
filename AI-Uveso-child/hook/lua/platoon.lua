@@ -30,7 +30,38 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
         -- Trova le coordinate della sub-location target (es. 'BASE_NE')
         local targetLocType = cons.LocationType
         local targetPos
-        if targetLocType then
+        local buildList = cons.BuildStructures
+
+        -- Fase 9-F18: 'OWPlusOutpostPool' e' un sentinel — non e' una location
+        -- fissa, ma dice "scegli dinamicamente un avamposto (OUT#) generato da
+        -- OWPlusOutpostGenerator.lua non ancora rivendicato". La ricetta di quello
+        -- slot (fabbriche scelte a caso) viene anteposta alle difese gia' in
+        -- cons.BuildStructures.
+        if targetLocType == 'OWPlusOutpostPool' then
+            aiBrain.OWPlusOutpostClaimed = aiBrain.OWPlusOutpostClaimed or {}
+            local chosenKey
+            if aiBrain.OWPlusSubBases then
+                for slotKey, _ in aiBrain.OWPlusSubBases do
+                    if string.sub(slotKey, 1, 3) == 'OUT' and not aiBrain.OWPlusOutpostClaimed[slotKey] then
+                        chosenKey = slotKey
+                        break
+                    end
+                end
+            end
+            if not chosenKey then
+                WaitTicks(1)
+                self:PlatoonDisband()
+                return
+            end
+            aiBrain.OWPlusOutpostClaimed[chosenKey] = true
+            targetLocType = chosenKey
+            targetPos = aiBrain.OWPlusSubBases[chosenKey]
+            local recipe = aiBrain.OWPlusOutpostRecipes and aiBrain.OWPlusOutpostRecipes[chosenKey] or {}
+            buildList = {}
+            for _, t in recipe do table.insert(buildList, t) end
+            for _, t in cons.BuildStructures do table.insert(buildList, t) end
+            LOG('[OWPlus] Outpost: rivendicato ' .. chosenKey .. ', ' .. table.getn(buildList) .. ' strutture da costruire (ricetta+difese)')
+        elseif targetLocType then
             -- Legge da OWPlusSubBases (tabella custom sul brain, immune a DeadBaseMonitor).
             -- BuilderManagers NON viene usato: i manager vuoti vengono rimossi dopo 5s.
             targetPos = aiBrain.OWPlusSubBases and aiBrain.OWPlusSubBases[targetLocType]
@@ -74,7 +105,7 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
         -- Costruisce vicino a targetPos.
         -- closeToBuilder=nil, reference=targetPos (tabella) → AIExecuteBuildStructure di Uveso
         -- entra nel branch "reference and type(reference)=='table'" → relativeTo = targetPos.
-        for _, buildType in cons.BuildStructures do
+        for _, buildType in buildList do
             if aiBrain:PlatoonExists(self) and not eng.Dead then
                 AIBuildStructures.AIExecuteBuildStructure(
                     aiBrain, eng, buildType,
@@ -135,7 +166,10 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             -- di scena) — dopo 3 fallimenti ci limitiamo a liberare lo slot per
             -- fermare lo spam di retry infiniti (visto in test: 100% fallimento
             -- per tutta la partita su Setons/scmp_009).
-            if targetLocType and (string.sub(targetLocType, 1, 3) == 'FWD' or string.sub(targetLocType, 1, 5) == 'BASE_') then
+            --
+            -- Fase 9-F18: stesso meccanismo esteso agli avamposti OUT# (nessun
+            -- marker da rifiutare, sono punti generati da OWPlusOutpostGenerator.lua).
+            if targetLocType and (string.sub(targetLocType, 1, 3) == 'FWD' or string.sub(targetLocType, 1, 5) == 'BASE_' or string.sub(targetLocType, 1, 3) == 'OUT') then
                 aiBrain.OWPlusForwardFailCount = aiBrain.OWPlusForwardFailCount or {}
                 aiBrain.OWPlusForwardFailCount[targetLocType] = (aiBrain.OWPlusForwardFailCount[targetLocType] or 0) + 1
                 LOG('[OWPlus] OWPlusDispersedBuildAI (' .. ownerName .. '): ' .. targetLocType .. ' fallimento #'
@@ -167,7 +201,7 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
         -- di produzione di MAIN (solo ingegneri, 9-F4) invece della lista Builders
         -- del template Uveso Forward Base OverwhelmPlus.lua (mai attaccata per FWD*
         -- per lo stesso motivo per cui fabbrica/difese richiedevano un workaround).
-        if targetLocType and (string.sub(targetLocType, 1, 3) == 'FWD' or string.sub(targetLocType, 1, 5) == 'BASE_') then
+        if targetLocType and (string.sub(targetLocType, 1, 3) == 'FWD' or string.sub(targetLocType, 1, 5) == 'BASE_' or string.sub(targetLocType, 1, 3) == 'OUT') then
             ForkThread(function()
                 WaitSeconds(60)
                 local nearby = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE * categories.FACTORY * categories.LAND, targetPos, 15, 'Ally')

@@ -4,6 +4,7 @@
 -- Fa anche il monkey-patch di GetScoutTable via pcall per silenziare il crash nil/sort.
 
 local UvesoAIBrainClass = import('/mods/AI-Uveso/lua/ai/uveso-ai.lua').AIBrain
+local OWPlusOutpostGen = import('/mods/AI-Uveso-child/lua/AI/OWPlusOutpostGenerator.lua')
 
 -- Fase 9-F13: cerca un punto valido lungo la diagonale (segnoX, segnoZ) partendo
 -- da (startX, startZ), provando piu' distanze finche' il terreno non supera il check
@@ -78,6 +79,12 @@ AIBrain = Class(UvesoAIBrainClass) {
                 LOG('[OWPlus] OWPlusSubBases: ' .. name .. ' nessuna distanza valida trovata (terreno non valido su tutte le prove), slot non impostato')
             end
         end
+
+        -- Fase 9-F18: thread avamposti, forkato dall'aiBrain (sopravvive per tutta
+        -- la partita, stesso pattern di PriorityManagerThread/LocationRangeManagerThread
+        -- di Uveso in aiarchetype-managerloader.lua — MAI forkare da un platoon/unita',
+        -- che muore quando quell'oggetto viene distrutto/disbandato).
+        self:ForkThread(OWPlusOutpostGen.OWPlusOutpostScanThread)
     end,
 
 }
