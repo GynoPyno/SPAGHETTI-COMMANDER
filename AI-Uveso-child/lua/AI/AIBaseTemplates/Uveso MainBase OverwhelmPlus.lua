@@ -121,6 +121,7 @@ BaseBuilderTemplate {
         'U123 Air Builders ADAPTIVE',
         'U123 Air Builders Anti-Experimental',
         'U123 Air Transport Builders',
+        'OWPlus Outpost Transport',         -- Fase 9-F24: pool dedicato trasporti T1 per raggiungere gli avamposti OUT# (vedi platoon.lua MoveToLocationInclTransport)
 
         -----------------------------------------------------------------------------
         -- ==== Air Units FORMER ==== --

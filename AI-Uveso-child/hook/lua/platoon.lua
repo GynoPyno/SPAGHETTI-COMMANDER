@@ -14,6 +14,26 @@
 -- rimuove ogni manager non-MAIN senza ingegneri/fabbriche dopo 5 secondi dalla creazione.
 
 local AIBuildStructures = import('/lua/AI/aibuildstructures.lua')
+-- Fase 9-F21: AddFactoryToClosestManager (usata piu' sotto, dentro il ForkThread
+-- di riaggancio) e' una "globale" ma vive nell'ambiente isolato del modulo
+-- aiarchetype-managerloader.lua — in questo motore ogni file import()ato ha il
+-- proprio _G separato (setfenv), quindi va acceduta tramite la tabella
+-- restituita da import(), non come nome nudo. Confermato bug reale in game log:
+-- "access to nonexistent global variable AddFactoryToClosestManager" da
+-- platoon.lua, ogni volta che 9-F19/20 tentava di chiamarla.
+--
+-- Fase 9-F23: l'import di questo modulo NON va fatto qui a livello di file (si
+-- eseguirebbe troppo presto, mentre platoon.lua stesso si sta ancora caricando,
+-- prima che il resto del bootstrap AI abbia definito le globali da cui questo
+-- modulo dipende) — confermato crash reale: "access to nonexistent global
+-- variable ExecutePlan" proprio dentro aiarchetype-managerloader.lua, innescato
+-- da questo import a caricamento modulo. L'import va fatto in modo "lazy",
+-- dentro la funzione/ForkThread che lo usa davvero: a quel punto nel match il
+-- bootstrap AI normale (PriorityManagerThread ecc., forkati da questo stesso
+-- file a inizio partita) ha gia' caricato ed eseguito il modulo, quindi
+-- l'import() qui sotto trova la cache gia' pronta (stesso path base motore
+-- usato dal resto del gioco, non il path del file di hook della mod) invece di
+-- ricaricarlo da zero.
 
 CopyOfOldPlatoonClassOWPlusChild = Platoon
 Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
@@ -31,6 +51,7 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
         local targetLocType = cons.LocationType
         local targetPos
         local buildList = cons.BuildStructures
+        local buildRefs
 
         -- Fase 9-F18: 'OWPlusOutpostPool' e' un sentinel — non e' una location
         -- fissa, ma dice "scegli dinamicamente un avamposto (OUT#) generato da
@@ -57,9 +78,27 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             targetLocType = chosenKey
             targetPos = aiBrain.OWPlusSubBases[chosenKey]
             local recipe = aiBrain.OWPlusOutpostRecipes and aiBrain.OWPlusOutpostRecipes[chosenKey] or {}
+            -- Fase 9-F21: le difese cercano posto con un riferimento SPOSTATO da
+            -- targetPos invece di condividerlo con le fabbriche della ricetta.
+            -- Motivo: essendo in coda alla buildList, dopo che 2-3 fabbriche sono
+            -- gia' state piazzate vicino a targetPos, FindPlaceToBuild trova
+            -- raramente spazio libero li' e la struttura viene saltata in
+            -- silenzio (confermato: game log senza NESSUN fallimento esplicito
+            -- per T1GroundDefense/T1AADefense, segno che il tentativo non parte
+            -- quasi mai, non che fallisce). Offset fisso di 20 unita' in una
+            -- direzione casuale (Random(), sync-safe) da' loro terreno libero.
+            local defAngle = math.rad(Random(0, 359))
+            local defensePos = { targetPos[1] + math.cos(defAngle) * 20, targetPos[2], targetPos[3] + math.sin(defAngle) * 20 }
             buildList = {}
-            for _, t in recipe do table.insert(buildList, t) end
-            for _, t in cons.BuildStructures do table.insert(buildList, t) end
+            buildRefs = {}
+            for _, t in recipe do
+                table.insert(buildList, t)
+                table.insert(buildRefs, targetPos)
+            end
+            for _, t in cons.BuildStructures do
+                table.insert(buildList, t)
+                table.insert(buildRefs, defensePos)
+            end
             LOG('[OWPlus] Outpost: rivendicato ' .. chosenKey .. ', ' .. table.getn(buildList) .. ' strutture da costruire (ricetta+difese)')
         elseif targetLocType then
             -- Legge da OWPlusSubBases (tabella custom sul brain, immune a DeadBaseMonitor).
@@ -71,6 +110,11 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             LOG('[OWPlus-WARN] OWPlusDispersedBuildAI: sub-base ' .. tostring(targetLocType) .. ' non trovata in OWPlusSubBases')
             self:EngineerBuildAI()
             return
+        end
+
+        if not buildRefs then
+            buildRefs = {}
+            for _ in buildList do table.insert(buildRefs, targetPos) end
         end
 
         -- Trova l'ingegnere
@@ -92,6 +136,70 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             return
         end
 
+        -- Fase 9-F24: per gli avamposti OUT# (non per i nodi BASE_ di MAIN, gia'
+        -- vicini e raramente in timeout), spostiamo il plotone con
+        -- MoveToLocationInclTransport prima di costruire — la stessa funzione
+        -- gia' usata da Uveso per le sue espansioni via trasporto. Decide da
+        -- sola se camminare (percorso libero, distanza < 100u) o chiamare un
+        -- trasporto dal pool dedicato ('OWPlus Outpost Transport'); noi ci
+        -- limitiamo a esprimere la preferenza (WantsTransport=true), non la
+        -- forziamo. Motivazione: sess.66, 91% delle rivendicazioni falliva per
+        -- timeout (l'ingegnere non arrivava mai a destinazione), con ZERO
+        -- fallimenti reali di FindPlaceToBuild — indizio di un problema di
+        -- spostamento, non di terreno.
+        if targetLocType and string.sub(targetLocType, 1, 3) == 'OUT' then
+            -- Fase 9-F25: il primo parametro ('target') NON puo' essere nil.
+            -- MoveToLocationInclTransport lo ricontrolla ad ogni ciclo di
+            -- movimento con "if not target then self:Stop(); return end" — un
+            -- controllo pensato per platoon d'attacco che inseguono un'unita'
+            -- (si ferma se il bersaglio muore). Passando nil (non avevamo un
+            -- bersaglio, solo una posizione) la funzione si fermava al primo
+            -- controllo, subito dopo il comando di movimento, senza mai
+            -- completare il tragitto ne' a piedi ne' via trasporto — spiega
+            -- il fallimento istantaneo confermato in sess.66 (nessun crash,
+            -- solo un ritorno immediato). Passiamo 'eng' stesso: e' sempre
+            -- vivo a questo punto e non richiede mai :GetPosition() dato che
+            -- TargetPosition e' gia' fornito esplicitamente.
+            -- Fase 9-F26: MoveToLocationInclTransport NON chiama il trasporto
+            -- se aiBrain.WantTransports/NeedTransports (contatori nativi del
+            -- motore, mai impostati da codice Uveso — quindi mantenuti
+            -- probabilmente lato C++ in base a TUTTE le richieste trasporto
+            -- dell'esercito) sono gia' >=1 — cioe' se qualsiasi altra cosa
+            -- nell'IA ha gia' una richiesta di trasporto in sospeso, la nostra
+            -- viene saltata in silenzio. Confermato in sess.66: trasporti
+            -- costruiti (3) ma MAI usati per gli avamposti, nonostante il
+            -- fix del bersaglio nil. Bypassiamo il cancello chiamando
+            -- direttamente AIAttackUtils.SendPlatoonWithTransportsNoCheck (la
+            -- funzione "vera" sotto MoveToLocationInclTransport) — e' un
+            -- vero globale motore, referenziato da Uveso stesso senza mai
+            -- importarlo esplicitamente, quindi accessibile anche da qui.
+            -- Solo se non trova/usa un trasporto ricadiamo sul cammino a
+            -- piedi tramite MoveToLocationInclTransport (che ora funziona
+            -- correttamente dopo il fix 9-F25 sul parametro 'target').
+            -- Fase 9-F27: GetMostRestrictiveLayer(self) VA chiamata prima —
+            -- imposta self.MovementLayer, che SendPlatoonWithTransportsNoCheck
+            -- usa per sapere che tipo di plotone (terra/aria/mare) deve
+            -- trasportare e quindi quale trasporto e' compatibile. Senza
+            -- questo passaggio (saltato nella 9-F26 chiamando la funzione
+            -- direttamente) il plotone non ha layer impostato — spiega perche'
+            -- 30/30 tentativi fallivano nonostante 13 trasporti disponibili.
+            AIAttackUtils.GetMostRestrictiveLayer(self)
+            LOG('[OWPlus] Outpost: tentativo diretto di trasporto verso ' .. targetLocType)
+            local usedTransport = AIAttackUtils.SendPlatoonWithTransportsNoCheck(aiBrain, self, targetPos, true, false)
+            if not aiBrain:PlatoonExists(self) or eng.Dead then
+                return
+            end
+            if usedTransport then
+                LOG('[OWPlus] Outpost: trasporto usato per raggiungere ' .. targetLocType)
+            else
+                LOG('[OWPlus] Outpost: nessun trasporto disponibile, cammino a piedi verso ' .. targetLocType)
+                self:MoveToLocationInclTransport(eng, targetPos, false, true, nil)
+                if not aiBrain:PlatoonExists(self) or eng.Dead then
+                    return
+                end
+            end
+        end
+
         local factionLookup = { UEF = 1, AEON = 2, CYBRAN = 3, SERAPHIM = 4, NOMADS = 5 }
         local factionIndex = cons.FactionIndex or factionLookup[eng.factionCategory] or 1
         local buildingTmplFile = import(cons.BuildingTemplateFile or '/lua/BuildingTemplates.lua')
@@ -102,10 +210,10 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
 
         self.SetupEngineerCallbacks(eng)
 
-        -- Costruisce vicino a targetPos.
-        -- closeToBuilder=nil, reference=targetPos (tabella) → AIExecuteBuildStructure di Uveso
-        -- entra nel branch "reference and type(reference)=='table'" → relativeTo = targetPos.
-        for _, buildType in buildList do
+        -- Costruisce vicino a targetPos (o a buildRefs[i] per le difese, 9-F21).
+        -- closeToBuilder=nil, reference=tabella → AIExecuteBuildStructure di Uveso
+        -- entra nel branch "reference and type(reference)=='table'" → relativeTo = reference.
+        for i, buildType in buildList do
             if aiBrain:PlatoonExists(self) and not eng.Dead then
                 AIBuildStructures.AIExecuteBuildStructure(
                     aiBrain, eng, buildType,
@@ -113,7 +221,7 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                     false,           -- relative false
                     buildingTmpl,
                     baseTmplAtTarget,
-                    targetPos,       -- reference tabella → Uveso usa come centro di ricerca
+                    buildRefs[i],    -- reference tabella → Uveso usa come centro di ricerca
                     nil
                 )
             end
@@ -231,7 +339,12 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
         -- perche' la trovi realmente senza manager.
         if targetLocType and string.sub(targetLocType, 1, 3) == 'OUT'
             and not (aiBrain.OWPlusOutpostFactories and aiBrain.OWPlusOutpostFactories[targetLocType]) then
+            local outpostKey = targetLocType
+            local outpostPos = targetPos
             ForkThread(function()
+                -- Fase 9-F23: import lazy, path base motore (non il path del file
+                -- di hook della mod) — vedi nota in testa al file per il motivo.
+                local OWPlusManagerLoader = import('/lua/ai/aiarchetype-managerloader.lua')
                 local waitedBuild = 0
                 while eng and not eng.Dead and eng:IsUnitState('Building') and waitedBuild < 300 do
                     WaitSeconds(5)
@@ -253,13 +366,102 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                             LOG('[OWPlus] Outpost: fabbrica (' .. tostring(u.UnitId) .. ') a ' .. targetLocType
                                 .. ' staccata dal manager "' .. tostring(oldLocType) .. '"')
                         end
-                        AddFactoryToClosestManager(aiBrain, u)
+                        OWPlusManagerLoader.AddFactoryToClosestManager(aiBrain, u)
                         LOG('[OWPlus] Outpost: prima fabbrica (' .. tostring(u.UnitId) .. ') a ' .. targetLocType
                             .. ' registrata in un BuilderManager reale')
                         break
                     end
                 end
             end)
+
+            -- Fase 9-F22: sorveglianza distruzione/ricostruzione. Se TUTTE le
+            -- fabbriche di questo avamposto muoiono, dopo un periodo di sicurezza
+            -- (per non rimandare un ingegnere in mezzo a un combattimento ancora
+            -- in corso) e solo quando l'area torna libera da nemici, libera lo
+            -- slot cosi' 'OWPlus Outpost Factory Claim' puo' rimandare un
+            -- ingegnere a ricostruirlo — stessa posizione (OWPlusSubBases) e
+            -- stessa ricetta (OWPlusOutpostRecipes), mai toccate qui.
+            ForkThread(function()
+                WaitSeconds(90)
+                local guardUnits = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE * categories.FACTORY, outpostPos, 20, 'Ally') or {}
+                if table.getn(guardUnits) == 0 then
+                    LOG('[OWPlus] Outpost watcher (' .. outpostKey .. '): nessuna fabbrica trovata dopo 90s, sorveglianza annullata')
+                    return
+                end
+                LOG('[OWPlus] Outpost watcher (' .. outpostKey .. '): OK, sorveglianza avviata su ' .. table.getn(guardUnits) .. ' fabbriche')
+
+                while true do
+                    WaitSeconds(30)
+                    local anyAlive = false
+                    for _, u in guardUnits do
+                        if not u.Dead then
+                            anyAlive = true
+                            break
+                        end
+                    end
+                    if not anyAlive then
+                        break
+                    end
+                end
+                LOG('[OWPlus] Outpost watcher (' .. outpostKey .. '): OK, tutte le fabbriche distrutte, attesa di sicurezza (60s) prima di valutare ricostruzione')
+
+                WaitSeconds(60)
+                while aiBrain:GetNumUnitsAroundPoint(categories.ALLUNITS - categories.SCOUT, outpostPos, 40, 'Enemy') > 0 do
+                    WaitSeconds(30)
+                end
+
+                aiBrain.OWPlusOutpostClaimed[outpostKey] = nil
+                aiBrain.OWPlusOutpostFactories[outpostKey] = nil
+                LOG('[OWPlus] Outpost watcher (' .. outpostKey .. '): OK, area libera da nemici, slot rilasciato per ricostruzione')
+            end)
         end
+    end,
+
+    -- Fase 9-F28 (fix B12): PlatoonMerger (stock Uveso) chiama Platoon:GetPlan()
+    -- su ogni elemento di aiBrain:GetPlatoonsList() senza controllare se quel
+    -- metodo esiste davvero. Confermato in sess.66 (dev.log ricorrente):
+    --   attempt to call method 'GetPlan' (a nil value)
+    -- Se il crash avviene qui, la funzione si interrompe PRIMA di creare/
+    -- riusare il plotone unificato — le unita' del plotone chiamante restano
+    -- quindi in un plotone "orfano" mai fuso ne' disbandato, mai assegnate a
+    -- un plotone d'attacco attivo. Sospettato (insieme a UnitsLessInPlatoon,
+    -- vedi hook/lua/editor/unitcountbuildconditions.lua) come causa
+    -- dell'esercito pieno di unita' che non lancia mai un attacco su vasta
+    -- scala. Fix: stessa guardia difensiva "Platoon and Platoon.GetPlan and"
+    -- prima di chiamare :GetPlan() — nessun'altra logica modificata rispetto
+    -- all'originale.
+    PlatoonMerger = function(self)
+        local aiBrain = self:GetBrain()
+        local PlatoonPlan = self.PlatoonData.AIPlan
+        if not PlatoonPlan then
+            return
+        end
+        local platoonUnits = self:GetPlatoonUnits()
+        local AlreadyMergedPlatoon
+        local PlatoonList = aiBrain:GetPlatoonsList()
+        for _, Platoon in PlatoonList do
+            if Platoon and Platoon.GetPlan and Platoon:GetPlan() == PlatoonPlan then
+                AlreadyMergedPlatoon = Platoon
+                break
+            end
+        end
+        if not AlreadyMergedPlatoon then
+            AlreadyMergedPlatoon = aiBrain:MakePlatoon( PlatoonPlan..'Platoon', PlatoonPlan )
+            AlreadyMergedPlatoon.PlanName = PlatoonPlan
+            AlreadyMergedPlatoon.BuilderName = PlatoonPlan..'Platoon'
+        end
+        aiBrain:AssignUnitsToPlatoon( AlreadyMergedPlatoon, platoonUnits, 'support', 'none' )
+        AlreadyMergedPlatoon.PlatoonData.SearchRadius = self.PlatoonData.SearchRadius
+        AlreadyMergedPlatoon.PlatoonData.GetTargetsFromBase = self.PlatoonData.GetTargetsFromBase
+        AlreadyMergedPlatoon.PlatoonData.IgnorePathing = self.PlatoonData.IgnorePathing
+        AlreadyMergedPlatoon.PlatoonData.DirectMoveEnemyBase = self.PlatoonData.DirectMoveEnemyBase
+        AlreadyMergedPlatoon.PlatoonData.RequireTransport = self.PlatoonData.RequireTransport
+        AlreadyMergedPlatoon.PlatoonData.AggressiveMove = self.PlatoonData.AggressiveMove
+        AlreadyMergedPlatoon.PlatoonData.AttackEnemyStrength = self.PlatoonData.AttackEnemyStrength
+        AlreadyMergedPlatoon.PlatoonData.TargetSearchCategory = self.PlatoonData.TargetSearchCategory
+        AlreadyMergedPlatoon.PlatoonData.MoveToCategories = self.PlatoonData.MoveToCategories
+        AlreadyMergedPlatoon.PlatoonData.WeaponTargetCategories = self.PlatoonData.WeaponTargetCategories
+        AlreadyMergedPlatoon.PlatoonData.TargetHug = self.PlatoonData.TargetHug
+        self:PlatoonDisbandNoAssign()
     end,
 }
