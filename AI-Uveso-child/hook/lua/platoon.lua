@@ -161,5 +161,26 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
         end
         LOG('[OWPlus] OWPlusDispersedBuildAI: OK, build avviato a ' .. tostring(targetLocType))
         self.ProcessBuildCommand(eng, false)
+
+        -- Fase 9-F17 (diagnostica): a quale BuilderManager finisce per appartenere
+        -- la fabbrica costruita qui? Se e' 'MAIN', significa che segue le regole
+        -- di produzione di MAIN (solo ingegneri, 9-F4) invece della lista Builders
+        -- del template Uveso Forward Base OverwhelmPlus.lua (mai attaccata per FWD*
+        -- per lo stesso motivo per cui fabbrica/difese richiedevano un workaround).
+        if targetLocType and (string.sub(targetLocType, 1, 3) == 'FWD' or string.sub(targetLocType, 1, 5) == 'BASE_') then
+            ForkThread(function()
+                WaitSeconds(60)
+                local nearby = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE * categories.FACTORY * categories.LAND, targetPos, 15, 'Ally')
+                for _, u in nearby or {} do
+                    if not u.Dead and u.BuilderManagerData and u.BuilderManagerData.FactoryBuildManager then
+                        LOG('[OWPlus] Diagnostica manager: fabbrica ' .. tostring(u.UnitId) .. ' a ' .. tostring(targetLocType)
+                            .. ' appartiene al manager "' .. tostring(u.BuilderManagerData.FactoryBuildManager.LocationType) .. '"')
+                    elseif not u.Dead then
+                        LOG('[OWPlus] Diagnostica manager: fabbrica ' .. tostring(u.UnitId) .. ' a ' .. tostring(targetLocType)
+                            .. ' SENZA BuilderManagerData (orfana)')
+                    end
+                end
+            end)
+        end
     end,
 }
