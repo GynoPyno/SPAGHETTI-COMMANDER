@@ -184,6 +184,23 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             -- direttamente) il plotone non ha layer impostato — spiega perche'
             -- 30/30 tentativi fallivano nonostante 13 trasporti disponibili.
             AIAttackUtils.GetMostRestrictiveLayer(self)
+
+            -- Fase 9-F29 (diagnostica): quanti trasporti esistono vicino a MAIN
+            -- in questo istante e in che stato sono, per capire perche'
+            -- SendPlatoonWithTransportsNoCheck non ne trova mai uno libero
+            -- nonostante il pool dedicato ne costruisca.
+            if aiBrain.BuilderManagers and aiBrain.BuilderManagers['MAIN'] then
+                local mainPos = aiBrain.BuilderManagers['MAIN'].Position
+                local nearbyTransports = aiBrain:GetUnitsAroundPoint(categories.MOBILE * categories.AIR * categories.TRANSPORTFOCUS, mainPos, 200, 'Ally') or {}
+                LOG('[OWPlus] Outpost: diagnostica trasporti — trovati ' .. table.getn(nearbyTransports) .. ' vicino a MAIN')
+                for _, t in nearbyTransports do
+                    LOG('[OWPlus] Outpost: trasporto (' .. tostring(t.UnitId) .. ') Dead=' .. tostring(t.Dead)
+                        .. ' Idle=' .. tostring(not t.Dead and t:IsUnitState('Idle'))
+                        .. ' Attached=' .. tostring(not t.Dead and t:IsUnitState('Attached'))
+                        .. ' Busy=' .. tostring(not t.Dead and t:IsUnitState('Busy')))
+                end
+            end
+
             LOG('[OWPlus] Outpost: tentativo diretto di trasporto verso ' .. targetLocType)
             local usedTransport = AIAttackUtils.SendPlatoonWithTransportsNoCheck(aiBrain, self, targetPos, true, false)
             if not aiBrain:PlatoonExists(self) or eng.Dead then
