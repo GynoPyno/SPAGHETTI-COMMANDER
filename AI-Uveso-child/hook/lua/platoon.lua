@@ -14,6 +14,10 @@
 -- rimuove ogni manager non-MAIN senza ingegneri/fabbriche dopo 5 secondi dalla creazione.
 
 local AIBuildStructures = import('/lua/AI/aibuildstructures.lua')
+-- Fase 9-F30: modulo nostro (non un file hookato del motore/di un'altra mod),
+-- quindi nessun rischio di load-order come per aiarchetype-managerloader.lua —
+-- sicuro da importare qui a livello di file.
+local OWPlusTransportUtils = import('/mods/AI-Uveso-child/lua/AI/OWPlusTransportUtils.lua')
 -- Fase 9-F21: AddFactoryToClosestManager (usata piu' sotto, dentro il ForkThread
 -- di riaggancio) e' una "globale" ma vive nell'ambiente isolato del modulo
 -- aiarchetype-managerloader.lua — in questo motore ogni file import()ato ha il
@@ -136,88 +140,34 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             return
         end
 
-        -- Fase 9-F24: per gli avamposti OUT# (non per i nodi BASE_ di MAIN, gia'
-        -- vicini e raramente in timeout), spostiamo il plotone con
-        -- MoveToLocationInclTransport prima di costruire — la stessa funzione
-        -- gia' usata da Uveso per le sue espansioni via trasporto. Decide da
-        -- sola se camminare (percorso libero, distanza < 100u) o chiamare un
-        -- trasporto dal pool dedicato ('OWPlus Outpost Transport'); noi ci
-        -- limitiamo a esprimere la preferenza (WantsTransport=true), non la
-        -- forziamo. Motivazione: sess.66, 91% delle rivendicazioni falliva per
-        -- timeout (l'ingegnere non arrivava mai a destinazione), con ZERO
-        -- fallimenti reali di FindPlaceToBuild — indizio di un problema di
-        -- spostamento, non di terreno.
+        -- Fase 9-F30: per gli avamposti OUT# (non per i nodi BASE_ di MAIN, gia'
+        -- vicini e raramente in timeout), spostiamo l'ingegnere con la nostra
+        -- logistica trasporto scritta a mano (OWPlusTransportUtils.lua) invece
+        -- di affidarci a AIAttackUtils.SendPlatoonWithTransportsNoCheck.
+        -- Motivazione: sess.66, quella funzione di motore rifiutava sempre di
+        -- usare un trasporto — CONFERMATO con un log diagnostico che trasporti
+        -- completamente liberi esistevano vicino a MAIN nel momento esatto del
+        -- tentativo (nessuno stato attivo), eppure la funzione restituiva
+        -- comunque "nessun trasporto disponibile", senza errori/crash e senza
+        -- un motivo verificabile dal codice sorgente (compilato nel motore).
+        -- Prima di questo (9-F24-27) avevamo gia' scoperto e corretto due bug
+        -- nostri nella chiamata (target=nil, GetMostRestrictiveLayer mancante)
+        -- che spiegavano i primi fallimenti — ma anche dopo quei fix, con
+        -- trasporti confermati liberi, la funzione continuava a rifiutarsi.
         if targetLocType and string.sub(targetLocType, 1, 3) == 'OUT' then
-            -- Fase 9-F25: il primo parametro ('target') NON puo' essere nil.
-            -- MoveToLocationInclTransport lo ricontrolla ad ogni ciclo di
-            -- movimento con "if not target then self:Stop(); return end" — un
-            -- controllo pensato per platoon d'attacco che inseguono un'unita'
-            -- (si ferma se il bersaglio muore). Passando nil (non avevamo un
-            -- bersaglio, solo una posizione) la funzione si fermava al primo
-            -- controllo, subito dopo il comando di movimento, senza mai
-            -- completare il tragitto ne' a piedi ne' via trasporto — spiega
-            -- il fallimento istantaneo confermato in sess.66 (nessun crash,
-            -- solo un ritorno immediato). Passiamo 'eng' stesso: e' sempre
-            -- vivo a questo punto e non richiede mai :GetPosition() dato che
-            -- TargetPosition e' gia' fornito esplicitamente.
-            -- Fase 9-F26: MoveToLocationInclTransport NON chiama il trasporto
-            -- se aiBrain.WantTransports/NeedTransports (contatori nativi del
-            -- motore, mai impostati da codice Uveso — quindi mantenuti
-            -- probabilmente lato C++ in base a TUTTE le richieste trasporto
-            -- dell'esercito) sono gia' >=1 — cioe' se qualsiasi altra cosa
-            -- nell'IA ha gia' una richiesta di trasporto in sospeso, la nostra
-            -- viene saltata in silenzio. Confermato in sess.66: trasporti
-            -- costruiti (3) ma MAI usati per gli avamposti, nonostante il
-            -- fix del bersaglio nil. Bypassiamo il cancello chiamando
-            -- direttamente AIAttackUtils.SendPlatoonWithTransportsNoCheck (la
-            -- funzione "vera" sotto MoveToLocationInclTransport) — e' un
-            -- vero globale motore, referenziato da Uveso stesso senza mai
-            -- importarlo esplicitamente, quindi accessibile anche da qui.
-            -- Solo se non trova/usa un trasporto ricadiamo sul cammino a
-            -- piedi tramite MoveToLocationInclTransport (che ora funziona
-            -- correttamente dopo il fix 9-F25 sul parametro 'target').
-            -- Fase 9-F27: GetMostRestrictiveLayer(self) VA chiamata prima —
-            -- imposta self.MovementLayer, che SendPlatoonWithTransportsNoCheck
-            -- usa per sapere che tipo di plotone (terra/aria/mare) deve
-            -- trasportare e quindi quale trasporto e' compatibile. Senza
-            -- questo passaggio (saltato nella 9-F26 chiamando la funzione
-            -- direttamente) il plotone non ha layer impostato — spiega perche'
-            -- 30/30 tentativi fallivano nonostante 13 trasporti disponibili.
-            AIAttackUtils.GetMostRestrictiveLayer(self)
-
-            -- Fase 9-F29 (diagnostica): quanti trasporti esistono vicino a MAIN
-            -- in questo istante e in che stato sono, per capire perche'
-            -- SendPlatoonWithTransportsNoCheck non ne trova mai uno libero
-            -- nonostante il pool dedicato ne costruisca.
-            if aiBrain.BuilderManagers and aiBrain.BuilderManagers['MAIN'] then
-                local mainPos = aiBrain.BuilderManagers['MAIN'].Position
-                local nearbyTransports = aiBrain:GetUnitsAroundPoint(categories.MOBILE * categories.AIR * categories.TRANSPORTFOCUS, mainPos, 200, 'Ally') or {}
-                LOG('[OWPlus] Outpost: diagnostica trasporti — trovati ' .. table.getn(nearbyTransports) .. ' vicino a MAIN')
-                for _, t in nearbyTransports do
-                    if t.Dead then
-                        LOG('[OWPlus] Outpost: trasporto (' .. tostring(t.UnitId) .. ') Dead=true')
-                    else
-                        LOG('[OWPlus] Outpost: trasporto (' .. tostring(t.UnitId) .. ') Dead=false'
-                            .. ' Moving=' .. tostring(t:IsUnitState('Moving'))
-                            .. ' Attached=' .. tostring(t:IsUnitState('Attached'))
-                            .. ' Busy=' .. tostring(t:IsUnitState('Busy'))
-                            .. ' WaitingForTransport=' .. tostring(t:IsUnitState('WaitingForTransport'))
-                            .. ' TransportLoading=' .. tostring(t:IsUnitState('TransportLoading'))
-                            .. ' TransportUnloading=' .. tostring(t:IsUnitState('TransportUnloading'))
-                            .. ' Ferrying=' .. tostring(t:IsUnitState('Ferrying')))
-                    end
-                end
+            local mainPos = aiBrain.BuilderManagers and aiBrain.BuilderManagers['MAIN'] and aiBrain.BuilderManagers['MAIN'].Position
+            local usedTransport = false
+            if mainPos then
+                LOG('[OWPlus] Outpost: tentativo trasporto (logistica propria) verso ' .. targetLocType)
+                usedTransport = OWPlusTransportUtils.OWPlusTransportUnit(aiBrain, eng, mainPos, targetPos)
             end
-
-            LOG('[OWPlus] Outpost: tentativo diretto di trasporto verso ' .. targetLocType)
-            local usedTransport = AIAttackUtils.SendPlatoonWithTransportsNoCheck(aiBrain, self, targetPos, true, false)
             if not aiBrain:PlatoonExists(self) or eng.Dead then
                 return
             end
             if usedTransport then
                 LOG('[OWPlus] Outpost: trasporto usato per raggiungere ' .. targetLocType)
             else
-                LOG('[OWPlus] Outpost: nessun trasporto disponibile, cammino a piedi verso ' .. targetLocType)
+                LOG('[OWPlus] Outpost: nessun trasporto disponibile/usato, cammino a piedi verso ' .. targetLocType)
                 self:MoveToLocationInclTransport(eng, targetPos, false, true, nil)
                 if not aiBrain:PlatoonExists(self) or eng.Dead then
                     return
