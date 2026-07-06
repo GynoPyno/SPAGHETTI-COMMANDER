@@ -79,8 +79,17 @@ local function OWPlusOutpostDirectionThread(aiBrain, angleDeg, startX, startZ, o
     local STEP = 20
     local MAX_DIST = 500
 
+    -- Fase 9-F31: distanza minima differenziata. Le 4 direzioni diagonali
+    -- (45/135/225/315) condividono lo stesso raggio di ricerca dei nodi
+    -- dispersi di MAIN (BASE_NE/SE/SW/NW, che provano 20-90 in overwhelmplusai.lua)
+    -- — restano a 90 per evitare sovrapposizioni. Le 4 direzioni cardinali
+    -- (0/90/180/270) non hanno nulla di MAIN nelle vicinanze, quindi possono
+    -- partire da 50, avvicinando i primi avamposti senza rischio di collisione.
+    local isDiagonal = (angleDeg == 45 or angleDeg == 135 or angleDeg == 225 or angleDeg == 315)
+    local MIN_DIST = isDiagonal and 90 or 50
+
     while true do
-        local dist = 90
+        local dist = MIN_DIST
         local offMap = false
         while dist <= MAX_DIST and not offMap do
             local checkKey = angleDeg .. '_' .. dist

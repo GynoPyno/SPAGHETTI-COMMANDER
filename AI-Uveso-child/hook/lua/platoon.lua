@@ -279,6 +279,27 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
         LOG('[OWPlus] OWPlusDispersedBuildAI: OK, build avviato a ' .. tostring(targetLocType))
         self.ProcessBuildCommand(eng, false)
 
+        -- Fase 9-F31: questa funzione confermava solo l'AVVIO della prima
+        -- struttura, poi finiva — pur essendoci ancora 1-4 strutture in coda
+        -- (ricetta+difese). L'ingegnere continuava a costruirle da solo tramite
+        -- la sua coda nativa (eng.EngineerBuildQueue, gestita da
+        -- ProcessBuildCommand via callback), ma il PLOTONE che lo controllava
+        -- terminava subito — segnalando ad altri builder (es. i tanti "reclaim"
+        -- di Uveso/OWPlus) che l'ingegnere non aveva piu' un plotone attivo e
+        -- quindi era "libero", anche se stava ancora fisicamente costruendo.
+        -- Risultato osservato (sess.66): un ingegnere reclamato a meta'
+        -- costruzione di un avamposto. Fix: restiamo in attesa finche' la coda
+        -- nativa non e' davvero vuota (o l'ingegnere muore, o scade un tetto di
+        -- sicurezza) prima di proseguire — cosi' il plotone resta "occupato"
+        -- per tutta la vera durata della costruzione.
+        local queueWaited = 0
+        local queueMaxWait = 600
+        while not eng.Dead and eng.EngineerBuildQueue and not table.empty(eng.EngineerBuildQueue) and queueWaited < queueMaxWait do
+            WaitSeconds(5)
+            queueWaited = queueWaited + 5
+        end
+        LOG('[OWPlus] OWPlusDispersedBuildAI: OK, coda di costruzione esaurita (o ingegnere morto/tetto raggiunto) a ' .. tostring(targetLocType))
+
         -- Fase 9-F17 (diagnostica): a quale BuilderManager finisce per appartenere
         -- la fabbrica costruita qui? Se e' 'MAIN', significa che segue le regole
         -- di produzione di MAIN (solo ingegneri, 9-F4) invece della lista Builders
