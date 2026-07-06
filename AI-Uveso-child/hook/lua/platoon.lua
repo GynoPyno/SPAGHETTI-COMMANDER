@@ -194,10 +194,18 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                 local nearbyTransports = aiBrain:GetUnitsAroundPoint(categories.MOBILE * categories.AIR * categories.TRANSPORTFOCUS, mainPos, 200, 'Ally') or {}
                 LOG('[OWPlus] Outpost: diagnostica trasporti — trovati ' .. table.getn(nearbyTransports) .. ' vicino a MAIN')
                 for _, t in nearbyTransports do
-                    LOG('[OWPlus] Outpost: trasporto (' .. tostring(t.UnitId) .. ') Dead=' .. tostring(t.Dead)
-                        .. ' Idle=' .. tostring(not t.Dead and t:IsUnitState('Idle'))
-                        .. ' Attached=' .. tostring(not t.Dead and t:IsUnitState('Attached'))
-                        .. ' Busy=' .. tostring(not t.Dead and t:IsUnitState('Busy')))
+                    if t.Dead then
+                        LOG('[OWPlus] Outpost: trasporto (' .. tostring(t.UnitId) .. ') Dead=true')
+                    else
+                        LOG('[OWPlus] Outpost: trasporto (' .. tostring(t.UnitId) .. ') Dead=false'
+                            .. ' Moving=' .. tostring(t:IsUnitState('Moving'))
+                            .. ' Attached=' .. tostring(t:IsUnitState('Attached'))
+                            .. ' Busy=' .. tostring(t:IsUnitState('Busy'))
+                            .. ' WaitingForTransport=' .. tostring(t:IsUnitState('WaitingForTransport'))
+                            .. ' TransportLoading=' .. tostring(t:IsUnitState('TransportLoading'))
+                            .. ' TransportUnloading=' .. tostring(t:IsUnitState('TransportUnloading'))
+                            .. ' Ferrying=' .. tostring(t:IsUnitState('Ferrying')))
+                    end
                 end
             end
 
