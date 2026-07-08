@@ -140,6 +140,25 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             return
         end
 
+        -- Fase 9-F34: guardia difensiva contro il doppio-assegnamento dello
+        -- stesso ingegnere a due rivendicazioni avamposto in parallelo (bug
+        -- osservato in sess.67: un ingegnere che stava gia' costruendo un
+        -- avamposto ad est e' stato caricato da un trasporto e portato a
+        -- costruirne un altro a nord-ovest). 'OWPlus Outpost Factory Claim' ha
+        -- InstanceCount=6, quindi fino a 6 rivendicazioni possono partire in
+        -- parallelo — se il framework di selezione ingegneri (fuori dal nostro
+        -- controllo) assegna per errore/race lo stesso ingegnere a due platoon
+        -- OWPlusDispersedBuildAI, questo flag lo rileva e la SECONDA
+        -- rivendicazione si ritira subito senza toccare l'ingegnere, lasciando
+        -- la prima (gia' in corso) indisturbata. Il flag viene ripulito a ogni
+        -- uscita della funzione (abbandono, fallimento terreno, completamento).
+        if eng.OWPlusOutpostBusy then
+            LOG('[OWPlus-WARN] OWPlusDispersedBuildAI: ingegnere gia\' impegnato su un altro avamposto, abbandono rivendicazione di ' .. tostring(targetLocType))
+            self:PlatoonDisband()
+            return
+        end
+        eng.OWPlusOutpostBusy = true
+
         -- Fase 9-F30: per gli avamposti OUT# (non per i nodi BASE_ di MAIN, gia'
         -- vicini e raramente in timeout), spostiamo l'ingegnere con la nostra
         -- logistica trasporto scritta a mano (OWPlusTransportUtils.lua) invece
@@ -162,16 +181,35 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                 usedTransport = OWPlusTransportUtils.OWPlusTransportUnit(aiBrain, eng, mainPos, targetPos)
             end
             if not aiBrain:PlatoonExists(self) or eng.Dead then
+                eng.OWPlusOutpostBusy = nil
                 return
             end
             if usedTransport then
                 LOG('[OWPlus] Outpost: trasporto usato per raggiungere ' .. targetLocType)
             else
-                LOG('[OWPlus] Outpost: nessun trasporto disponibile/usato, cammino a piedi verso ' .. targetLocType)
-                self:MoveToLocationInclTransport(eng, targetPos, false, true, nil)
-                if not aiBrain:PlatoonExists(self) or eng.Dead then
-                    return
+                -- Fase 9-F33: espansione avamposti SOLO via trasporto, su richiesta
+                -- esplicita dell'utente (sess.67, confermata efficace in sess.68 —
+                -- fallback a piedi cancellato). Se non c'e' un trasporto libero ORA,
+                -- abbandoniamo questo tentativo (verra' ritentato dal builder) invece
+                -- di camminare — cosi' l'AI e' spinta a costruire piu' trasporti
+                -- invece di aggirarli a piedi.
+                --
+                -- Fase 9-F35: throttle 10s prima di disbandare. Senza, il builder
+                -- ('OWPlus Outpost Factory Claim', priorita' alta, valutato quasi
+                -- ogni tick) rirendicava e riabbandonava lo stesso slot in loop
+                -- istantaneo — confermato in sess.68: 527 abbandoni per 1 solo
+                -- trasporto trovato libero in una partita di 4 minuti.
+                LOG('[OWPlus] Outpost: nessun trasporto disponibile, tentativo abbandonato (solo-trasporto, 9-F33) per ' .. targetLocType)
+                WaitSeconds(10)
+                eng.OWPlusOutpostBusy = nil
+                -- Rilascia lo slot (se e' un OUT# con claim registrato) cosi'
+                -- 'OWPlus Outpost Factory Claim' puo' ritentarlo quando un
+                -- trasporto sara' di nuovo libero, invece di perderlo per sempre.
+                if targetLocType and aiBrain.OWPlusOutpostClaimed then
+                    aiBrain.OWPlusOutpostClaimed[targetLocType] = nil
                 end
+                self:PlatoonDisband()
+                return
             end
         end
 
@@ -273,32 +311,52 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             end
 
             WaitSeconds(30)
+            eng.OWPlusOutpostBusy = nil
             self:PlatoonDisband()
             return
         end
         LOG('[OWPlus] OWPlusDispersedBuildAI: OK, build avviato a ' .. tostring(targetLocType))
-        self.ProcessBuildCommand(eng, false)
 
-        -- Fase 9-F31: questa funzione confermava solo l'AVVIO della prima
-        -- struttura, poi finiva — pur essendoci ancora 1-4 strutture in coda
-        -- (ricetta+difese). L'ingegnere continuava a costruirle da solo tramite
-        -- la sua coda nativa (eng.EngineerBuildQueue, gestita da
-        -- ProcessBuildCommand via callback), ma il PLOTONE che lo controllava
-        -- terminava subito — segnalando ad altri builder (es. i tanti "reclaim"
-        -- di Uveso/OWPlus) che l'ingegnere non aveva piu' un plotone attivo e
-        -- quindi era "libero", anche se stava ancora fisicamente costruendo.
-        -- Risultato osservato (sess.66): un ingegnere reclamato a meta'
-        -- costruzione di un avamposto. Fix: restiamo in attesa finche' la coda
-        -- nativa non e' davvero vuota (o l'ingegnere muore, o scade un tetto di
-        -- sicurezza) prima di proseguire — cosi' il plotone resta "occupato"
-        -- per tutta la vera durata della costruzione.
+        -- Fase 9-F32: RIMOSSA self.ProcessBuildCommand(eng, false) (era qui dalla
+        -- 9-F31). Causa di root del bug "ingegnere ripreso mentre costruisce
+        -- ancora", confermata leggendo /lua/platoon.lua vanilla:
+        -- ProcessBuildCommand fa IssueClearCommands({eng}) e ri-emette SOLO il
+        -- primo item di eng.EngineerBuildQueue, scartando gli ordini nativi per
+        -- gli item 2..N gia' emessi dal ciclo AIExecuteBuildStructure qui sopra
+        -- (che li mette in coda nativa direttamente via aiBrain:BuildStructure,
+        -- non serve alcuna chiamata di supporto). Il completamento del primo
+        -- item dovrebbe far scattare EngineerBuildDone (via SetupEngineerCallbacks)
+        -- per processare l'item successivo, ma EngineerBuildDone controlla
+        -- `unit.PlatoonHandle.PlanName == 'EngineerBuildAI'` — il nostro plotone
+        -- ha PlanName = 'OWPlusDispersedBuildAI', quindi il callback esce subito
+        -- e la catena si interrompe dopo il primo item. L'ingegnere risultava
+        -- "davvero" libero a livello nativo (nessun comando in coda) pur avendo
+        -- ancora 1-4 strutture pianificate nel nostro codice — altri builder
+        -- (reclaim/economia) lo raccoglievano, e siccome era l'unico membro di
+        -- questo plotone la riassegnazione lo disbandava, uccidendo anche
+        -- questo stesso thread a meta' esecuzione (spiega perche' il LOG di
+        -- chiusura sotto non compariva mai in sess.67, nemmeno per il primo
+        -- avamposto avviato con 12+ minuti disponibili prima della fine del test).
+        --
+        -- Fix: nessuna chiamata a ProcessBuildCommand. Attendiamo lo stato
+        -- nativo dell'ingegnere (che riflette davvero cosa sta facendo) invece
+        -- della sua coda Lua-side, che nel nostro path non viene mai svuotata
+        -- correttamente — stesso pattern di WatchForNotBuilding in platoon.lua
+        -- vanilla. Resta "occupato" finche' sta costruendo o si sposta tra una
+        -- struttura e l'altra, con lo stesso tetto di sicurezza di prima.
         local queueWaited = 0
         local queueMaxWait = 600
-        while not eng.Dead and eng.EngineerBuildQueue and not table.empty(eng.EngineerBuildQueue) and queueWaited < queueMaxWait do
+        while not eng.Dead and (eng:IsUnitState('Building') or eng:IsUnitState('Moving')) and queueWaited < queueMaxWait do
             WaitSeconds(5)
             queueWaited = queueWaited + 5
         end
-        LOG('[OWPlus] OWPlusDispersedBuildAI: OK, coda di costruzione esaurita (o ingegnere morto/tetto raggiunto) a ' .. tostring(targetLocType))
+        LOG('[OWPlus] OWPlusDispersedBuildAI: OK, costruzione avamposto completata (o ingegnere morto/tetto raggiunto) a ' .. tostring(targetLocType))
+        -- Fase 9-F34: costruzione conclusa (o ingegnere morto/tetto raggiunto) —
+        -- rilascia il flag cosi' l'ingegnere (se sopravvissuto) torna disponibile
+        -- per una futura rivendicazione avamposto legittima.
+        if not eng.Dead then
+            eng.OWPlusOutpostBusy = nil
+        end
 
         -- Fase 9-F17 (diagnostica): a quale BuilderManager finisce per appartenere
         -- la fabbrica costruita qui? Se e' 'MAIN', significa che segue le regole

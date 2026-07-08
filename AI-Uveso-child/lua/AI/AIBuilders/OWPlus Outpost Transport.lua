@@ -33,7 +33,16 @@ BuilderGroup {
     Builder {
         BuilderName = 'OWPlus Outpost Transport Pool',
         PlatoonTemplate = 'T1AirTransport',
-        Priority = 450,
+        -- Fase 9-F32: 450 era troppo basso rispetto a TUTTO il resto che compete
+        -- per le stesse fabbriche aria (Engineer Builders ~18400-19100, Land Naval
+        -- ~18100-18800, Experimental ~17400-18300) — le fabbriche costruivano
+        -- praticamente sempre altro, e i trasporti passavano solo nei rari momenti
+        -- di coda vuota. Sintomo osservato in test: 1 solo trasporto per i primi
+        -- minuti, poi un "burst" tardivo di 8 tutti insieme quando la domanda
+        -- concorrente si esauriva. Alzata a 18600 (stesso ordine di grandezza dei
+        -- builder di combattimento) cosi' la scorta si forma presto quanto il
+        -- resto dell'esercito, invece che per ultima.
+        Priority = 18600,
         BuilderConditions = {
             { OWPlusLogCond, 'OWPlusHasUnclaimedOutpost', {} },
             { UCBC, 'BuildOnlyOnLocation', { 'LocationType', 'MAIN' } },
