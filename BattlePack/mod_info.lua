@@ -1,5 +1,5 @@
-name = "MAXI Wyvern Battle Pack MAXI"
-uid = "9a9C61C0-1787-10DF-A0AD-BATTLEPACK005-MAXI"
+name = "Wyvern Battle Pack"
+uid = "9a9C61C0-1787-10DF-A0AD-BATTLEPACK005"
 version = 5
 copyright = "2010 Brandon Potter"
 description = "Contains several new units, effects and projectiles. With full AI support"
