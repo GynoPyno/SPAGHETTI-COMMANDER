@@ -1,0 +1,10 @@
+ProjectileBlueprint {
+Merge = true,   -- sera anti-nuke projectile
+    Audio = {
+        Impact = Sound {
+          Bank = 'Memes',
+          Cue = 'Bonk',
+          LodCutoff = 'Weapon_LodCutoff',
+    },
+	},
+}

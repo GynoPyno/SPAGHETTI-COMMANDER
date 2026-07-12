@@ -20,5 +20,19 @@
 !AI-Uveso-child/
 !AI-Uveso-child/**
 
+# audio
+!faf_audio_obiettivi.md
+!Audiowo/
+!Audiowo/**
+# audio test da rimuovere
+!AnimeSounds/
+!AnimeSounds/**
+!ZhanaseeSound/
+!ZhanaseeSound/**
+!Oof/
+!Oof/**
+!MemeSoundEffects/
+!MemeSoundEffects/**
+
 # Escludi file temporanei/backup anche dentro le cartelle tracciate
 *.bak

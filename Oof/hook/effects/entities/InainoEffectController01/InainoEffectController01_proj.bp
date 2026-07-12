@@ -1,0 +1,10 @@
+ProjectileBlueprint {
+Merge = true,
+    Audio = {
+        NukeExplosion = Sound {
+            Bank = 'Oof',
+            Cue = '00000032',
+            LodCutoff = 'UnitMove_LodCutoff',
+        },
+    },
+}

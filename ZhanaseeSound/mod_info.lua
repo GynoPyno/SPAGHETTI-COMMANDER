@@ -1,0 +1,10 @@
+name = "Seraphim T3 Bomber Sound-3640"
+version = 1.0
+copyright = "Nil"
+description = "The Zhanesee weapon sound of the Sinntha plays at the same volume regardless of camera location. Replaces it with another sound that scales correctly"
+author = "Bamboofats"
+url = ""
+uid = "EA847CCA-F757-11E4-8DEE-23921D5D46B0"
+exclusive = false
+ui_only =false
+conflicts = {}

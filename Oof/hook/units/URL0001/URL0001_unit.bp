@@ -1,0 +1,10 @@
+UnitBlueprint {
+Merge = true,
+BlueprintId = "url0001",    -- cybran com 
+    Audio = {
+        Killed = Sound {
+            Bank = 'Oof',
+            Cue = 'oooof',
+    },
+	},
+}

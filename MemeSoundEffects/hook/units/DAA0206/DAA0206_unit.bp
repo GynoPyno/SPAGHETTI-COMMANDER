@@ -1,0 +1,25 @@
+UnitBlueprint {
+  Merge = true,
+  BlueprintId = "daa0206",  --mercy
+  Audio = {
+    Destroyed = Sound {
+      Bank = 'Memes',
+      Cue = 'Brap',
+      LodCutoff = 'UnitMove_LodCutoff',
+    },
+    Killed = Sound {
+      Bank = 'Memes',
+      Cue = 'Brap',
+      LodCutoff = 'UnitMove_LodCutoff',
+    },
+  },
+  Weapon = {
+    Audio = {
+      Fire = Sound{
+        Bank = 'Memes',
+        Cue = 'Brap',
+        LodCutoff = 'Weapon_LodCutoff',
+      },
+    },
+  },
+}

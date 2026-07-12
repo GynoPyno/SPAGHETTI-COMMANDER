@@ -1,0 +1,10 @@
+ProjectileBlueprint {  --cybran strat missile
+  Merge = true,
+  Audio = {
+    NukeExplosion = Sound {
+      Bank = 'Memes',
+      Cue = 'Fart',
+      LodCutoff = 'Weapon_LodCutoff',
+    },
+  },
+}
