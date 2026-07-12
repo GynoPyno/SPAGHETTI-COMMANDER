@@ -15,25 +15,25 @@
 -- sopravvive per tutta la partita, stesso pattern di PriorityManagerThread/
 -- LocationRangeManagerThread di Uveso (aiarchetype-managerloader.lua).
 
--- Ricette di composizione fabbriche per avamposto — scelta a caso (Random(), sync-safe)
--- ad ogni nuovo avamposto generato, cosi' non sono tutti identici. NON include
--- spaceship (Orbital Wars): quell'integrazione non e' ancora implementata (B3,
--- backlog AI_Mod_Spec.md) — aggiungerla qui darebbe un building-type inesistente.
+-- Fix sess.76 (richiesta esplicita utente): ricetta semplificata al massimo —
+-- una sola fabbrica di terra, niente piu' varianti/conteggi casuali. Motivo:
+-- ridurre al minimo il tempo (e quindi la finestra di rischio) tra sbarco
+-- dell'ingegnere e "avamposto online" (prima fabbrica adottata in un
+-- BuilderManager reale, protezioni dedicate agganciate) — piu' breve la
+-- ricetta, prima l'avamposto e' al sicuro. Se in futuro si vorra' reintrodurre
+-- varieta', farlo DOPO che l'avamposto e' gia' online (stessa logica gia'
+-- usata per le difese, rimandate a una fase 2 in platoon.lua).
 local OWPlusOutpostRecipes = {
     { 'T1LandFactory' },
-    { 'T1LandFactory', 'T1LandFactory' },
-    { 'T1LandFactory', 'T1AirFactory' },
-    { 'T1LandFactory', 'T1LandFactory', 'T1AirFactory' },
-    { 'T1AirFactory' },
-    { 'T1AirFactory', 'T1AirFactory' },
-    { 'T1LandFactory', 'T1LandFactory', 'T1LandFactory' },
 }
 
--- Le difese (T1GroundDefense/T1AADefense/T2ShieldDefense, stesse stringhe di 9-F16)
--- sono aggiunte dal builder 'OWPlus Outpost Factory.lua' (Construction.BuildStructures),
--- non qui — questo file genera solo le posizioni e sceglie la ricetta di fabbriche.
+-- Fase C (B16): le difese non sono piu' una lista fissa nel builder — ogni
+-- avamposto riceve una selezione casuale (3-7 point-defense + 4-9 AA, pool
+-- vanilla+TotalMayhem) generata qui insieme alla ricetta fabbriche, e salvata in
+-- aiBrain.OWPlusOutpostDefenseRecipes[slotKey]. Vedi OWPlusOutpostDefensePool.lua.
 
 local AITargetManager = import('/mods/AI-Uveso/lua/AI/AITargetManager.lua')
+local OWPlusOutpostDefensePool = import('/mods/AI-Uveso-child/lua/AI/OWPlusOutpostDefensePool.lua')
 
 local function OWPlusTerrainValid(x, z)
     local terrainH = GetTerrainHeight(x, z)
@@ -115,9 +115,15 @@ local function OWPlusOutpostDirectionThread(aiBrain, angleDeg, startX, startZ, o
                     aiBrain.OWPlusSubBases[slotKey] = { x, surfaceH, z }
                     local recipe = OWPlusOutpostRecipes[Random(1, table.getn(OWPlusOutpostRecipes))]
                     aiBrain.OWPlusOutpostRecipes[slotKey] = recipe
+                    -- Fase C (B16): selezione difese iniziali (3-7 terra + 4-9 AA,
+                    -- pool vanilla+TotalMayhem) generata una volta per avamposto,
+                    -- alla stessa maniera della ricetta fabbriche.
+                    local defenses = OWPlusOutpostDefensePool.OWPlusPickInitialOutpostDefenses(aiBrain)
+                    aiBrain.OWPlusOutpostDefenseRecipes[slotKey] = defenses
                     LOG('[OWPlus] Outpost (' .. ownerName .. '): registrato ' .. slotKey
                         .. ' a (' .. math.floor(x) .. ',' .. math.floor(z) .. ') direzione=' .. angleDeg
-                        .. 'deg dist=' .. dist .. ', ricetta=' .. table.getn(recipe) .. ' fabbriche')
+                        .. 'deg dist=' .. dist .. ', ricetta=' .. table.getn(recipe) .. ' fabbriche, difese='
+                        .. table.getn(defenses.ground) .. ' terra + ' .. table.getn(defenses.aa) .. ' AA')
                     -- NON marchiamo checkKey come "definitivo" se il terreno fallisce: un
                     -- punto fallito oggi (es. detriti/prop temporanei) puo' essere riprovato
                     -- al prossimo giro, usando un nuovo scarto casuale.
@@ -143,10 +149,17 @@ end
 function OWPlusOutpostScanThread(aiBrain)
     local ownerName = (ArmyBrains[aiBrain:GetArmyIndex()] and ArmyBrains[aiBrain:GetArmyIndex()].Nickname) or tostring(aiBrain:GetArmyIndex())
     local startX, startZ = aiBrain:GetArmyStartPos()
-    local angles = { 0, 45, 90, 135, 180, 225, 270, 315 }
+    -- Fix sess.77: isolamento test diagnostico (richiesta esplicita utente) — solo
+    -- la direzione Nord (270deg, Z negativo per convenzione SupCom) resta attiva,
+    -- per eliminare la variabile "avamposti multipli in competizione" mentre si
+    -- indaga il blocco totale post salto-di-tier. L'utente si occupa di posizionare
+    -- l'AI in modo che un punto valido a Nord sia sempre disponibile. RIPRISTINARE
+    -- tutte e 8 le direzioni prima di tornare al gioco normale.
+    local angles = { 270 }
 
     aiBrain.OWPlusSubBases = aiBrain.OWPlusSubBases or {}
     aiBrain.OWPlusOutpostRecipes = aiBrain.OWPlusOutpostRecipes or {}
+    aiBrain.OWPlusOutpostDefenseRecipes = aiBrain.OWPlusOutpostDefenseRecipes or {}
     aiBrain.OWPlusOutpostChecked = aiBrain.OWPlusOutpostChecked or {}
     aiBrain.OWPlusOutpostCount = aiBrain.OWPlusOutpostCount or 0
 

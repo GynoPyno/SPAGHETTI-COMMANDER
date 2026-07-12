@@ -29,9 +29,17 @@ BuilderGroup {
         PlatoonTemplate = 'OWPlusDispersedBuilder',
         Priority = 17500,
         InstanceCount = 6,
+        -- Fix sess.76: PoolGreaterAtLocation (conteggio grezzo) sostituito con
+        -- OWPlusHasFreeEngineerAtLocation (hook/lua/editor/unitcountbuildconditions.lua)
+        -- — esclude gli ingegneri gia' marcati OWPlusOutpostBusy da un'altra
+        -- rivendicazione in corso. Root cause del "furto" confermata via test di
+        -- isolamento (nessun altro builder attivo): con InstanceCount=6 e un
+        -- conteggio che non distingue "libero" da "gia' impegnato", lo stesso
+        -- ingegnere fisico poteva essere rivendicato due volte in parallelo dal
+        -- nostro stesso builder.
         BuilderConditions = {
             { OWPlusLogCond, 'OWPlusHasUnclaimedOutpost', {} },
-            { UCBC, 'PoolGreaterAtLocation', { 'MAIN', 0, ENG } },
+            { UCBC, 'OWPlusHasFreeEngineerAtLocation', { 'MAIN', ENG } },
             { EBC,  'GreaterThanEconStorageRatio', { 0.10, 0.20 } },
         },
         BuilderType = 'Any',
@@ -39,8 +47,12 @@ BuilderGroup {
             Construction = {
                 LocationType    = 'OWPlusOutpostPool',
                 BuildClose      = true,
-                -- Solo le difese: la ricetta di fabbriche viene anteposta
-                -- dinamicamente da OWPlusDispersedBuildAI in base allo slot scelto.
+                -- Fase C (B16): questa coppia fissa NON e' piu' la fonte primaria
+                -- delle difese — OWPlusDispersedBuildAI (hook/lua/platoon.lua) legge
+                -- ora aiBrain.OWPlusOutpostDefenseRecipes[slot] (3-7 point-defense +
+                -- 4-9 AA, pool vanilla+TotalMayhem, generato da
+                -- OWPlusOutpostGenerator.lua). Resta qui SOLO come fallback di
+                -- sicurezza se quella tabella risultasse vuota per qualche motivo.
                 -- Fase 9-F20: 'T2ShieldDefense' rimosso — richiede un ingegnere T2
                 -- (confermato in log: "TECH1 Unit assigned to build TECH2
                 -- buildplatoon! FAILED"), ma l'ingegnere inviato da MAIN e' sempre

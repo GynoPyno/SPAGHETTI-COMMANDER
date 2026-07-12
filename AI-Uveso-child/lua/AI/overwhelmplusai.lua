@@ -87,4 +87,52 @@ AIBrain = Class(UvesoAIBrainClass) {
         self:ForkThread(OWPlusOutpostGen.OWPlusOutpostScanThread)
     end,
 
+    -- Fix sess.77: root cause reale del "buco nero" post tier-up inseguito per
+    -- tutta la sessione B16. DeadBaseMonitor (ereditato da /lua/aibrains/base-ai.lua,
+    -- la classe che uveso-ai.lua estende — verificato leggendo la catena di
+    -- ereditarieta' reale, non assunto) distrugge ogni BuilderManager non-MAIN
+    -- privo di ingegneri E fabbriche ogni 5s. Durante un upgrade fabbrica esiste
+    -- una finestra reale (vecchia entita' T-inferiore gia' .Dead, nuova non
+    -- ancora ri-registrata nel FactoryList) in cui il manager di un avamposto
+    -- risulta "vuoto" e viene cancellato — confermato in game con diagnostica
+    -- dedicata (dump FactoryList al salto di tier + heartbeat 15s): il manager
+    -- spariva esattamente al tier-up e non tornava mai piu' per il resto della
+    -- partita, bloccando tutta la valutazione builder per quella location.
+    --
+    -- DeadBaseMonitor e' un ciclo `while true` autosufficiente, non compone con
+    -- un override parziale (non c'e' un punto dove richiamare l'originale e poi
+    -- continuare) — a differenza della regola 1 (mai copiare funzioni vanilla
+    -- ridondanti), qui la sostituzione integrale e' l'unica via strutturale.
+    -- Unica modifica rispetto all'originale (base-ai.lua riga ~414): esclude
+    -- anche i manager registrati in self.OWPlusOutpostLocationTypes (whitelist
+    -- per posizione, stesso principio gia' usato in AddGlobalBaseTemplate,
+    -- hook/lua/AI/AIAddBuilderTable.lua). Il rescue-watcher reattivo in
+    -- hook/lua/platoon.lua resta come rete di sicurezza per casi imprevisti,
+    -- ma con questo fix non dovrebbe piu' scattare in condizioni normali.
+    DeadBaseMonitor = function(self)
+        while true do
+            WaitSeconds(5)
+            local needSort = false
+            for k, v in self.BuilderManagers do
+                if k ~= 'MAIN'
+                    and not (self.OWPlusOutpostLocationTypes and self.OWPlusOutpostLocationTypes[k])
+                    and v.EngineerManager:GetNumCategoryUnits('Engineers', categories.ALLUNITS) <= 0
+                    and v.FactoryManager:GetNumCategoryFactories(categories.ALLUNITS) <= 0 then
+                    v.EngineerManager:SetEnabled(false)
+                    v.EngineerManager:Destroy()
+                    v.FactoryManager:SetEnabled(false)
+                    v.FactoryManager:Destroy()
+                    v.PlatoonFormManager:SetEnabled(false)
+                    v.PlatoonFormManager:Destroy()
+                    self.BuilderManagers[k] = nil
+                    self.NumBases = self.NumBases - 1
+                    needSort = true
+                end
+            end
+            if needSort then
+                self.BuilderManagers = self:RebuildTable(self.BuilderManagers)
+            end
+        end
+    end,
+
 }

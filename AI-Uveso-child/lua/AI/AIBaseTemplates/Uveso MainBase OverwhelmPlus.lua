@@ -32,11 +32,17 @@ BaseBuilderTemplate {
         -----------------------------------------------------------------------------
         -- ==== Engineer ==== --
         -----------------------------------------------------------------------------
-        'OWPlus Engineer Builders',   -- sostituisce U123 Engineer Builders: T1 bloccati se T3 factory esiste
+        'U123 Engineer Builders',   -- sess.76: rinominato da 'OWPlus Engineer Builders' — ora sostituisce davvero lo stock (registry override-by-same-name), non solo per MAIN ma anche per il template UvesoExpansionArea usato dagli avamposti. T1 bloccati se T3 factory esiste
+        'OWPlus Outpost Engineer Builders',  -- Fase A (B16): ingegneri propri per avamposto (OUT#), cap 5 per-location, tier segue la fabbrica
         'U2 Hive+Kennel',
         'U23 Hive+Kennel Upgrade',
         'UC123 Assistees',
-        'OWPlus Assist Experimentals',     -- fix bug Uveso: AssisteeType='Engineer' per T4 mobili (non strutture)
+        -- Barriera temporanea test (sess.73, richiesta utente): sospetto che lo spam
+        -- sperimentali assorba troppi ingegneri T2/T3/SACU a scapito degli avamposti.
+        -- Disattivata insieme a 'OWPlus Experimental Land/Air' sotto, per isolare
+        -- l'effetto durante i test — ripristinare togliendo il commento quando si
+        -- torna a bilanciare gli sperimentali.
+        -- 'OWPlus Assist Experimentals',     -- fix bug Uveso: AssisteeType='Engineer' per T4 mobili (non strutture)
         'U1 Engineer Reclaim',
 
         -----------------------------------------------------------------------------
@@ -67,6 +73,7 @@ BaseBuilderTemplate {
         'OWPlus Factory Builders RECOVER',  -- rimpiazza RECOVER: stessa logica, usa FACTORY*LAND senza -SUPPORTFACTORY
         'U1 Gate Builders',
         'U123 Factory Upgrader Rush',
+        'OWPlus Outpost Factory Upgrade',   -- Fase B (B16): upgrade tier fabbrica avamposto, soglia storage 15%, priorità sopra sperimentali MAIN
         'U2 Air Staging Platform Builders',
         'U1 Factory Builders Naval',
         'U123 Factory Upgrader Naval',
@@ -148,8 +155,10 @@ BaseBuilderTemplate {
         -----------------------------------------------------------------------------
         -- ==== EXPERIMENTALS BUILDER ==== --
         -----------------------------------------------------------------------------
-        'OWPlus Experimental Land',     -- priority 18200-18300: bypassa ItsTimeForGameender (default 25min), scala T4 con eco storage
-        'OWPlus Experimental Air',      -- priority 18200-18300: sperimentali aria quando T3 air factory + eco overflow
+        -- Barriera temporanea test (sess.73): vedi nota su 'OWPlus Assist Experimentals'
+        -- piu' sopra in questo file — stesso motivo, stessa disattivazione temporanea.
+        -- 'OWPlus Experimental Land',     -- priority 18200-18300: bypassa ItsTimeForGameender (default 25min), scala T4 con eco storage
+        -- 'OWPlus Experimental Air',      -- priority 18200-18300: sperimentali aria quando T3 air factory + eco overflow
         'U4 Land Experimental Builders',
         'U4 Air Experimental Builders',
         'U4 Economic Experimental Builders',

@@ -1,0 +1,80 @@
+-- OWPlus Outpost Engineer Builders.lua
+-- Fase A (B16 - Avamposti autonomi): ingegneri propri per ogni avamposto (OUT#),
+-- indipendenti dal pool ingegneri di MAIN.
+--
+-- Un builder per tier (T1/T2/T3): si attiva SOLO su un LocationType riconosciuto
+-- come avamposto (OWPlusIsOutpostLocation, popolato in platoon.lua al momento
+-- della registrazione della prima fabbrica, 9-F19/20) E la cui fabbrica e'
+-- ESATTAMENTE al tier di quel builder (OWPlusOutpostFactoryIsTech) — quando la
+-- fabbrica sale di tier, il builder del tier precedente smette di produrre da
+-- solo (nessun HaveLessThanUnitsWithCategory globale necessario, a differenza
+-- di NoT3Factory in OWPlus Engineer Builders.lua: qui lo scoping e' gia'
+-- per-location). Gli ingegneri del tier superato vengono riassorbiti ad assist
+-- permanente da un watcher dedicato in platoon.lua, non da questo file.
+--
+-- Cap: 5 ingegneri (PoolLessAtLocation, scoping per-avamposto, stesso pattern
+-- gia' usato in OWPlus Outpost Transport.lua).
+--
+-- Priorita' crescenti per tier (sess.74): con priorita' identica (18700 per
+-- tutti e tre), in caso di sovrapposizione della cache condizioni
+-- (ConditionsMonitor, fino a ~7s di ritardo — vedi Conoscenze_AI_34/35) T2 e
+-- T3 potevano risultare ENTRAMBI validi per una finestra breve subito dopo un
+-- upgrade, e GetHighestBuilder (motore, BuilderManager.lua) spezza i pareggi
+-- di priorita' A CASO — osservato in game: la fabbrica costruiva T3, poi T2,
+-- poi T3 di nuovo, alternando invece di restare sul tier corretto. Dando ad
+-- ogni tier una priorita' leggermente piu' alta del precedente, un eventuale
+-- doppio-vero non e' piu' un pareggio: vince sempre il tier piu' alto.
+
+local categories = categories
+-- UCBC (UnitCountBuildConditions) rimosso temporaneamente (sess.72): le condizioni
+-- PoolLessAtLocation/LocationFactoriesBuildingLess passano ora dai wrapper
+-- diagnostici OWPlusDebug* in OWPlusLogConditions.lua, da rimettere dirette a
+-- diagnosi completata.
+local OWPlusLogCond = '/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua'
+
+local MAX_OUTPOST_ENGINEERS = 5
+
+BuilderGroup {
+    BuilderGroupName = 'OWPlus Outpost Engineer Builders',
+    BuildersType = 'FactoryBuilder',
+
+    Builder {
+        BuilderName = 'OWPlus Outpost Engineer T1',
+        PlatoonTemplate = 'T1BuildEngineer',
+        Priority = 18700,
+        BuilderConditions = {
+            { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
+            { OWPlusLogCond, 'OWPlusOutpostFactoryIsTech', { 'LocationType', 1 } },
+            { OWPlusLogCond, 'OWPlusFactoryNotUpgrading', { 'LocationType', 'Engineer T1' } },
+            { OWPlusLogCond, 'OWPlusDebugPoolLessAtLocation', { 'LocationType', MAX_OUTPOST_ENGINEERS, categories.MOBILE * categories.ENGINEER * categories.TECH1 - categories.STATIONASSISTPOD, 'Engineer T1' } },
+            { OWPlusLogCond, 'OWPlusDebugLocationFactoriesBuildingLess', { 'LocationType', 1, categories.ENGINEER * categories.TECH1, 'Engineer T1' } },
+        },
+        BuilderType = 'Land',
+    },
+    Builder {
+        BuilderName = 'OWPlus Outpost Engineer T2',
+        PlatoonTemplate = 'T2BuildEngineer',
+        Priority = 18710,
+        BuilderConditions = {
+            { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
+            { OWPlusLogCond, 'OWPlusOutpostFactoryIsTech', { 'LocationType', 2 } },
+            { OWPlusLogCond, 'OWPlusFactoryNotUpgrading', { 'LocationType', 'Engineer T2' } },
+            { OWPlusLogCond, 'OWPlusDebugPoolLessAtLocation', { 'LocationType', MAX_OUTPOST_ENGINEERS, categories.MOBILE * categories.ENGINEER * categories.TECH2 - categories.STATIONASSISTPOD, 'Engineer T2' } },
+            { OWPlusLogCond, 'OWPlusDebugLocationFactoriesBuildingLess', { 'LocationType', 1, categories.ENGINEER * categories.TECH2, 'Engineer T2' } },
+        },
+        BuilderType = 'Land',
+    },
+    Builder {
+        BuilderName = 'OWPlus Outpost Engineer T3',
+        PlatoonTemplate = 'T3BuildEngineer',
+        Priority = 18720,
+        BuilderConditions = {
+            { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
+            { OWPlusLogCond, 'OWPlusOutpostFactoryIsTech', { 'LocationType', 3 } },
+            { OWPlusLogCond, 'OWPlusFactoryNotUpgrading', { 'LocationType', 'Engineer T3' } },
+            { OWPlusLogCond, 'OWPlusDebugPoolLessAtLocation', { 'LocationType', MAX_OUTPOST_ENGINEERS, categories.MOBILE * categories.ENGINEER * categories.TECH3 - categories.SUBCOMMANDER - categories.STATIONASSISTPOD, 'Engineer T3' } },
+            { OWPlusLogCond, 'OWPlusDebugLocationFactoriesBuildingLess', { 'LocationType', 1, categories.ENGINEER * categories.TECH3, 'Engineer T3' } },
+        },
+        BuilderType = 'Land',
+    },
+}
