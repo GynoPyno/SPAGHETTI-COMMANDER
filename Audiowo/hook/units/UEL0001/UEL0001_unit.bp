@@ -1,0 +1,14 @@
+UnitBlueprint {
+Merge = true,
+BlueprintId = "uel0001",    -- uef com
+    Audio = {
+        Killed = Sound {
+            Bank = 'Audiowo',
+            Cue = 'acu_death',
+        },
+        EnhanceEnd = Sound {
+            Bank = 'Audiowo',
+            Cue = 'acu_upgrade_complete',
+        },
+    },
+}
