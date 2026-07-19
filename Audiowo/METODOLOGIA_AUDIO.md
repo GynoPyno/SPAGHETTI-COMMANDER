@@ -12,6 +12,7 @@ Questo documento raccoglie i metodi trovati funzionanti (e quelli falliti, per n
    - Se la risposta è **PlaySound diretto** → **Pattern A**, il caso semplice.
    - Se la risposta è **aiBrain → PlayVOSound → Sync.Voice → PlayVoice** → **Pattern B**, il caso che richiede l'hook UI.
 4. **Segnale d'allarme se si sbaglia pattern**: se si prova il Pattern A (override blueprint con banco custom) su un audio che in realtà è Pattern B, il sintomo è un **suono vanilla sbagliato e diverso ogni volta che si ritenta** — mai un errore esplicito nei log. Se capita questo, è quasi certamente Pattern B travestito da A.
+5. **Caso particolare — suoni di impatto/esplosione di un projectile** (bombe, missili, proiettili): il campo non è sul blueprint dell'unità ma su quello del **projectile** (`/projectiles/<Nome>/<Nome>_proj.bp`, cercare `ProjectileId` nell'arma nel blueprint dell'unità per trovare il nome). I campi `Audio.Impact`, `Audio.ImpactTerrain`, `Audio.ImpactWater`, `Audio.ImpactUnit`, ecc. passano tutti da `sim/Projectile.lua` (`EntityPlaySound`, nativo) — **sempre Pattern A**, mai bisogno di hook UI. I file `.bp` dei projectile non sono nell'archivio `units.nx2` ma in un archivio a parte, `projectiles.nx2` (stesso `C:\ProgramData\FAForever\gamedata\`, stesso formato ZIP, stessa procedura di estrazione).
 
 ---
 
@@ -38,6 +39,7 @@ BlueprintId = "xxx0001",
 **Casi risolti con questo pattern**:
 - `Audio.Killed` (morte ACU) — letto da `PlayUnitSound`, chiamato da `OnKilledVO`/logica di morte in `sim/Unit.lua`.
 - `Audio.EnhanceEnd` (fine upgrade ACU) — letto da `PlayUnitSound`, chiamato da `OnWorkEnd` in `sim/Unit.lua`.
+- `Audio.ImpactTerrain` sul **projectile** del colpo del Mavor (`UEB2401`, projectile `TIFHETacticalNuclearShell01`, 2026-07-19) — letto in `sim/Projectile.lua:457-461` (`local snd = blueprintAudio['Impact' .. targetType]; ... EntityPlaySound(self, snd)`, dove `EntityPlaySound = EntityMethods.PlaySound`, stessa famiglia nativa di `self:PlaySound`). Override sul blueprint del **projectile** (`/projectiles/<Nome>/<Nome>_proj.bp`), non sull'unità — il colpo/bomba è un'entità separata dall'unità che lo lancia. Nota generale: qualunque `Audio.Impact*` su un projectile passa da questa stessa funzione, quindi è sempre Pattern A. (Provato per la prima volta sul Bombardiere Strategico T3 — stesso identico meccanismo, poi spostato sul Mavor su richiesta esplicita.)
 
 ---
 
@@ -90,6 +92,20 @@ end
 - `Audio.NuclearLaunchDetected` (allarme nuke, quello che sente il nemico) — `Cue = 'Computer_Computer_MissileLaunch_01351'`, `Bank = 'XGG'`.
 
 **Nota**: esiste anche un secondo sistema, indipendente, per il "ping" visivo+sonoro sulla mappa (`ui/game/nukelaunchping.lua` → `ui/game/ping.lua`, suono `Aeon_Select_Radar` dal banco `Interface`, riprodotto con `PlaySound` diretto lato UI). Non è quello che sente il nemico in modo affidabile (dipende dal fatto di avere visione/radar sul punto), ma potrebbe essere rilevante per altri scopi (es. il feedback di chi lancia). Se in futuro serve toccare anche quello, è un Pattern A (PlaySound diretto), quindi semplice.
+
+---
+
+## Attenuazione del volume in base alla distanza dalla camera — TENTATIVO FALLITO, non riprovare a mano
+
+**Sintomo (2026-07-19)**: un suono custom (Pattern A, `EntityPlaySound`) ha panning direzionale corretto (si sente da che lato arriva rispetto all'inquadratura), ma **il volume resta sempre al massimo indipendentemente dalla distanza** dalla camera — a differenza dei suoni vanilla, che si affievoliscono con la distanza (confermato anche da segnalazioni della community FAF: mod audio "grezze" come Total Mayhem hanno lo stesso problema, "not attenuated by camera distance", a differenza della maggior parte dei suoni originali del gioco).
+
+**Causa (teoria, non del tutto confermata)**: il panning/posizionamento 3D è calcolato in automatico dal motore quando il suono è legato a un'entità (`EntityPlaySound`), mentre l'attenuazione del volume richiederebbe una curva **RPC (Runtime Parameter Control)** nel banco XACT che mappa la variabile riservata `Distance` sul parametro `Volume` del Sound — dato che i banchi vanilla (compilati da GPG con la vera XACT Studio) probabilmente hanno e il nostro `Audiowo.xap` (scritto a mano) no.
+
+**Tentativo fatto e FALLITO**: aggiunta a mano nel testo di `Audiowo.xap` una `Variable { Name = Distance; Reserved = 1; ... }` in `Global Settings`, un blocco `RPC { RPC Curve { Property = 0; Variable Entry { Name = Distance; } RPC Point {...} } }`, e agganciata con `RPC Entry`/`RPC Curve Entry` al sound `mavor_impact`. **`XactBld.exe` ha compilato tutto senza errori** (build "Success!"), ma **in game l'intero Sound Bank `Audiowo.xsb` ha smesso di caricarsi**: `warning: Error loading soundbank '/sounds/audiowo.xsb': Invalid data` nel log partita (`C:\Users\hp\AppData\Roaming\Forged Alliance Forever\logs\game_<id>.log`). Risultato: **non solo il nuovo suono non ha funzionato, ma sono spariti anche morte ACU, upgrade ACU e allarme nuke**, perché condividono lo stesso file `.xsb`. XactBld accetta la sintassi testuale ma il motore di gioco (versione XACT più vecchia/diversa, `xactengine2_9.dll`) rifiuta il binario compilato come "Invalid data" — la nostra sintassi RPC scritta a mano, pur sintatticamente valida per il compilatore, produce un binario che il runtime del gioco non accetta (mancano probabilmente campi/metadati che la vera XACT Studio genera automaticamente e che non sono documentati nel formato testuale `.xap`).
+
+**Rollback eseguito**: rimossi `Variable{Distance}`, il blocco `RPC{...}`, e i riferimenti `RPC Entry`/`RPC Curve Entry` da `Audiowo.xap`. Ricompilato e ridistribuito — il Sound Bank torna a caricarsi come prima (nessuna curva RPC, nessun campo `RPC`/`Variable` nel progetto).
+
+**Se si vuole riprovare in futuro**: NON riscrivere a mano i blocchi `RPC`/`Variable` nel `.xap` — il rischio è di rompere l'intero banco (tutti gli eventi, non solo quello nuovo) in un modo che il compilatore non segnala. Servirebbe usare la vera GUI **XACT Studio** (`Xact.exe`, nella stessa cartella di `XactBld.exe`: `C:\Program Files (x86)\Microsoft DirectX SDK (August 2007)\Utilities\Bin\x86\Xact.exe`) per costruire l'RPC tramite editor visuale (Variable=Distance, Object=Sound, Parameter=Volume, poi "Attach/Detach RPC" sul sound) — l'editor genera i metadati corretti che a mano non siamo riusciti a replicare. Questo richiede intervento manuale dell'utente nella GUI (non scriptabile da qui), poi si torna a compilare con `XactBld.exe` da PowerShell come sempre. **Prima di riprovare, testare SEMPRE in game su un solo evento alla volta e controllare subito il log per `Error loading soundbank` prima di considerare il resto della sessione di test valido** — un fallimento qui azzera silenziosamente tutti gli altri eventi della mod.
 
 ---
 
