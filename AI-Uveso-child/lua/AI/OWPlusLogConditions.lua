@@ -8,6 +8,28 @@ local AIUtils = import('/lua/ai/aiutilities.lua')
 local UCBCMod = import('/lua/editor/UnitCountBuildConditions.lua')
 local EBCMod = import('/lua/editor/EconomyBuildConditions.lua')
 
+-- Test dedicato sess.79 (richiesta esplicita utente): flag temporaneo per
+-- disattivare SOLO l'upgrade di tier della fabbrica avamposto (i builder in
+-- 'OWPlus Outpost Factory Upgrade.lua'), lasciando invariata la produzione
+-- ingegneri/difese. Serviva a isolare se il "buco" di strutture osservato in
+-- game (12 difese T1 costruite, solo 7 sopravvissute a fine test) dipendesse
+-- dal ciclo di upgrade tier o si presentasse comunque con la fabbrica ferma a
+-- T1. Isolamento concluso (Fase C confermata stabile, sess.81) — rimesso a
+-- false sess.82: senza tier-up, nessun evento fa mai scattare l'upgrade delle
+-- difese (T2/T3 point-defense/AA) ne' l'unica ricetta prevista per scudi/
+-- artiglieria/anti-missile.
+OWPlusOutpostTierUpDisabled = false
+
+function OWPlusOutpostTierUpAllowed(aiBrain, label)
+    if OWPlusOutpostTierUpDisabled then
+        if OWPlusDebugThrottle(aiBrain, 'TierUpDisabled_' .. tostring(label), 15) then
+            LOG('[OWPlus-DBG] OWPlusOutpostTierUpAllowed: bloccato (test disattivazione tier-up attivo) -- builder "' .. tostring(label) .. '"')
+        end
+        return false
+    end
+    return true
+end
+
 -- Instrumentazione diagnostica (sess.72): il fix di sess.71 (AddGlobalBuilderGroup)
 -- ha confermato che i BuilderGroup di Fase A/B vengono correttamente agganciati ai
 -- manager avamposto, ma un test in game ha mostrato che vengono comunque quasi mai
@@ -31,7 +53,31 @@ end
 function OWPlusDebugPoolLessAtLocation(aiBrain, locationType, unitCount, unitCategory, label)
     local result = UCBCMod.PoolLessAtLocation(aiBrain, locationType, unitCount, unitCategory)
     if OWPlusDebugThrottle(aiBrain, 'PoolLess_' .. tostring(locationType) .. '_' .. tostring(label), 8) then
-        LOG('[OWPlus-DBG] PoolLessAtLocation(' .. tostring(locationType) .. ', cap=' .. tostring(unitCount) .. ') = ' .. tostring(result) .. ' -- builder "' .. tostring(label) .. '"')
+        -- Diagnostica sess.78 (quinquies): PoolLessAtLocation (vanilla,
+        -- UnitCountBuildConditions.lua) NON conta le unita' fisicamente presenti
+        -- all'avamposto — conta quante unita' della categoria risultano ancora
+        -- nel plotone speciale 'ArmyPool' entro EngineerManager.Radius dal punto
+        -- EngineerManager:GetLocationCoords(). Osservato in game: 13+ ingegneri T3
+        -- costruiti a un avamposto, eppure il cap=5 non scatta mai. Due ipotesi:
+        -- (a) IssueGuard (Fase A) e' un comando nativo che non passa dal sistema
+        -- di plotoni dell'AI, quindi l'ingegnere potrebbe restare nella ArmyPool
+        -- anche mentre fa la guardia; (b) Location/Radius del manager (creato "a
+        -- mano" via AddFactoryToClosestManager, non per la via normale del
+        -- motore) sono sbagliati/troppo piccoli e la conta perde di vista
+        -- ingegneri comunque vicini. Confronto diretto per distinguerle.
+        local mgr = aiBrain.BuilderManagers[locationType]
+        local diagInfo = ''
+        if mgr and mgr.EngineerManager then
+            local coordsOk, coords = pcall(function() return mgr.EngineerManager:GetLocationCoords() end)
+            local radius = mgr.EngineerManager.Radius
+            if coordsOk and coords then
+                local realCountSameRadius = table.getn(aiBrain:GetUnitsAroundPoint(unitCategory, coords, radius or 0, 'Ally') or {})
+                local realCountWide = table.getn(aiBrain:GetUnitsAroundPoint(unitCategory, coords, 60, 'Ally') or {})
+                diagInfo = ' -- diag: coords=(' .. tostring(coords[1]) .. ',' .. tostring(coords[3]) .. ') radius=' .. tostring(radius)
+                    .. ' realCount(stessoRaggio)=' .. tostring(realCountSameRadius) .. ' realCount(60)=' .. tostring(realCountWide)
+            end
+        end
+        LOG('[OWPlus-DBG] PoolLessAtLocation(' .. tostring(locationType) .. ', cap=' .. tostring(unitCount) .. ') = ' .. tostring(result) .. ' -- builder "' .. tostring(label) .. '"' .. diagInfo)
     end
     return result
 end
@@ -262,6 +308,75 @@ function OWPlusIsOutpostLocation(aiBrain, locationType)
         LOG('[OWPlus-DBG] OWPlusIsOutpostLocation(' .. tostring(locationType) .. ') = ' .. tostring(result))
     end
     return result
+end
+
+-- Fase C (B16), sess.83: analoghe a OWPlusDebugFactoryUpgradeCandidateExists/
+-- OWPlusClaimFactoryUpgrade sopra, ma per l'upgrade NATIVO in-place (General.
+-- UpgradesTo nel .bp, Plan='UnitUpgradeAI') delle difese modded TotalMayhem
+-- con una versione MK2 nota (Mayor/Thug/Coyote/Pen — vedi OWPlusOutpostDefensePool.
+-- OWPlusModdedUpgradeChain). A differenza delle fabbriche (tracciate in
+-- mgr.FactoryManager.FactoryList), le difese non hanno una lista dedicata nel
+-- manager — si scansiona fisicamente attorno alla posizione nota del manager
+-- (mgr.Position, campo diretto impostato da AddBuilderManagers/base-ai.lua —
+-- NON aiBrain.OWPlusOutpostFactories/OWPlusSubBases, indicizzate per
+-- targetLocType e non per la vera chiave LocationType, stesso pitfall di
+-- OWPlusOutpostFactoryIsTech sopra). NOTA: aiBrain.BuilderManagers[locationType]
+-- e' una tabella semplice {FactoryManager=,PlatoonFormManager=,EngineerManager=,
+-- Position=,...}, NON un'istanza di classe — GetLocationCoords() esiste solo sui
+-- SOTTO-manager (es. mgr.EngineerManager:GetLocationCoords(), usata da Uveso in
+-- aibuildstructures.lua), non sul wrapper stesso; mgr.Position e' piu' diretto e
+-- gia' quota-corretta (terrain/surface height applicati da AddBuilderManagers).
+-- Stesso doppio gate (non gia' in upgrade, non gia' reclamata dal nostro claim
+-- sincrono) e stesso pattern di claim-con-rilascio-attivo-a-15s di
+-- OWPlusClaimFactoryUpgrade — riusa la stessa lezione (sess.77) su
+-- IsUnitState('Upgrading') che non si sincronizza abbastanza in fretta lato
+-- script per fidarsi di un controllo singolo.
+function OWPlusDefenseUpgradeCandidateExists(aiBrain, locationType, moddedUnitId, label)
+    local mgr = aiBrain.BuilderManagers[locationType]
+    if not mgr then return false end
+    local pos = mgr.Position
+    if not pos then return false end
+    local nearby = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE * categories.DEFENSE, pos, 40, 'Ally') or {}
+    local count = 0
+    for _, u in nearby do
+        if not u.Dead and string.lower(tostring(u.UnitId)) == moddedUnitId
+            and not u:IsUnitState('Upgrading') and not u.OWPlusUpgradeClaimed then
+            count = count + 1
+        end
+    end
+    if OWPlusDebugThrottle(aiBrain, 'DefUpgradeCandidate_' .. tostring(locationType) .. '_' .. tostring(label), 8) then
+        LOG('[OWPlus-DBG] Candidati upgrade difesa "' .. tostring(label) .. '" a ' .. tostring(locationType) .. ': ' .. tostring(count))
+    end
+    return count > 0
+end
+
+function OWPlusClaimDefenseUpgrade(aiBrain, locationType, moddedUnitId, label)
+    local mgr = aiBrain.BuilderManagers[locationType]
+    if not mgr then return false end
+    local pos = mgr.Position
+    if not pos then return false end
+    local nearby = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE * categories.DEFENSE, pos, 40, 'Ally') or {}
+    for _, u in nearby do
+        if not u.Dead and string.lower(tostring(u.UnitId)) == moddedUnitId
+            and not u:IsUnitState('Upgrading') and not u.OWPlusUpgradeClaimed then
+            u.OWPlusUpgradeClaimed = true
+            LOG('[OWPlus] Outpost (' .. tostring(locationType) .. '): OK, upgrade difesa avviato (' .. moddedUnitId .. ') — builder "' .. tostring(label) .. '"')
+            ForkThread(function()
+                WaitSeconds(15)
+                if not u.Dead then
+                    if u:IsUnitState('Upgrading') then
+                        LOG('[OWPlus] Outpost (' .. tostring(locationType) .. '): OK, upgrade difesa (' .. moddedUnitId .. ') confermato avviato (Upgrading=true a +15s)')
+                    else
+                        LOG('[OWPlus-WARN] Outpost (' .. tostring(locationType) .. '): upgrade difesa (' .. moddedUnitId
+                            .. ') MAI partito (Upgrading=false a +15s) — claim rilasciato, ritento subito')
+                    end
+                    u.OWPlusUpgradeClaimed = nil
+                end
+            end)
+            return true
+        end
+    end
+    return false
 end
 
 -- Fase A (B16): la fabbrica di QUESTO LocationType (la stessa chiave reale che il

@@ -542,3 +542,60 @@ function EcoManagerThread(aiBrain)
         end
     end
 end
+
+-- Fix sess.84 (B16, richiesta esplicita utente dopo test in game): il thread
+-- nativo persistente LocationRangeManagerThread (AI-Uveso, non ridefinito in
+-- questo file) scansiona OGNI fabbrica dell'esercito ogni ciclo e chiama
+-- AddFactoryToClosestManager su qualunque fabbrica con BuilderManagerData nil
+-- o factory.lost attivo da 10+s — INDIPENDENTEMENTE dal nostro fix in
+-- platoon.lua (che blocca solo le chiamate esplicite fatte dal NOSTRO codice
+-- di registrazione avamposti). Confermato in game: questo thread nativo ha
+-- ri-agganciato una vera Support Factory T3 di MAIN (ZEB9601, capace di
+-- costruire unita' mobili T3 in autonomia via il proprio BuildableCategory)
+-- al manager di un avamposto a soli 90 unita' da MAIN — e per lo stesso
+-- motivo puo' fare l'esatto contrario (una fabbrica di avamposto ri-
+-- assorbita da MAIN) ogni volta che risulta temporaneamente senza manager
+-- (es. durante un salto di tecnologia, finestra nota gia' vista in sess.72/
+-- 77/78). Fix: se il candidato e' fisicamente vicino a un avamposto NOTO
+-- (aiBrain.OWPlusSubBases) che al momento NON ha una fabbrica viva tracciata,
+-- lo lasciamo al nostro sistema di recupero dedicato (watcher periodico
+-- per-avamposto in platoon.lua) invece di lasciarlo assorbire dalla ricerca
+-- generica "marker piu' vicino" di AddFactoryToClosestManager, che per un
+-- avamposto vicino a MAIN rischia ancora il merge. Se l'avamposto ha GIA' una
+-- fabbrica viva tracciata, il candidato NON e' la sua fabbrica (es. una vera
+-- struttura di MAIN nelle vicinanze, come ZEB9601) — comportamento nativo
+-- invariato, cosi' una struttura di MAIN genuinamente orfana viene comunque
+-- gestita correttamente.
+local OWPlusOld_AddFactoryToClosestManager = AddFactoryToClosestManager
+function AddFactoryToClosestManager(aiBrain, factory)
+    if aiBrain.OWPlusSubBases and not factory.Dead then
+        local fPos = factory:GetPosition()
+        for slotKey, pos in aiBrain.OWPlusSubBases do
+            if VDist2(fPos[1], fPos[3], pos[1], pos[3]) < 20 then
+                local liveFactory = aiBrain.OWPlusOutpostFactories and aiBrain.OWPlusOutpostFactories[slotKey]
+                -- Fix sess.85: la condizione originale (not liveFactory or liveFactory.Dead)
+                -- presumeva che "abbiamo gia' una fabbrica viva tracciata" implicasse
+                -- "questo candidato dev'essere una struttura DIVERSA" (es. ZEB9601 di
+                -- MAIN) -- falso quando il candidato E' la nostra stessa fabbrica,
+                -- momentaneamente con BuilderManagerData=nil perche' il NOSTRO stesso
+                -- codice di recupero in platoon.lua l'ha appena staccata per
+                -- riagganciarla. In quella finestra LocationRangeManagerThread la
+                -- coglieva "orfana" e la faceva adottare da AddFactoryToClosestManager
+                -- (spesso MAIN) prima che il nostro recupero completasse il riaggancio
+                -- -- confermato in game via il tag [OWPlus-DIAG-WIDE] (fabbriche di
+                -- OUT4/OUT9/OUT10 comandate da "MAIN", builder scelto "OWPlus T2 Land
+                -- Assault") e dal fatto che il log qui sotto non scattava MAI nonostante
+                -- il nostro recupero dedicato registrasse ripetuti "staccata dal manager
+                -- MAIN". liveFactory == factory copre esattamente questo caso: stesso
+                -- oggetto, non una struttura diversa -- va sempre lasciato al nostro
+                -- recupero, indipendentemente dal BuilderManagerData nel preciso istante.
+                if not liveFactory or liveFactory.Dead or liveFactory == factory then
+                    LOG('[OWPlus] LocationRangeManagerThread: fabbrica (' .. tostring(factory.UnitId)
+                        .. ') vicina all\'avamposto ' .. slotKey .. ' senza manager -- lasciata al nostro recupero dedicato invece di AddFactoryToClosestManager')
+                    return
+                end
+            end
+        end
+    end
+    return OWPlusOld_AddFactoryToClosestManager(aiBrain, factory)
+end

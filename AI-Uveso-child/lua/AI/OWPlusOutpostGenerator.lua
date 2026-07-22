@@ -49,12 +49,28 @@ end
 
 -- Vero se (x,z) e' abbastanza lontano da OGNI start di giocatore (non solo il
 -- nostro) — evita di ripetere il bug ARMY_X scoperto nel vecchio sistema.
+--
+-- Fix sess.87 (richiesta esplicita utente, confermato in test OWTEST): su una
+-- mappa con piu' slot armata di quanti giocatori reali configurati (es.
+-- total_open_war.v0007 con /owtest che assegna solo ARMY_1/ARMY_8), gli slot
+-- non assegnati restano "fantasma" — IsDefeated() (= ArmyIsOutOfGame()) non
+-- diventa mai true perche' nulla li marca esplicitamente chiusi durante il
+-- lancio da riga di comando (stesso meccanismo gia' noto: "il lancio CLI non
+-- popola i dati della lobby", qui si manifesta sul flag out-of-game invece
+-- che sulle opzioni AI). Risultato osservato: la scansione a Nord si bloccava
+-- in modo permanente e silenzioso oltre una certa distanza, sempre alla
+-- stessa posizione (uno slot fantasma mai in play). Fix: oltre a non essere
+-- sconfitta, l'armata deve avere DAVVERO avuto un Comandante — uno slot mai
+-- assegnato non ne genera mai uno, un giocatore vero (umano o IA) si' sempre.
 local function OWPlusFarFromEveryStart(x, z, minDist)
     for _, brain in ArmyBrains do
         if brain and not brain:IsDefeated() then
-            local sx, sz = brain:GetArmyStartPos()
-            if sx and VDist2(x, z, sx, sz) < minDist then
-                return false
+            local hasCommander = brain:GetListOfUnits(categories.COMMAND, false)
+            if hasCommander and table.getn(hasCommander) > 0 then
+                local sx, sz = brain:GetArmyStartPos()
+                if sx and VDist2(x, z, sx, sz) < minDist then
+                    return false
+                end
             end
         end
     end
@@ -149,13 +165,12 @@ end
 function OWPlusOutpostScanThread(aiBrain)
     local ownerName = (ArmyBrains[aiBrain:GetArmyIndex()] and ArmyBrains[aiBrain:GetArmyIndex()].Nickname) or tostring(aiBrain:GetArmyIndex())
     local startX, startZ = aiBrain:GetArmyStartPos()
-    -- Fix sess.77: isolamento test diagnostico (richiesta esplicita utente) — solo
-    -- la direzione Nord (270deg, Z negativo per convenzione SupCom) resta attiva,
-    -- per eliminare la variabile "avamposti multipli in competizione" mentre si
-    -- indaga il blocco totale post salto-di-tier. L'utente si occupa di posizionare
-    -- l'AI in modo che un punto valido a Nord sia sempre disponibile. RIPRISTINARE
-    -- tutte e 8 le direzioni prima di tornare al gioco normale.
-    local angles = { 270 }
+    -- Fix sess.88 (richiesta esplicita utente): ripristinate tutte e 8 le direzioni
+    -- (rosa dei venti) — l'isolamento diagnostico di sess.77 (solo Nord/270deg,
+    -- per isolare "avamposti multipli in competizione" durante l'indagine del
+    -- blocco post salto-di-tier, problema chiuso da tempo in sess.85) resta solo
+    -- come nota storica qui sotto.
+    local angles = { 0, 45, 90, 135, 180, 225, 270, 315 }
 
     aiBrain.OWPlusSubBases = aiBrain.OWPlusSubBases or {}
     aiBrain.OWPlusOutpostRecipes = aiBrain.OWPlusOutpostRecipes or {}

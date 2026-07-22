@@ -21,6 +21,46 @@ local OWPlusTransportUtils = import('/mods/AI-Uveso-child/lua/AI/OWPlusTransport
 -- Fase C (B16): stesso motivo di OWPlusTransportUtils sopra — modulo nostro, puro
 -- (nessuna dipendenza esterna a livello di file), sicuro da importare qui.
 local OWPlusOutpostDefensePool = import('/mods/AI-Uveso-child/lua/AI/OWPlusOutpostDefensePool.lua')
+-- Fase F (B16), sess.88: mappa di appartenenza esplicita unita'->avamposto
+-- (sostituisce l'inferenza per prossimita' nel conteggio difese/scudi/
+-- artiglieria) — stesso motivo di OWPlusOutpostDefensePool sopra, modulo
+-- nostro puro, sicuro da importare qui.
+local OWPlusOutpostOwnership = import('/mods/AI-Uveso-child/lua/AI/OWPlusOutpostOwnership.lua')
+-- Fase C (B16), sess.81: tetto ai retry di un singolo task difesa. Un task che
+-- fallisce ripetutamente (difesa modded senza posto valido, ingegnere sempre
+-- inadatto) veniva rimesso in coda all'infinito (1378 requeue osservati in game
+-- con l'opzione A). Oltre questa soglia il task viene scartato invece di
+-- intasare la coda per sempre.
+local OWPLUS_MAX_DEFENSE_RETRIES = 8
+-- Fase D-difese (sess.86): interruttore rapido per isolare la nuova feature
+-- "difese scalate per tier" (lotto aggiuntivo + slot bonus al tier-up, vedi
+-- OWPlusPickTierDefenses in OWPlusOutpostDefensePool.lua) durante il test in
+-- game — se qualcosa si rompe, mettere a false qui isola immediatamente se il
+-- problema e' questa feature o qualcos'altro, senza dover fare revert di codice.
+local OWPLUS_TIER_DEFENSES_ENABLED = true
+-- Fase C (B16), sess.82: helper condiviso per il gate 2 (posizione) del build
+-- diretto di un ID blueprint literale modded — Conoscenze_AI_40 §40.1. Usato sia
+-- dal ramo 'build' (task nuovi) sia dal ramo 'reclaim' (upgrade MK1->MK2 di una
+-- difesa esistente, sess.82): stesso identico anello di offset, evitava di
+-- triplicare la stessa logica in tre punti diversi del file. Ritorna la
+-- worldPos {x,y,z} trovata valida, o nil se nessun offset e' risultato
+-- costruibile entro maxTries tentativi. Non verifica CanBuild (capacita'
+-- ingegnere) — quello resta un gate separato a carico del chiamante, perche' e'
+-- indipendente dalla posizione.
+local function OWPlusFindModdedBuildSpot(aiBrain, bpId, centerPos, radiusMin, radiusMax, maxTries)
+    local tries = 0
+    while tries < maxTries do
+        local a = math.rad(Random(0, 359))
+        local d = Random(radiusMin, radiusMax)
+        local cx = centerPos[1] + math.cos(a) * d
+        local cz = centerPos[3] + math.sin(a) * d
+        if aiBrain:CanBuildStructureAt(bpId, { cx, 0, cz }) then
+            return { cx, centerPos[2], cz }
+        end
+        tries = tries + 1
+    end
+    return nil
+end
 -- Fase 9-F21: AddFactoryToClosestManager (usata piu' sotto, dentro il ForkThread
 -- di riaggancio) e' una "globale" ma vive nell'ambiente isolato del modulo
 -- aiarchetype-managerloader.lua — in questo motore ogni file import()ato ha il
@@ -213,6 +253,128 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                 self:PlatoonDisband()
                 return
             end
+        end
+
+        -- Fase sess.85 (registrazione anticipata — sostituisce il recupero
+        -- reattivo piu' sotto, ora commentato). L'ingegnere e' appena stato
+        -- scaricato all'avamposto. Invece di lasciarlo costruire "libero" e poi
+        -- tentare di strappare la fabbrica risultante a MAIN (che lascia
+        -- trigger nativi fantasma legati a MAIN per sempre — confermato in
+        -- game, vedi Conoscenze_AI_37 §37.2: SetupFactoryCallbacks registra 4
+        -- trigger via ScenarioTriggers.lua SOLO se BuilderManagerData e' nil,
+        -- e non rimuove mai i vecchi se l'unita' viene poi ri-registrata
+        -- altrove), registriamo QUI l'ingegnere al manager dedicato PRIMA che
+        -- costruisca qualunque cosa. Il motore nativo (EngineerManager.lua,
+        -- UnitConstructionFinished, riga ~807-809) assegna automaticamente e
+        -- correttamente la fabbrica al manager dell'ingegnere che l'ha
+        -- costruita — lo stesso identico meccanismo che gia' fa funzionare
+        -- senza problemi le espansioni di MAIN.
+        if targetLocType and string.sub(targetLocType, 1, 3) == 'OUT'
+            and not (aiBrain.OWPlusOutpostFactories and aiBrain.OWPlusOutpostFactories[targetLocType]) then
+            local outpostKey = targetLocType
+            local outpostPos = targetPos
+            if not aiBrain.BuilderManagers[outpostKey] then
+                if not Scenario.MasterChain._MASTERCHAIN_.Markers[outpostKey] then
+                    Scenario.MasterChain._MASTERCHAIN_.Markers[outpostKey] = {
+                        color = 'fff4a460',
+                        hint = true,
+                        orientation = { 0, 0, 0 },
+                        prop = "/env/common/props/markers/M_Expansion_prop.bp",
+                        type = 'Expansion Area',
+                        position = outpostPos,
+                    }
+                end
+                aiBrain:AddBuilderManagers(outpostPos, 100, outpostKey, true)
+                LOG('[OWPlus] Outpost: ' .. outpostKey .. ' — manager dedicato creato PRIMA della costruzione (registrazione anticipata)')
+            end
+            aiBrain.BuilderManagers[outpostKey].EngineerManager:AddUnit(eng, true)
+            LOG('[OWPlus] Outpost: ' .. outpostKey .. ' — ingegnere (' .. tostring(eng.UnitId)
+                .. ') registrato al manager dedicato PRIMA di costruire (registrazione anticipata)')
+
+            aiBrain.OWPlusOutpostLocationTypes = aiBrain.OWPlusOutpostLocationTypes or {}
+            aiBrain.OWPlusOutpostLocationTypes[outpostKey] = true
+            aiBrain.OWPlusOutpostRealLocType = aiBrain.OWPlusOutpostRealLocType or {}
+            aiBrain.OWPlusOutpostRealLocType[outpostKey] = outpostKey
+            LOG('[OWPlus] Outpost: ' .. outpostKey .. ' registrato in OWPlusOutpostLocationTypes (registrazione anticipata)')
+
+            -- Fase D-difese, crescita logaritmica (sess.86): timer del tier attivo
+            -- (T1) parte alla fondazione — il watcher periodico dedicato (vedi
+            -- "sorveglianza crescita difese" piu' sotto) lo legge per calcolare il
+            -- tetto corrente. Resettato di nuovo ad ogni salita di tier (vedi punto
+            -- di rilevamento tier-up piu' sotto in questo file).
+            if OWPLUS_TIER_DEFENSES_ENABLED then
+                aiBrain.OWPlusOutpostTierTimer = aiBrain.OWPlusOutpostTierTimer or {}
+                aiBrain.OWPlusOutpostTierTimer[outpostKey] = GetGameTimeSeconds()
+            end
+
+            local OWPlusAddBuilderTable = import('/lua/ai/AIAddBuilderTable.lua')
+            OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, outpostKey, 'OWPlus Outpost Engineer Builders')
+            OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, outpostKey, 'OWPlus Outpost Factory Upgrade')
+            OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, outpostKey, 'OWPlus Outpost Defense Upgrade')
+            LOG('[OWPlus] Outpost: ' .. outpostKey .. ' — agganciati builder dedicati (Engineer/FactoryUpgrade/DefenseUpgrade) al manager (registrazione anticipata)')
+
+            local defenseRecipe = aiBrain.OWPlusOutpostDefenseRecipes and aiBrain.OWPlusOutpostDefenseRecipes[outpostKey]
+            if defenseRecipe then
+                aiBrain.OWPlusOutpostPendingDefenses = aiBrain.OWPlusOutpostPendingDefenses or {}
+                local queue = {}
+                aiBrain.OWPlusOutpostPendingDefenses[outpostKey] = queue
+                for _, t in defenseRecipe.ground do
+                    table.insert(queue, { action = 'build', unitType = t, tier = 1 })
+                end
+                for _, t in defenseRecipe.aa do
+                    table.insert(queue, { action = 'build', unitType = t, tier = 1 })
+                end
+                LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, ' .. table.getn(queue)
+                    .. ' difese T1 iniziali aggiunte in coda (registrazione anticipata)')
+            end
+
+            -- Cattura il riferimento alla fabbrica una volta costruita, solo per
+            -- il nostro tracking interno (OWPlusOutpostFactories) — la
+            -- registrazione al manager e' gia' garantita dal motore nativo via
+            -- EngineerManager:AddUnit qui sopra, non serve piu' alcuna
+            -- correzione/furto da MAIN qui.
+            --
+            -- Fix (bug reale osservato in game, stesso test): la versione
+            -- originale aspettava eng:IsUnitState('Building') prima di
+            -- scandire — ma questo ForkThread parte in parallelo al flusso
+            -- principale, PRIMA che l'ordine di costruzione sia effettivamente
+            -- partito. Se lo stato 'Building' risultava falso al primissimo
+            -- controllo, il ciclo non entrava mai e la scansione avveniva
+            -- subito, quando la fabbrica non esisteva ancora — confermato:
+            -- 'catturata per tracking' non e' MAI comparsa nel log di un test
+            -- intero. Poiche' un'altra sorveglianza (poco sotto, riassorbimento
+            -- tier ingegneri) aspetta fino a 60s che questa tabella si popoli e
+            -- ABORTISCE per sempre se non succede, il bug lasciava gli
+            -- ingegneri di tier superato mai riassorbiti (sintomo osservato:
+            -- avamposti con meno di 5 ingegneri T3). Fix: polling fisico
+            -- ripetuto (stesso pattern gia' usato dal watcher 9-F22 qui sotto),
+            -- niente affidamento sullo stato istantaneo dell'ingegnere.
+            ForkThread(function()
+                local waited = 0
+                local found = false
+                while waited < 300 and not found do
+                    local nearby = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE * categories.FACTORY, outpostPos, 15, 'Ally')
+                    for _, u in nearby or {} do
+                        if not u.Dead then
+                            aiBrain.OWPlusOutpostFactories = aiBrain.OWPlusOutpostFactories or {}
+                            aiBrain.OWPlusOutpostFactories[outpostKey] = u
+                            LOG('[OWPlus] Outpost (' .. outpostKey .. '): fabbrica (' .. tostring(u.UnitId)
+                                .. ') catturata per tracking — manager gia\' assegnato dal motore nativo ("'
+                                .. tostring(u.BuilderManagerData and u.BuilderManagerData.FactoryBuildManager
+                                    and u.BuilderManagerData.FactoryBuildManager.LocationType or 'SCONOSCIUTO') .. '")')
+                            found = true
+                            break
+                        end
+                    end
+                    if not found then
+                        WaitSeconds(5)
+                        waited = waited + 5
+                    end
+                end
+                if not found then
+                    LOG('[OWPlus-WARN] Outpost (' .. outpostKey .. '): tracking fabbrica non riuscito entro 300s, nessuna fabbrica trovata vicino a targetPos')
+                end
+            end)
         end
 
         local factionLookup = { UEF = 1, AEON = 2, CYBRAN = 3, SERAPHIM = 4, NOMADS = 5 }
@@ -451,14 +613,39 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
         -- fabbriche navali mal assegnate in LocationRangeManagerThread
         -- (aiarchetype-managerloader.lua), POI chiamare AddFactoryToClosestManager
         -- perche' la trovi realmente senza manager.
+        --
+        -- NOTA sess.85: il ForkThread reattivo qui sotto (ricerca fabbrica ->
+        -- distacco da MAIN -> ri-registrazione) e' COMMENTATO (non cancellato,
+        -- su richiesta esplicita dell'utente) perche' sostituito dalla
+        -- registrazione anticipata subito sopra (ingegnere assegnato a
+        -- EngineerManager PRIMA di costruire). local outpostKey/outpostPos
+        -- restano attivi perche' servono ai watcher SEGUENTI in questo stesso
+        -- blocco if (Fase 9-F22, sorveglianza build/tier/difese), che non sono
+        -- toccati da questo cambio. Se la registrazione anticipata si rivela
+        -- insufficiente in qualche caso limite, il blocco commentato resta
+        -- come riferimento per un ripristino — altrimenti va cancellato in una
+        -- sessione futura una volta confermato il funzionamento in game.
+        --
+        -- Fix (bug reale osservato in game, stesso test del fix tracking qui
+        -- sopra): la guardia originale ('not OWPlusOutpostFactories[...]') e'
+        -- diventata inaffidabile ORA che il tracking funziona ed e' veloce —
+        -- si popola in pochi secondi (riga 'catturata per tracking'), MOLTO
+        -- prima che l'ingegnere finisca l'intera coda di costruzione e il
+        -- flusso principale arrivi fin qui. Risultato confermato in game: la
+        -- condizione arriva gia' falsa, le 4 sorveglianze essenziali qui sotto
+        -- (ricostruzione, mutex build-order, riassorbimento tier, coda difese/
+        -- guardia) non partono MAI — zero difese costruite in un test intero.
+        -- Serve una guardia "ho gia' avviato le sorveglianze per questo
+        -- avamposto" INDIPENDENTE dal tracking, impostata in modo sincrono e
+        -- deterministico proprio qui (nessuna corsa possibile: e' lo stesso
+        -- identico punto, valutata una sola volta per avamposto).
+        aiBrain.OWPlusOutpostWatchersStarted = aiBrain.OWPlusOutpostWatchersStarted or {}
         if targetLocType and string.sub(targetLocType, 1, 3) == 'OUT'
-            and not (aiBrain.OWPlusOutpostFactories and aiBrain.OWPlusOutpostFactories[targetLocType]) then
+            and not aiBrain.OWPlusOutpostWatchersStarted[targetLocType] then
+            aiBrain.OWPlusOutpostWatchersStarted[targetLocType] = true
             local outpostKey = targetLocType
             local outpostPos = targetPos
-            ForkThread(function()
-                -- Fase 9-F23: import lazy, path base motore (non il path del file
-                -- di hook della mod) — vedi nota in testa al file per il motivo.
-                local OWPlusManagerLoader = import('/lua/ai/aiarchetype-managerloader.lua')
+            --[[ ForkThread(function()
                 local waitedBuild = 0
                 while eng and not eng.Dead and eng:IsUnitState('Building') and waitedBuild < 300 do
                     WaitSeconds(5)
@@ -486,30 +673,52 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                             LOG('[OWPlus] Outpost: fabbrica (' .. tostring(u.UnitId) .. ') a ' .. targetLocType
                                 .. ' staccata dal manager "' .. tostring(oldLocType) .. '"')
                         end
-                        OWPlusManagerLoader.AddFactoryToClosestManager(aiBrain, u)
-                        LOG('[OWPlus] Outpost: prima fabbrica (' .. tostring(u.UnitId) .. ') a ' .. targetLocType
-                            .. ' registrata in un BuilderManager reale')
-
-                        -- Fase A (B16): segna il LocationType REALE (non targetLocType/'OUT#')
-                        -- come avamposto riconosciuto. u.BuilderManagerData.FactoryBuildManager.
-                        -- LocationType NON e' affidabile qui: FactoryBuilderManager.lua vanilla
-                        -- (SetupFactoryCallbacks) fa "if not v.BuilderManagerData then" prima di
-                        -- riassegnarlo — essendo gia' non-nil dal precedente aggancio a MAIN,
-                        -- resta stantio anche dopo AddFactoryToClosestManager. L'unica fonte di
-                        -- verita' e' l'appartenenza reale a FactoryList del nuovo manager
-                        -- (table.insert incondizionato dentro AddFactory, non soggetto al guard).
-                        local realLocType
-                        for locKey, mgr in aiBrain.BuilderManagers do
-                            if mgr.FactoryManager and mgr.FactoryManager.FactoryList then
-                                for _, factoryUnit in mgr.FactoryManager.FactoryList do
-                                    if factoryUnit == u then
-                                        realLocType = locKey
-                                        break
-                                    end
-                                end
+                        -- Fix sess.83 (richiesta esplicita utente, bug osservato in game):
+                        -- AddFactoryToClosestManager (vanilla) cerca il MARKER DI MAPPA piu'
+                        -- vicino tra 'Blank Marker'/'Expansion Area'/'Large Expansion Area' —
+                        -- il nostro MAIN e' un 'Blank Marker'. Se l'avamposto e' abbastanza
+                        -- vicino a MAIN da rientrare nel raggio ATTUALE del SUO manager
+                        -- (FactoryManager.Radius, che cresce nel tempo — "spirale
+                        -- addensamento"), la fabbrica viene agganciata DIRETTAMENTE al
+                        -- manager di MAIN invece che a uno dedicato, ereditando l'intera
+                        -- lista Builders di MAIN (inclusa produzione unita' generica) — root
+                        -- cause confermata di "l'avamposto costruisce unita' come decide
+                        -- MAIN, non i nostri builder dedicati" e "ingegneri oltre il tetto di
+                        -- 5" (i builder ingegnere di MAIN, con tetti diversi, si aggiungono
+                        -- ai nostri). Creiamo il manager NOI, sulla posizione nota
+                        -- dell'avamposto (outpostPos) e con targetLocType come chiave
+                        -- (es. 'OUT3') — stesso pattern ATOMICO che AddFactoryToClosestManager
+                        -- usa internamente quando decide di crearne uno nuovo (creare un
+                        -- marker sintetico in Scenario.MasterChain, poi AddBuilderManagers +
+                        -- FactoryManager:AddFactory, nessun WaitSeconds in mezzo — la stessa
+                        -- garanzia anti-DeadBaseMonitor che aveva motivato la scelta
+                        -- originale di questa funzione in 9-F19), ma con chiave/posizione
+                        -- NOSTRE invece che dedotte da un marker esistente — l'avamposto non
+                        -- puo' piu' finire dentro MAIN, indipendentemente dalla distanza.
+                        -- AddBuilderManagers legge Scenario.MasterChain._MASTERCHAIN_.Markers
+                        -- [baseName].type incondizionatamente: senza un marker preesistente
+                        -- crasherebbe (indicizzazione su nil).
+                        if not aiBrain.BuilderManagers[targetLocType] then
+                            if not Scenario.MasterChain._MASTERCHAIN_.Markers[targetLocType] then
+                                Scenario.MasterChain._MASTERCHAIN_.Markers[targetLocType] = {
+                                    color = 'fff4a460',
+                                    hint = true,
+                                    orientation = { 0, 0, 0 },
+                                    prop = "/env/common/props/markers/M_Expansion_prop.bp",
+                                    type = 'Expansion Area',
+                                    position = outpostPos,
+                                }
                             end
-                            if realLocType then break end
+                            aiBrain:AddBuilderManagers(outpostPos, 100, targetLocType, true)
                         end
+                        aiBrain.BuilderManagers[targetLocType].FactoryManager:AddFactory(u)
+                        u.lost = nil
+                        LOG('[OWPlus] Outpost: prima fabbrica (' .. tostring(u.UnitId) .. ') a ' .. targetLocType
+                            .. ' registrata nel manager dedicato "' .. targetLocType .. '" (bypassato AddFactoryToClosestManager)')
+
+                        -- targetLocType E' ora la chiave reale (deterministico, non serve piu'
+                        -- scandire tutti i manager per scoprirlo).
+                        local realLocType = targetLocType
 
                         if realLocType then
                             aiBrain.OWPlusOutpostLocationTypes = aiBrain.OWPlusOutpostLocationTypes or {}
@@ -522,93 +731,44 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                             aiBrain.OWPlusOutpostRealLocType[targetLocType] = realLocType
                             LOG('[OWPlus] Outpost: ' .. targetLocType .. ' registrato in OWPlusOutpostLocationTypes con chiave reale "' .. realLocType .. '"')
 
-                            -- Fase A/B/C fix (sess.71): AddFactoryToClosestManager crea il
-                            -- nuovo manager con il template stock 'UvesoExpansionArea'
-                            -- (AddGlobalBaseTemplate, aiarchetype-managerloader.lua),
-                            -- NON col nostro 'overwhelmplus' — la sua lista Builders non
-                            -- include quindi nessuno dei builder OWPlus Outpost dedicati.
-                            -- Confermato in dev.log (sess.71): 'OWPlus Outpost Engineer
-                            -- Builders'/'OWPlus Outpost Factory Upgrade' mai valutati per
-                            -- nessun avamposto reale. Fix: aggancio mirato dei soli 2
-                            -- BuilderGroup dedicati a QUESTO manager (non l'intero template
-                            -- overwhelmplus, per non esporre gli avamposti anche ai builder
-                            -- generici di MAIN non ancora verificati come sicuri).
+                            -- Fase A/B/C fix (sess.71, aggiornato sess.83): dalla sess.83 il
+                            -- manager dell'avamposto viene creato da NOI (vedi sopra) senza
+                            -- alcun template stock — parte con zero BuilderGroup. Agganciamo
+                            -- qui SOLO quelli dedicati OWPlus (mai un intero template
+                            -- 'overwhelmplus'/stock, per non esporre gli avamposti anche ai
+                            -- builder generici di produzione unita').
                             local OWPlusAddBuilderTable = import('/lua/ai/AIAddBuilderTable.lua')
                             OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, realLocType, 'OWPlus Outpost Engineer Builders')
                             OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, realLocType, 'OWPlus Outpost Factory Upgrade')
-                            LOG('[OWPlus] Outpost: ' .. targetLocType .. ' — agganciati builder dedicati (Engineer/FactoryUpgrade) al manager "' .. realLocType .. '"')
+                            -- Fase C, sess.83: upgrade nativo in-place MK1->MK2 delle difese
+                            -- modded (vedi OWPlus Outpost Defense Upgrade.lua).
+                            OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, realLocType, 'OWPlus Outpost Defense Upgrade')
+                            LOG('[OWPlus] Outpost: ' .. targetLocType .. ' — agganciati builder dedicati (Engineer/FactoryUpgrade/DefenseUpgrade) al manager "' .. realLocType .. '"')
 
-                            -- Fase 2 difese (sess.76, richiesta utente): l'avamposto e' ora
-                            -- online (fabbrica adottata, builder dedicati agganciati) — solo
-                            -- ORA costruiamo le difese, usando la ricetta gia' generata da
-                            -- OWPlusOutpostGenerator.lua (mai consumata nella ricetta
-                            -- iniziale, che ora contiene solo fabbriche). Un ingegnere libero
-                            -- alla volta (lo stesso ingegnere del claim se ancora presente e
-                            -- libero, oppure un ingegnere dedicato prodotto nel frattempo)
-                            -- costruisce una difesa, aspetta il completamento, poi passa alla
-                            -- successiva — stesso principio di offset casuale gia' usato per
-                            -- le fabbriche (9-F21).
-                            ForkThread(function()
+                            -- Fix sess.78: Fase difese unificata. Non costruisce piu' nulla qui
+                            -- direttamente — si limita a travasare la ricetta T1 iniziale (gia'
+                            -- generata da OWPlusOutpostGenerator.lua, invariata) nella coda
+                            -- condivisa aiBrain.OWPlusOutpostPendingDefenses[outpostKey], che il
+                            -- watcher periodico unico (vedi "sorveglianza unificata difese/guardia"
+                            -- piu' sotto) consuma pezzo per pezzo. Sostituisce il vecchio ciclo
+                            -- dedicato — root cause del "costruisce 1-3 difese poi si ferma": un
+                            -- ciclo separato competeva con Fase A per gli stessi ingegneri liberi.
+                            do
                                 local defenseRecipe = aiBrain.OWPlusOutpostDefenseRecipes and aiBrain.OWPlusOutpostDefenseRecipes[outpostKey]
-                                if not defenseRecipe then
-                                    return
-                                end
-                                local defenseList = {}
-                                for _, t in defenseRecipe.ground do table.insert(defenseList, t) end
-                                for _, t in defenseRecipe.aa do table.insert(defenseList, t) end
-                                LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, avvio fase difese (' .. table.getn(defenseList) .. ' strutture)')
-                                for _, defType in defenseList do
-                                    local freeEng
-                                    local waited = 0
-                                    while not freeEng and waited < 180 do
-                                        local nearbyEngs = aiBrain:GetUnitsAroundPoint(
-                                            categories.MOBILE * categories.ENGINEER, outpostPos, 30, 'Ally') or {}
-                                        for _, e in nearbyEngs do
-                                            if not e.Dead and not e.OWPlusOutpostBusy and e:IsIdleState() then
-                                                freeEng = e
-                                                break
-                                            end
-                                        end
-                                        if not freeEng then
-                                            WaitSeconds(5)
-                                            waited = waited + 5
-                                        end
+                                if defenseRecipe then
+                                    aiBrain.OWPlusOutpostPendingDefenses = aiBrain.OWPlusOutpostPendingDefenses or {}
+                                    local queue = {}
+                                    aiBrain.OWPlusOutpostPendingDefenses[outpostKey] = queue
+                                    for _, t in defenseRecipe.ground do
+                                        table.insert(queue, { action = 'build', unitType = t, tier = 1 })
                                     end
-                                    if freeEng and not freeEng.Dead then
-                                        freeEng.OWPlusOutpostBusy = true
-                                        local defAngle = math.rad(Random(0, 359))
-                                        local defDist = Random(20, 40)
-                                        local defensePos = { outpostPos[1] + math.cos(defAngle) * defDist, outpostPos[2], outpostPos[3] + math.sin(defAngle) * defDist }
-                                        -- Fix sess.76 (crash reale trovato in game: "attempt to loop
-                                        -- over local 'buildingTemplate' (a nil value)"): a differenza
-                                        -- della ricetta iniziale (OWPlusDispersedBuildAI, che risolve
-                                        -- sempre buildingTmpl/baseTmplAtTarget), qui passavamo nil per
-                                        -- entrambi. Funziona quando il c-engine DecideWhatToBuild()
-                                        -- risolve da solo il tipo — ma per unita' non vanilla (es. pool
-                                        -- difese TotalMayhem, vedi OWPlusOutpostDefensePool.lua)
-                                        -- DecideWhatToBuild() fallisce e il fallback manuale DENTRO
-                                        -- AIExecuteBuildStructure itera "buildingTemplate" — crash se nil.
-                                        local factionLookup = { UEF = 1, AEON = 2, CYBRAN = 3, SERAPHIM = 4, NOMADS = 5 }
-                                        local defFactionIndex = factionLookup[freeEng.factionCategory] or 1
-                                        local defBuildingTmpl = import('/lua/BuildingTemplates.lua')['BuildingTemplates'][defFactionIndex]
-                                        local defBaseTmpl = import('/lua/BaseTemplates.lua')['BaseTemplates'][defFactionIndex]
-                                        local defBaseTmplAtTarget = AIBuildStructures.AIBuildBaseTemplateFromLocation(defBaseTmpl, defensePos)
-                                        AIBuildStructures.AIExecuteBuildStructure(
-                                            aiBrain, freeEng, defType, nil, false, defBuildingTmpl, defBaseTmplAtTarget, defensePos, nil)
-                                        local buildWaited = 0
-                                        while not freeEng.Dead and (freeEng:IsUnitState('Building') or freeEng:IsUnitState('Moving')) and buildWaited < 180 do
-                                            WaitSeconds(5)
-                                            buildWaited = buildWaited + 5
-                                        end
-                                        if not freeEng.Dead then
-                                            freeEng.OWPlusOutpostBusy = nil
-                                        end
-                                    else
-                                        LOG('[OWPlus-WARN] Outpost (' .. outpostKey .. '): nessun ingegnere libero per la difesa "' .. tostring(defType) .. '", salto')
+                                    for _, t in defenseRecipe.aa do
+                                        table.insert(queue, { action = 'build', unitType = t, tier = 1 })
                                     end
+                                    LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, ' .. table.getn(queue)
+                                        .. ' difese T1 iniziali aggiunte in coda')
                                 end
-                                LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, fase difese completata')
-                            end)
+                            end
 
                             -- Fix (sess.73): confermato via hook diagnostico (AssignBuildOrder,
                             -- FactoryBuilderManager.lua / ManagerLoopBody, PlatoonFormManager.lua)
@@ -658,12 +818,15 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                                 end
                             end)
                         else
-                            LOG('[OWPlus-WARN] Outpost: ' .. targetLocType .. ' non trovato in FactoryList di alcun BuilderManager dopo AddFactoryToClosestManager — OWPlusOutpostLocationTypes NON popolato, i builder ingegnere avamposto non si attiveranno qui')
+                            -- Irraggiungibile dalla sess.83 (realLocType = targetLocType,
+                            -- sempre impostato) — lasciato come rete di sicurezza silenziosa
+                            -- nel caso AddBuilderManagers fallisse in modo imprevisto.
+                            LOG('[OWPlus-WARN] Outpost: ' .. targetLocType .. ' — creazione manager dedicato fallita in modo imprevisto, OWPlusOutpostLocationTypes NON popolato')
                         end
                         break
                     end
                 end
-            end)
+            end) ]] -- fine ForkThread reattivo commentato (sess.85, Fase 9-F19/20)
 
             -- Fase 9-F22: sorveglianza distruzione/ricostruzione. Se TUTTE le
             -- fabbriche di questo avamposto muoiono, dopo un periodo di sicurezza
@@ -711,16 +874,80 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
 
                 aiBrain.OWPlusOutpostClaimed[outpostKey] = nil
                 aiBrain.OWPlusOutpostFactories[outpostKey] = nil
+                -- Fix sess.85: reset anche del nuovo flag guardia (vedi sopra) —
+                -- senza, alla ricostruzione le 4 sorveglianze di questo stesso
+                -- blocco (incluso questo watcher stesso) non ripartirebbero mai,
+                -- dato che il flag resterebbe 'true' dalla prima fondazione.
+                if aiBrain.OWPlusOutpostWatchersStarted then
+                    aiBrain.OWPlusOutpostWatchersStarted[outpostKey] = nil
+                end
                 LOG('[OWPlus] Outpost watcher (' .. outpostKey .. '): OK, area libera da nemici, slot rilasciato per ricostruzione')
             end)
 
-            -- Fase A (B16): riassorbimento ingegneri di tier superato. Quando la
-            -- fabbrica dell'avamposto sale di tier (T1->T2->T3), gli ingegneri del
-            -- tier precedente non vengono piu' prodotti (gate in OWPlus Outpost
-            -- Engineer Builders.lua) ma quelli gia' esistenti non vanno sprecati:
-            -- finiscono l'ordine in corso, poi passano ad assist permanente della
-            -- fabbrica stessa (IssueGuard, stesso idioma usato per il secondo+
-            -- ingegnere di uno stesso plotone piu' sopra in questo file).
+            -- Fix sess.78: sorveglianza continua ordine di build. Confermato in game
+            -- (dev.log) che il mutex nativo factory.DelayThread puo' bloccarsi non solo
+            -- al riaggancio dopo un tier-up (gia' coperto dal reset esplicito nei rami
+            -- di recupero sopra) ma anche durante il normale funzionamento — es. subito
+            -- dopo che FactoryFinishBuilding (vanilla) richiede il prossimo ordine e
+            -- AssignBuildOrder fallisce quel tick (CanBuildPlatoon negativo): il retry
+            -- nativo a 2s puo' collidere col mutex e la fabbrica resta ferma per il
+            -- resto della partita senza nessun sintomo visibile (osservato: nessuna
+            -- riga AssignBuildOrder/DelayBuildOrder per gli ultimi ~6 minuti di un test
+            -- da 10). Watcher persistente per l'intera vita dell'avamposto: ogni 10s, se
+            -- la fabbrica corrente e' viva e non sta ne' costruendo ne' potenziando,
+            -- forza un reset del mutex e un nuovo tentativo — innocuo se non c'e'
+            -- davvero nulla da costruire (GetHighestBuilder torna 'nessun builder',
+            -- gia' visibile dall'hook diagnostico esistente in FactoryBuilderManager.lua).
+            --
+            -- Fix sess.78 (ter, causa reale del watcher mai intervenuto): diagnostica
+            -- dedicata in game ha rivelato che questo ForkThread e' un SIBLING creato in
+            -- modo sincrono insieme a 9-F22/Fase A/orfani, MOLTO prima che il ForkThread
+            -- asincrono di Fase 9-F19 arrivi a popolare
+            -- aiBrain.OWPlusOutpostRealLocType[outpostKey] (deve prima aspettare che
+            -- l'ingegnere finisca di costruire la fabbrica) — confermato dall'ordine reale
+            -- nel log: 'avviata sorveglianza' compariva PRIMA di 'registrato in
+            -- OWPlusOutpostLocationTypes con chiave reale'. Il while sotto veniva quindi
+            -- valutato falso al primissimo controllo (Lua valuta la condizione PRIMA del
+            -- corpo, incluso il WaitSeconds interno) — il ciclo non entrava mai, il thread
+            -- terminava subito in silenzio, per l'intera partita. Stessa identica causa
+            -- del watcher "ingegnere libero" di Fase A poco sotto (stesso fix applicato
+            -- li'). Attesa attiva (non timeout cieco) finche' la registrazione non e'
+            -- completa, prima di entrare nel ciclo di sorveglianza vero e proprio.
+            ForkThread(function()
+                local waitReg = 0
+                while not (aiBrain.OWPlusOutpostRealLocType and aiBrain.OWPlusOutpostRealLocType[outpostKey]) and waitReg < 300 do
+                    WaitSeconds(5)
+                    waitReg = waitReg + 5
+                end
+                LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, avviata sorveglianza continua ordine di build fabbrica')
+                while aiBrain.OWPlusOutpostRealLocType and aiBrain.OWPlusOutpostRealLocType[outpostKey] do
+                    WaitSeconds(10)
+                    local curFactory = aiBrain.OWPlusOutpostFactories and aiBrain.OWPlusOutpostFactories[outpostKey]
+                    local curRealLocType = aiBrain.OWPlusOutpostRealLocType[outpostKey]
+                    local curMgr = curRealLocType and aiBrain.BuilderManagers[curRealLocType]
+                    if curFactory and not curFactory.Dead and curMgr and curMgr.FactoryManager
+                        and not curFactory:IsUnitState('Building') and not curFactory:IsUnitState('Upgrading') then
+                        curFactory.DelayThread = nil
+                        local bType = 'Land'
+                        if EntityCategoryContains(categories.AIR, curFactory) then
+                            bType = 'Air'
+                        elseif EntityCategoryContains(categories.NAVAL, curFactory) then
+                            bType = 'Sea'
+                        end
+                        curMgr.FactoryManager:AssignBuildOrder(curFactory, bType)
+                    end
+                end
+            end)
+
+            -- Sorveglianza tier fabbrica avamposto. Rileva ogni salita di tier
+            -- (T1->T2->T3) e aggiorna aiBrain.OWPlusOutpostFactories con l'entita'
+            -- viva corrente (l'upgrade distrugge e ricrea l'unita', Conoscenze_AI_35
+            -- §35.1). Nota (sess.78): il riassorbimento esplicito degli ingegneri di
+            -- tier superato NON vive piu' qui — se ne occupa il watcher unificato
+            -- difese/guardia (piu' sotto in questo file), che ritrova comunque
+            -- qualunque ingegnere idle ad ogni ciclo, indipendentemente dal tier.
+            -- Qui restano solo il rilevamento tier-up e il popolamento della coda
+            -- difese da riscattare (vedi sotto).
             ForkThread(function()
                 -- Fix race condition (sess.73): questo ForkThread e' SIBLING del thread
                 -- di registrazione (quello che popola aiBrain.OWPlusOutpostFactories,
@@ -782,6 +1009,22 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                     if curTier > lastTier then
                         LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, fabbrica salita a tier ' .. curTier
                             .. ', riassorbimento ingegneri tier ' .. lastTier)
+
+                        -- Fase D-difese, crescita logaritmica (sess.86): il timer va resettato
+                        -- QUI, subito al rilevamento, non dopo l'attesa di svuotamento coda piu'
+                        -- sotto (sess.79, fino a 180s) — quell'attesa serve solo all'ordine del
+                        -- reclaim (un meccanismo diverso), ma la sorveglianza crescita difese
+                        -- (piu' sotto in questo file) rilegge il tier ATTIVO direttamente dalla
+                        -- fabbrica fisica, non da questo blocco — se il reset restava dopo
+                        -- l'attesa, per tutta la sua durata (fino a 3 minuti, bug reale osservato
+                        -- in game) il tier veniva gia' letto come nuovo ma il timer restava
+                        -- ancora quello del tier precedente, calcolando un tetto scorretto.
+                        if OWPLUS_TIER_DEFENSES_ENABLED then
+                            aiBrain.OWPlusOutpostTierTimer = aiBrain.OWPlusOutpostTierTimer or {}
+                            aiBrain.OWPlusOutpostTierTimer[outpostKey] = GetGameTimeSeconds()
+                            LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, timer crescita difese resettato per tier ' .. curTier)
+                        end
+
                         -- Diagnostica sess.77 (quater): dump non-throttled dello stato reale di
                         -- FactoryManager.FactoryList nell'istante esatto del salto di tier, per
                         -- capire se la lista resta "sporca" (vecchia entita' morta ancora presente,
@@ -853,151 +1096,294 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                                 end
                             end)
                         end
+                        -- Fase D-difese, crescita logaritmica (sess.86): il blocco reclaim
+                        -- generico sotto (sess.78/79/83 — aggiorna 1:1 OGNI vecchia difesa
+                        -- generica del tier superato al tier nuovo, senza alcun tetto) e'
+                        -- COMMENTATO su richiesta esplicita dell'utente — confermato in game
+                        -- che "eredita" un numero di difese T3 ben oltre il tetto basso
+                        -- iniziale del nuovo sistema di crescita (es. AA 7-12 contro tetto 2-5
+                        -- appena saliti a tier 3), perche' i due meccanismi lavoravano in
+                        -- parallelo con logiche indipendenti. Ora e' SOLO il tetto logaritmico
+                        -- (watcher "sorveglianza crescita difese" piu' sotto) a decidere quante
+                        -- difese di un tier esistono — le vecchie difese del tier precedente
+                        -- restano ferme al loro tier per sempre (nessun aggiornamento
+                        -- automatico), coerente col resto del design "additivo, mai distruttivo
+                        -- ne' furtivo". Non cancellato, commentato come riferimento.
+                        --[[
                         local oldTierCat = categories.TECH1
                         if lastTier == 2 then
                             oldTierCat = categories.TECH2
                         end
-                        local oldEngs = aiBrain:GetUnitsAroundPoint(
-                            categories.MOBILE * categories.ENGINEER * oldTierCat, outpostPos, 30, 'Ally') or {}
-                        -- Snapshot locale: lastTier verra' riassegnato dal while esterno prima
-                        -- che questi ForkThread (in attesa che l'ingegnere finisca l'ordine
-                        -- corrente) eseguano il proprio LOG — senza questa copia il messaggio
-                        -- potrebbe riportare un tier gia' superato da un successivo salto.
-                        local reassignedFromTier = lastTier
-                        -- Fix sess.76 (crash reale trovato in game): "attempt to call method
-                        -- 'IsUnitState' (a nil value)" proprio nell'istante del salto di tier —
-                        -- oldEng risultava nil dentro la ForkThread nonostante il guard
-                        -- "not oldEng.Dead" appena sopra (che presuppone oldEng non-nil). Il
-                        -- crash uccideva la coroutine silenziosamente e, a valle, l'intera
-                        -- valutazione dei builder ingegnere per l'avamposto si fermava per il
-                        -- resto della partita (confermato: OWPlusOutpostFactoryIsTech mai piu'
-                        -- valutata dopo il crash). Guardia difensiva aggiuntiva (oldEng non-nil,
-                        -- sia fuori che dentro la ForkThread) per non fidarsi ciecamente che
-                        -- l'iterazione su oldEngs (GetUnitsAroundPoint) dia sempre voci valide.
-                        for _, oldEng in oldEngs do
-                            if oldEng and not oldEng.Dead then
-                                ForkThread(function()
-                                    while oldEng and not oldEng.Dead and (oldEng:IsUnitState('Building') or oldEng:IsUnitState('Moving')) do
-                                        WaitSeconds(5)
-                                    end
-                                    local curFactory = aiBrain.OWPlusOutpostFactories and aiBrain.OWPlusOutpostFactories[outpostKey]
-                                    if oldEng and not oldEng.Dead and curFactory and not curFactory.Dead then
-                                        IssueClearCommands({oldEng})
-                                        IssueGuard({oldEng}, curFactory)
-                                        LOG('[OWPlus] Outpost (' .. outpostKey .. '): ingegnere tier ' .. reassignedFromTier
-                                            .. ' (' .. tostring(oldEng.UnitId) .. ') riassegnato ad assist permanente della fabbrica')
-                                    end
-                                end)
-                            end
+                        -- Fix sess.79 (bug di timing confermato in game): il tier-up a T3
+                        -- scattava PRIMA che l'ondata di upgrade T1->T2 avesse finito di
+                        -- trasformare fisicamente le difese — lo scan sotto (che cerca
+                        -- strutture GIA' del tier vecchio) trovava zero candidati perche'
+                        -- le difese erano ancora T1 (task 'reclaim' non ancora consumati
+                        -- dal watcher), quindi nessun task T2->T3 veniva mai accodato.
+                        -- Fix: attendere che la coda di questo avamposto sia vuota (ondata
+                        -- precedente completata) prima di accodare la prossima — con un
+                        -- tetto di sicurezza (180s) per non restare bloccati per sempre se
+                        -- un task specifico continua a fallire.
+                        local drainWaited = 0
+                        while aiBrain.OWPlusOutpostPendingDefenses and aiBrain.OWPlusOutpostPendingDefenses[outpostKey]
+                            and table.getn(aiBrain.OWPlusOutpostPendingDefenses[outpostKey]) > 0 and drainWaited < 180 do
+                            WaitSeconds(5)
+                            drainWaited = drainWaited + 5
                         end
-                        -- Fase C (B16): reclaim reale + ricostruzione delle difese
-                        -- del tier precedente. Ogni difesa trovata viene reclamata
-                        -- da un ingegnere libero dell'avamposto (stesso flag
-                        -- OWPlusOutpostBusy della 9-F34, per evitare che il ciclo
-                        -- standard di assegnazione builder lo riprenda a meta'
-                        -- reclaim) e ricostruita al tier nuovo. Se l'ingegnere
-                        -- viene comunque interrotto (reclaim mai completato entro
-                        -- il timeout), nessun danno strutturale: la vecchia difesa
-                        -- resta in piedi (il reclaim reale, a differenza dei danni,
-                        -- non lascia la struttura a meta' se annullato) e si
-                        -- riprova dopo un throttle — stesso principio della 9-F35.
+                        if drainWaited > 0 then
+                            LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, atteso ' .. drainWaited
+                                .. 's svuotamento coda prima di accodare upgrade tier ' .. curTier)
+                        end
+                        -- Fix sess.78: riassorbimento ingegneri tier vecchio + Fase C reclaim
+                        -- unificati nella stessa coda condivisa della Fase difese (vedi sopra).
+                        -- Non serve piu' riassegnare esplicitamente gli ingegneri di tier
+                        -- superato — il watcher periodico unico li ritrova comunque appena
+                        -- diventano idle (nessuna lista dedicata). Qui ci limitiamo ad
+                        -- accodare un task 'reclaim' per ogni difesa fisicamente trovata
+                        -- ancora al tier vecchio: il retry-su-fallimento e la protezione
+                        -- OWPlusOutpostBusy restano identici, gestiti dentro il watcher.
                         local oldDefenses = aiBrain:GetUnitsAroundPoint(
                             categories.STRUCTURE * categories.DEFENSE * oldTierCat - categories.SHIELD, outpostPos, 40, 'Ally') or {}
-                        for _, oldDef in oldDefenses do
-                            if not oldDef.Dead then
-                                local isAA = EntityCategoryContains(categories.ANTIAIR, oldDef)
-                                ForkThread(function()
-                                    local rebuilt = false
-                                    local totalWaited = 0
-                                    while not rebuilt and not oldDef.Dead and totalWaited < 600 do
-                                        -- Ingegnere libero: non gia' impegnato (OWPlusOutpostBusy)
-                                        -- e realmente idle (Conoscenze_AI_32 §32.2: IsIdleState(),
-                                        -- non IsUnitState()).
-                                        local freeEng
-                                        local nearbyEngs = aiBrain:GetUnitsAroundPoint(
-                                            categories.MOBILE * categories.ENGINEER, outpostPos, 30, 'Ally') or {}
-                                        for _, e in nearbyEngs do
-                                            if not e.Dead and not e.OWPlusOutpostBusy and e:IsIdleState() then
-                                                freeEng = e
-                                                break
-                                            end
-                                        end
-
-                                        -- Fix sess.77 (crash reale trovato in game, RIPETUTO anche dopo
-                                        -- un primo guard "not oldDef.Dead" appena prima della chiamata):
-                                        -- "attempt to call method 'GetPosition' (a nil value)" su oldDef.
-                                        -- Il fatto che si ripresenti identico nonostante il ricontrollo
-                                        -- immediato (nessun WaitSeconds/yield fra check e chiamata, quindi
-                                        -- nessun altro thread Lua puo' essersi inserito in mezzo) indica che
-                                        -- .Dead puo' restare false lato Lua per una finestra dopo che il
-                                        -- motore ha gia' invalidato l'entita' lato C — non verificabile da
-                                        -- script. pcall come rete di sicurezza definitiva: se la chiamata
-                                        -- fallisce comunque, si abbandona il giro e si riprova al prossimo
-                                        -- (il while esterno ricontrolla oldDef.Dead ad ogni iterazione).
-                                        local defPos
-                                        if freeEng then
-                                            local defPosOk
-                                            defPosOk, defPos = pcall(function() return oldDef:GetPosition() end)
-                                            if not defPosOk or not defPos then
-                                                LOG('[OWPlus-WARN] Outpost (' .. outpostKey .. '): GetPosition fallita su difesa (probabile invalidazione concorrente), salto questa iterazione')
-                                                freeEng = nil
-                                            end
-                                        end
-                                        if freeEng then
-                                            freeEng.OWPlusOutpostBusy = true
-                                            IssueClearCommands({freeEng})
-                                            IssueReclaim({freeEng}, oldDef)
-
-                                            local reclaimWaited = 0
-                                            while not oldDef.Dead and reclaimWaited < 120 do
-                                                WaitSeconds(3)
-                                                reclaimWaited = reclaimWaited + 3
-                                            end
-
-                                            if oldDef.Dead and not freeEng.Dead then
-                                                local newDefType = OWPlusOutpostDefensePool.OWPlusPickUpgradeDefense(aiBrain, curTier, isAA)
-                                                -- Fix sess.76: stesso crash/fix della fase difese iniziali
-                                                -- piu' sotto — nil per buildingTemplate/baseTemplate fa
-                                                -- crashare AIExecuteBuildStructure su unita' non vanilla
-                                                -- (es. difese TotalMayhem) quando DecideWhatToBuild() non
-                                                -- le risolve da solo.
-                                                local factionLookup = { UEF = 1, AEON = 2, CYBRAN = 3, SERAPHIM = 4, NOMADS = 5 }
-                                                local defFactionIndex = factionLookup[freeEng.factionCategory] or 1
-                                                local defBuildingTmpl = import('/lua/BuildingTemplates.lua')['BuildingTemplates'][defFactionIndex]
-                                                local defBaseTmpl = import('/lua/BaseTemplates.lua')['BaseTemplates'][defFactionIndex]
-                                                local defBaseTmplAtTarget = AIBuildStructures.AIBuildBaseTemplateFromLocation(defBaseTmpl, defPos)
-                                                AIBuildStructures.AIExecuteBuildStructure(
-                                                    aiBrain, freeEng, newDefType, nil, false, defBuildingTmpl, defBaseTmplAtTarget, defPos, nil)
-                                                LOG('[OWPlus] Outpost (' .. outpostKey .. '): difesa tier ' .. reassignedFromTier
-                                                    .. ' reclamata e ricostruita a tier ' .. curTier .. ' (' .. tostring(newDefType) .. ')')
-                                                rebuilt = true
-                                            else
-                                                LOG('[OWPlus-WARN] Outpost (' .. outpostKey .. '): reclaim difesa interrotto/scaduto, riprovo dopo throttle')
-                                            end
-
-                                            if not freeEng.Dead then
-                                                freeEng.OWPlusOutpostBusy = nil
-                                            end
-                                        end
-
-                                        if not rebuilt and not oldDef.Dead then
-                                            WaitSeconds(15)
-                                            totalWaited = totalWaited + 15
-                                        end
+                        if table.getn(oldDefenses) > 0 then
+                            aiBrain.OWPlusOutpostPendingDefenses = aiBrain.OWPlusOutpostPendingDefenses or {}
+                            aiBrain.OWPlusOutpostPendingDefenses[outpostKey] = aiBrain.OWPlusOutpostPendingDefenses[outpostKey] or {}
+                            local queue = aiBrain.OWPlusOutpostPendingDefenses[outpostKey]
+                            local queuedCount = 0
+                            local skippedModded = 0
+                            for _, oldDef in oldDefenses do
+                                if not oldDef.Dead then
+                                    -- Fix sess.83: le difese modded con una versione MK2 nota
+                                    -- (OWPlusModdedUpgradeFor) sono ora gestite dal builder
+                                    -- nativo 'OWPlus Outpost Defense Upgrade' (upgrade in-place
+                                    -- continuo, non un one-shot legato a questo scan) — escluse
+                                    -- qui per non farle upgradare DUE volte in parallelo da due
+                                    -- meccanismi diversi (nativo in-place vs reclaim custom).
+                                    if OWPlusOutpostDefensePool.OWPlusModdedUpgradeFor(oldDef.UnitId) then
+                                        skippedModded = skippedModded + 1
+                                    else
+                                        table.insert(queue, {
+                                            action = 'reclaim',
+                                            targetUnit = oldDef,
+                                            newTier = curTier,
+                                            isAA = EntityCategoryContains(categories.ANTIAIR, oldDef),
+                                        })
+                                        queuedCount = queuedCount + 1
                                     end
-                                    if not rebuilt and not oldDef.Dead then
-                                        LOG('[OWPlus-WARN] Outpost (' .. outpostKey .. '): difesa tier ' .. reassignedFromTier
-                                            .. ' non reclamata/ricostruita entro il tetto di sicurezza, resta al tier vecchio')
-                                    end
-                                end)
+                                end
                             end
+                            LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, ' .. queuedCount
+                                .. ' difese tier ' .. lastTier .. ' aggiunte in coda per upgrade a tier ' .. curTier
+                                .. ' (' .. skippedModded .. ' modded escluse, gestite dal builder nativo)')
                         end
+                        ]]
 
                         lastTier = curTier
                     end
                 end
                 LOG('[OWPlus] Outpost (' .. outpostKey .. '): sorveglianza riassorbimento tier terminata (fabbrica assente/morta)')
             end)
+
+            -- Fase D-difese, crescita logaritmica (sess.86): sorveglianza crescita
+            -- difese. Ogni 60s rilegge il tier ATTIVO dalla fabbrica fisica (non un
+            -- contatore locale — coerente col resto del file), calcola il tetto
+            -- corrente (terra/AA/bonus, OWPlusGetTierDefenseTargets) dal timer di
+            -- quel tier, conta fisicamente quante difese di quel tier/bonus esistono
+            -- gia' vicino all'avamposto, e accoda solo la differenza mancante.
+            -- Gestisce SOLO il tier attivo + il suo bonus — i tier gia' superati non
+            -- vengono piu' rivalutati ne' riforniti (design confermato esplicitamente
+            -- dall'utente: a fabbrica/ingegneri tier 3 niente nuove T1, solo T3
+            -- principale + qualche T2 moddato bonus). Watcher persistente per
+            -- l'intera vita dell'avamposto, stesso guard-loop degli altri watcher di
+            -- questo blocco (OWPlusOutpostRealLocType[outpostKey]).
+            if OWPLUS_TIER_DEFENSES_ENABLED then
+                ForkThread(function()
+                    while aiBrain.OWPlusOutpostRealLocType and aiBrain.OWPlusOutpostRealLocType[outpostKey] do
+                        WaitSeconds(60)
+                        local curFactory = aiBrain.OWPlusOutpostFactories and aiBrain.OWPlusOutpostFactories[outpostKey]
+                        if curFactory and not curFactory.Dead then
+                            local activeTier = 1
+                            if EntityCategoryContains(categories.TECH3, curFactory) then
+                                activeTier = 3
+                            elseif EntityCategoryContains(categories.TECH2, curFactory) then
+                                activeTier = 2
+                            end
+                            local tierStart = aiBrain.OWPlusOutpostTierTimer and aiBrain.OWPlusOutpostTierTimer[outpostKey]
+                            if tierStart then
+                                local elapsed = GetGameTimeSeconds() - tierStart
+                                local groundTarget, aaTarget, bonusTarget, shieldTarget, artilleryTarget, tacticalMDTarget =
+                                    OWPlusOutpostDefensePool.OWPlusGetTierDefenseTargets(activeTier, elapsed)
+
+                                -- Fix Fase F (sess.88, richiesta esplicita utente): sostituisce lo
+                                -- scan a raggio (GetUnitsAroundPoint) con l'iterazione sulla mappa
+                                -- di appartenenza esplicita (OWPlusOutpostOwnership.lua). Motivo:
+                                -- confermato su un test reale che avamposti consecutivi (passo 20
+                                -- del generatore) cadono quasi sempre entro il raggio 40 usato dal
+                                -- vecchio scan — ogni difesa veniva contata anche dall'avamposto
+                                -- vicino, gonfiando entrambi i conteggi. La mappa contiene SOLO le
+                                -- unita' che QUESTO avamposto ha costruito (tag scritto al momento
+                                -- della costruzione, vedi i due punti 'build' piu' sotto in questo
+                                -- file), quindi zero rischio di conteggio incrociato per
+                                -- costruzione, non serve piu' nessuna esclusione di categoria
+                                -- (ARTILLERY/ANTIMISSILE) a valle.
+                                local tierCat = categories.TECH1
+                                if activeTier == 3 then
+                                    tierCat = categories.TECH3
+                                elseif activeTier == 2 then
+                                    tierCat = categories.TECH2
+                                end
+                                local bonusIds = OWPlusOutpostDefensePool.OWPlusGetBonusIdList(aiBrain, activeTier)
+                                local groundCount, aaCount, bonusCount, shieldCount, artilleryCount, tacticalMDCount = 0, 0, 0, 0, 0, 0
+                                for d, _ in OWPlusOutpostOwnership.OWPlusGetOwnedUnits(aiBrain, outpostKey) do
+                                    local dId = string.lower(tostring(d.UnitId))
+                                    local isBonus = false
+                                    for _, bId in bonusIds do
+                                        if dId == bId then isBonus = true end
+                                    end
+                                    if isBonus then
+                                        bonusCount = bonusCount + 1
+                                    elseif EntityCategoryContains(categories.ANTIMISSILE, d) then
+                                        -- Fix Fase G (sess.88): ANTIMISSILE da solo NON basta a
+                                        -- distinguere tattico da strategico — condividono la stessa
+                                        -- categoria, si distinguono SOLO dal tier (confermato sui
+                                        -- builder nativi Soriarn: 'ANTIMISSILE * TECH2' per il
+                                        -- tattico, 'ANTIMISSILE * TECH3' per lo strategico).
+                                        -- TECH2 = Missile Difesa Tattica, fa parte di un tetto a
+                                        -- crescita come scudi/artiglieria. TECH3 = SMD, tiro unico
+                                        -- (vedi piu' sotto), resta ignorata qui di proposito.
+                                        -- Controllata PRIMA di SHIELD perche' almeno un candidato SMD
+                                        -- (smp0080, Antares UEF) porta anche SHIELD insieme.
+                                        if EntityCategoryContains(categories.TECH2, d) then
+                                            tacticalMDCount = tacticalMDCount + 1
+                                        end
+                                    elseif EntityCategoryContains(categories.SHIELD, d) then
+                                        if EntityCategoryContains(tierCat, d) then
+                                            shieldCount = shieldCount + 1
+                                        end
+                                    elseif EntityCategoryContains(categories.ARTILLERY, d) then
+                                        if EntityCategoryContains(tierCat, d) then
+                                            artilleryCount = artilleryCount + 1
+                                        end
+                                    elseif EntityCategoryContains(tierCat, d) then
+                                        if EntityCategoryContains(categories.ANTIAIR, d) then
+                                            aaCount = aaCount + 1
+                                        else
+                                            groundCount = groundCount + 1
+                                        end
+                                    end
+                                end
+
+                                LOG('[OWPlus-DIAG] Outpost (' .. outpostKey .. '): sorveglianza crescita difese tier '
+                                    .. activeTier .. ', elapsed=' .. math.floor(elapsed) .. 's — terra ' .. groundCount
+                                    .. '/' .. groundTarget .. ', AA ' .. aaCount .. '/' .. aaTarget .. ', bonus '
+                                    .. bonusCount .. '/' .. bonusTarget .. ', scudi ' .. shieldCount .. '/' .. shieldTarget
+                                    .. ', artiglieria ' .. artilleryCount .. '/' .. artilleryTarget .. ', missile difesa tattica '
+                                    .. tacticalMDCount .. '/' .. tacticalMDTarget)
+
+                                aiBrain.OWPlusOutpostPendingDefenses = aiBrain.OWPlusOutpostPendingDefenses or {}
+                                aiBrain.OWPlusOutpostPendingDefenses[outpostKey] = aiBrain.OWPlusOutpostPendingDefenses[outpostKey] or {}
+                                local queue = aiBrain.OWPlusOutpostPendingDefenses[outpostKey]
+
+                                local groundNeeded = math.max(0, groundTarget - groundCount)
+                                local aaNeeded = math.max(0, aaTarget - aaCount)
+                                if groundNeeded > 0 or aaNeeded > 0 then
+                                    local missingGround, missingAA = OWPlusOutpostDefensePool.OWPlusPickTierMainline(
+                                        aiBrain, activeTier, groundNeeded, aaNeeded)
+                                    for _, t in missingGround do
+                                        table.insert(queue, { action = 'build', unitType = t, tier = activeTier })
+                                    end
+                                    for _, t in missingAA do
+                                        table.insert(queue, { action = 'build', unitType = t, tier = activeTier })
+                                    end
+                                end
+                                local bonusNeeded = math.max(0, bonusTarget - bonusCount)
+                                if bonusNeeded > 0 then
+                                    local missingBonus = OWPlusOutpostDefensePool.OWPlusPickBonusDefenses(
+                                        aiBrain, activeTier, bonusNeeded)
+                                    for _, t in missingBonus do
+                                        table.insert(queue, { action = 'build', unitType = t, tier = activeTier - 1 })
+                                    end
+                                end
+
+                                -- Fase E (sess.88): scudi/artiglieria mancanti — stesso principio di
+                                -- terra/AA sopra, ma con zone='inner' (il consumer piu' sotto in
+                                -- questo file li piazza nell'anello protetto 3-10 invece
+                                -- dell'anello perimetrale 10-18 di terra/AA) e un 'label' leggibile
+                                -- per distinguerli nel log di successo/fallimento a valle (l'utente
+                                -- verifica da remoto solo via log, non puo' guardare lo schermo).
+                                local shieldNeeded = math.max(0, shieldTarget - shieldCount)
+                                local artilleryNeeded = math.max(0, artilleryTarget - artilleryCount)
+                                if shieldNeeded > 0 or artilleryNeeded > 0 then
+                                    local missingShield, missingArtillery = OWPlusOutpostDefensePool.OWPlusPickTierShieldArtillery(
+                                        aiBrain, activeTier, shieldNeeded, artilleryNeeded)
+                                    for _, t in missingShield do
+                                        table.insert(queue, { action = 'build', unitType = t, tier = activeTier, zone = 'inner', label = 'scudo' })
+                                    end
+                                    for _, t in missingArtillery do
+                                        table.insert(queue, { action = 'build', unitType = t, tier = activeTier, zone = 'inner', label = 'artiglieria' })
+                                    end
+                                end
+
+                                -- Fase G (sess.88): Missile Difesa Tattica mancante — stesso
+                                -- principio di scudi/artiglieria sopra (crescita nel tempo, anello
+                                -- interno, label per il log).
+                                local tacticalMDNeeded = math.max(0, tacticalMDTarget - tacticalMDCount)
+                                if tacticalMDNeeded > 0 then
+                                    local missingTacticalMD = OWPlusOutpostDefensePool.OWPlusPickTacticalMissileDefense(
+                                        aiBrain, activeTier, tacticalMDNeeded)
+                                    for _, t in missingTacticalMD do
+                                        table.insert(queue, { action = 'build', unitType = t, tier = activeTier, zone = 'inner', label = 'missile difesa tattica' })
+                                    end
+                                end
+
+                                -- Fase E (sess.88): SMD — tiro unico quando l'avamposto raggiunge
+                                -- tier 3, mai ripetuto (flag dedicato OWPlusOutpostSMDRolled, per
+                                -- avamposto — coerente con la decisione esplicita dell'utente "il
+                                -- numero resta quello per il resto della partita"). Stessa coda/
+                                -- consumer di tutto il resto, zone='inner' come scudi/artiglieria.
+                                aiBrain.OWPlusOutpostSMDRolled = aiBrain.OWPlusOutpostSMDRolled or {}
+                                if activeTier >= 3 and not aiBrain.OWPlusOutpostSMDRolled[outpostKey] then
+                                    aiBrain.OWPlusOutpostSMDRolled[outpostKey] = true
+                                    local smdCount = OWPlusOutpostDefensePool.OWPlusRollSMDCount()
+                                    if smdCount > 0 then
+                                        local missingSMD = OWPlusOutpostDefensePool.OWPlusPickSMD(aiBrain, smdCount)
+                                        for _, t in missingSMD do
+                                            table.insert(queue, { action = 'build', unitType = t, tier = activeTier, zone = 'inner', label = 'SMD' })
+                                        end
+                                    end
+                                    LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, tiro SMD eseguito (una tantum, tier '
+                                        .. activeTier .. ') -> ' .. smdCount .. ' antimissili strategici aggiunti in coda')
+                                end
+
+                                -- Fase H (sess.88): lanciamissili strategico offensivo — stesso
+                                -- principio dell'SMD sopra (tiro unico a tier 3, flag dedicato
+                                -- separato, mai ripetuto), zone='inner' come tutte le categorie
+                                -- speciali.
+                                aiBrain.OWPlusOutpostStrategicMissileRolled = aiBrain.OWPlusOutpostStrategicMissileRolled or {}
+                                if activeTier >= 3 and not aiBrain.OWPlusOutpostStrategicMissileRolled[outpostKey] then
+                                    aiBrain.OWPlusOutpostStrategicMissileRolled[outpostKey] = true
+                                    local strategicMissileCount = OWPlusOutpostDefensePool.OWPlusRollStrategicMissileCount()
+                                    if strategicMissileCount > 0 then
+                                        local missingStrategicMissile = OWPlusOutpostDefensePool.OWPlusPickStrategicMissile(aiBrain, strategicMissileCount)
+                                        for _, t in missingStrategicMissile do
+                                            table.insert(queue, { action = 'build', unitType = t, tier = activeTier, zone = 'inner', label = 'lanciamissili strategico' })
+                                        end
+                                    end
+                                    LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, tiro lanciamissili strategico eseguito (una tantum, tier '
+                                        .. activeTier .. ') -> ' .. strategicMissileCount .. ' lanciamissili aggiunti in coda')
+                                end
+
+                                if groundNeeded > 0 or aaNeeded > 0 or bonusNeeded > 0 or shieldNeeded > 0 or artilleryNeeded > 0 or tacticalMDNeeded > 0 then
+                                    LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, crescita difese tier ' .. activeTier
+                                        .. ' — aggiunte in coda ' .. groundNeeded .. ' terra, ' .. aaNeeded .. ' AA, '
+                                        .. bonusNeeded .. ' bonus tier ' .. (activeTier - 1) .. ', ' .. shieldNeeded
+                                        .. ' scudi, ' .. artilleryNeeded .. ' artiglieria, ' .. tacticalMDNeeded
+                                        .. ' missile difesa tattica')
+                                end
+                            end
+                        end
+                    end
+                end)
+            end
 
             -- Fix orfano fabbrica avamposto (sess.72): confermato in dev.log (100%
             -- riproducibile su ogni avamposto osservato) che la fabbrica di un
@@ -1036,7 +1422,23 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                             categories.STRUCTURE * categories.FACTORY, outpostPos, 20, 'Ally') or {}
                         local rescueFactory
                         for _, cand in rescueCandidates do
-                            if not cand.Dead then
+                            -- Fix sess.84 (bug reale confermato in game): il vecchio codice
+                            -- prendeva il primo candidato non-morto senza verificarne la
+                            -- provenienza — per un avamposto vicino a MAIN (es. 90 unita') questo
+                            -- ha strappato a MAIN una vera Support Factory T3 (ZEB9601, capace di
+                            -- costruire unita' mobili T3 in autonomia via il proprio
+                            -- BuildableCategory) semplicemente perche' si trovava nel raggio di
+                            -- 20 unita'. Due esclusioni mirate: (a) categories.SUPPORTFACTORY —
+                            -- la nostra ricetta avamposto non produce MAI questa categoria
+                            -- direttamente, una struttura cosi' trovata qui e' sempre una
+                            -- compagna di UN'ALTRA fabbrica (quasi certamente di MAIN), mai la
+                            -- nostra; (b) candidato gia' assegnato al manager 'MAIN' — MAIN non
+                            -- va mai considerato "orfano" nel senso in cui lo sono i nostri
+                            -- avamposti, quindi una sua struttura non va mai rivendicata qui.
+                            local candIsSupportFactory = EntityCategoryContains(categories.SUPPORTFACTORY, cand)
+                            local candBelongsToMain = cand.BuilderManagerData and cand.BuilderManagerData.FactoryBuildManager
+                                and cand.BuilderManagerData.FactoryBuildManager.LocationType == 'MAIN'
+                            if not cand.Dead and not candIsSupportFactory and not candBelongsToMain then
                                 rescueFactory = cand
                                 break
                             end
@@ -1069,26 +1471,45 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                                 LOG('[OWPlus] Outpost (' .. outpostKey .. '): fabbrica di recupero (' .. tostring(rescueFactory.UnitId)
                                     .. ') staccata dal manager "' .. tostring(rescueOldLocType) .. '"')
                             end
-                            local OWPlusManagerLoader = import('/lua/ai/aiarchetype-managerloader.lua')
-                            OWPlusManagerLoader.AddFactoryToClosestManager(aiBrain, rescueFactory)
-                            local newRealLocType
-                            for locKey, candMgr in aiBrain.BuilderManagers do
-                                if candMgr.FactoryManager and candMgr.FactoryManager.FactoryList then
-                                    for _, factoryUnit in candMgr.FactoryManager.FactoryList do
-                                        if factoryUnit == rescueFactory then
-                                            newRealLocType = locKey
-                                            break
-                                        end
-                                    end
+                            -- Fix sess.78: diagnostica in game (hook DelayBuildOrder,
+                            -- FactoryBuilderManager.lua) ha confermato che rescueFactory.DelayThread
+                            -- puo' risultare gia' 'true' in questo istante (residuo del vecchio
+                            -- manager o di un'altra catena di retry in corso) — con quel mutex
+                            -- bloccato, sia il fork automatico di AddFactory sia la nostra chiamata
+                            -- esplicita di AssignBuildOrder poco sotto si annullano in silenzio senza
+                            -- pianificare nessun retry, lasciando la fabbrica orfana per sempre.
+                            -- Reset esplicito per garantire un punto di partenza pulito.
+                            rescueFactory.DelayThread = nil
+                            -- Fix sess.83: stesso bypass della PRIMA adozione (vedi sopra in
+                            -- questo file) — manager dedicato creato/riusato direttamente su
+                            -- outpostKey/outpostPos, mai piu' affidato alla ricerca "marker piu'
+                            -- vicino" di AddFactoryToClosestManager (stesso rischio di merge con
+                            -- MAIN se l'avamposto e' nel suo raggio attuale). outpostKey resta
+                            -- la chiave del manager per l'intera vita dell'avamposto, anche
+                            -- attraverso un recupero come questo.
+                            if not aiBrain.BuilderManagers[outpostKey] then
+                                if not Scenario.MasterChain._MASTERCHAIN_.Markers[outpostKey] then
+                                    Scenario.MasterChain._MASTERCHAIN_.Markers[outpostKey] = {
+                                        color = 'fff4a460',
+                                        hint = true,
+                                        orientation = { 0, 0, 0 },
+                                        prop = "/env/common/props/markers/M_Expansion_prop.bp",
+                                        type = 'Expansion Area',
+                                        position = outpostPos,
+                                    }
                                 end
-                                if newRealLocType then break end
+                                aiBrain:AddBuilderManagers(outpostPos, 100, outpostKey, true)
                             end
+                            aiBrain.BuilderManagers[outpostKey].FactoryManager:AddFactory(rescueFactory)
+                            rescueFactory.lost = nil
+                            local newRealLocType = outpostKey
                             if newRealLocType then
                                 aiBrain.OWPlusOutpostLocationTypes[newRealLocType] = true
                                 aiBrain.OWPlusOutpostRealLocType[outpostKey] = newRealLocType
                                 local OWPlusAddBuilderTable = import('/lua/ai/AIAddBuilderTable.lua')
                                 OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, newRealLocType, 'OWPlus Outpost Engineer Builders')
                                 OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, newRealLocType, 'OWPlus Outpost Factory Upgrade')
+                                OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, newRealLocType, 'OWPlus Outpost Defense Upgrade')
                                 -- Fix sess.77 (septies): stessa rete di sicurezza del ramo
                                 -- "fabbrica orfana" poco sotto — chiamata diretta ed esplicita a
                                 -- AssignBuildOrder, indipendente da cosa AddFactoryToClosestManager
@@ -1100,12 +1521,22 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                                     rescueBType2 = 'Sea'
                                 end
                                 aiBrain.BuilderManagers[newRealLocType].FactoryManager:AssignBuildOrder(rescueFactory, rescueBType2)
+                                -- Fix sess.78 (bis): la rete di sicurezza "usa e getta" a 5s qui
+                                -- (rimossa) copriva solo la collisione DelayThread al riaggancio, ma
+                                -- confermato in game (dev.log) che la stessa collisione puo' ripetersi
+                                -- in QUALUNQUE momento della partita, anche durante il normale
+                                -- funzionamento (es. dopo che FactoryFinishBuilding richiede il
+                                -- prossimo ordine e AssignBuildOrder fallisce quel tick) — sostituita
+                                -- da un watcher persistente per l'intera vita dell'avamposto, vedi
+                                -- "sorveglianza continua ordine di build" piu' sotto.
                                 aiBrain.OWPlusOutpostFactories = aiBrain.OWPlusOutpostFactories or {}
                                 aiBrain.OWPlusOutpostFactories[outpostKey] = rescueFactory
                                 LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, manager sparito (DeadBaseMonitor) — ricreato e riagganciato con chiave "' .. newRealLocType .. '"')
                                 emptyStreak = 0
                             else
-                                LOG('[OWPlus-WARN] Outpost (' .. outpostKey .. '): manager sparito, fabbrica ricandidata ma non trovata in alcun FactoryList dopo AddFactoryToClosestManager')
+                                -- Irraggiungibile dalla sess.83 (newRealLocType = outpostKey,
+                                -- sempre impostato) — lasciato come rete di sicurezza silenziosa.
+                                LOG('[OWPlus-WARN] Outpost (' .. outpostKey .. '): manager sparito, creazione manager di recupero fallita in modo imprevisto')
                                 break
                             end
                         else
@@ -1130,7 +1561,20 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                                 categories.STRUCTURE * categories.FACTORY, outpostPos, 20, 'Ally') or {}
                             local rescued = false
                             for _, cand in candidates do
-                                if not cand.Dead then
+                                -- Fix sess.84 (bug reale confermato in game): il presupposto del
+                                -- commento storico sotto ("qualunque candidato trovato qui e'
+                                -- SEMPRE la nostra fabbrica auto-assegnata a MAIN") si e' rivelato
+                                -- falso per un avamposto vicino a MAIN (90 unita') — lo scan ha
+                                -- strappato a MAIN una vera Support Factory T3 (ZEB9601, capace di
+                                -- costruire unita' mobili T3 in autonomia). Stesse due esclusioni
+                                -- del ramo "manager sparito" qui sopra: mai una SUPPORTFACTORY (la
+                                -- nostra ricetta non ne produce mai direttamente), mai un
+                                -- candidato gia' assegnato al manager 'MAIN' (mai da considerare
+                                -- "orfano" nel nostro senso).
+                                local candIsSupportFactory = EntityCategoryContains(categories.SUPPORTFACTORY, cand)
+                                local candBelongsToMain = cand.BuilderManagerData and cand.BuilderManagerData.FactoryBuildManager
+                                    and cand.BuilderManagerData.FactoryBuildManager.LocationType == 'MAIN'
+                                if not cand.Dead and not candIsSupportFactory and not candBelongsToMain then
                                     -- Fix sess.77 (bis): 'not cand.BuilderManagerData' non scattava
                                     -- mai — confermato in game (diagnostica dedicata): la nuova
                                     -- fabbrica T-superiore NON resta orfana dopo un upgrade, il
@@ -1162,7 +1606,26 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                                         LOG('[OWPlus] Outpost (' .. outpostKey .. '): fabbrica (' .. tostring(cand.UnitId)
                                             .. ') staccata dal manager "' .. tostring(candOldLocType) .. '"')
                                     end
+                                    -- Diagnostica sess.78 (confermata in game): ipotesi (b) e' quella
+                                    -- reale — cand.DelayThread risulta gia' 'true' PRIMA ancora che
+                                    -- AddFactory venga chiamato (log pre-AddFactory sotto, invariati
+                                    -- come sorveglianza), quindi sia il fork automatico di AddFactory
+                                    -- sia la nostra chiamata esplicita di AssignBuildOrder poco sotto
+                                    -- si annullano in silenzio senza pianificare nessun retry —
+                                    -- root cause reale della fabbrica T3 ferma per sempre.
+                                    local diagAlreadyInList = false
+                                    for _, diagExisting in mgr.FactoryManager.FactoryList do
+                                        if diagExisting == cand then diagAlreadyInList = true end
+                                    end
+                                    LOG('[OWPlus-DIAG] Outpost (' .. outpostKey .. '): pre-AddFactory fabbrica orfana ('
+                                        .. tostring(cand.UnitId) .. '): gia_in_FactoryList=' .. tostring(diagAlreadyInList)
+                                        .. ', DelayThread=' .. tostring(cand.DelayThread))
+                                    -- Fix sess.78: reset esplicito per garantire un punto di partenza
+                                    -- pulito ad AddFactory e alla chiamata esplicita poco sotto.
+                                    cand.DelayThread = nil
                                     mgr.FactoryManager:AddFactory(cand)
+                                    LOG('[OWPlus-DIAG] Outpost (' .. outpostKey .. '): post-AddFactory (' .. tostring(cand.UnitId)
+                                        .. '): DelayThread=' .. tostring(cand.DelayThread))
                                     -- Fix sess.77 (septies): confermato in game (hook diagnostico
                                     -- gia' esistente su AssignBuildOrder, sess.73) — dopo un
                                     -- riaggancio "a freddo" la catena nativa che chiede "cosa
@@ -1184,6 +1647,15 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                                         rescueBType = 'Sea'
                                     end
                                     mgr.FactoryManager:AssignBuildOrder(cand, rescueBType)
+                                    LOG('[OWPlus-DIAG] Outpost (' .. outpostKey .. '): post-AssignBuildOrder esplicito ('
+                                        .. tostring(cand.UnitId) .. '): DelayThread=' .. tostring(cand.DelayThread))
+                                    -- Fix sess.78 (bis): la rete di sicurezza "usa e getta" a 5s qui
+                                    -- (rimossa) copriva solo la collisione DelayThread al riaggancio, ma
+                                    -- confermato in game (dev.log) che la stessa collisione puo'
+                                    -- ripetersi in QUALUNQUE momento della partita, anche durante il
+                                    -- normale funzionamento — sostituita da un watcher persistente per
+                                    -- l'intera vita dell'avamposto, vedi "sorveglianza continua ordine
+                                    -- di build" piu' sotto.
                                     cand.lost = nil
                                     aiBrain.OWPlusOutpostFactories = aiBrain.OWPlusOutpostFactories or {}
                                     aiBrain.OWPlusOutpostFactories[outpostKey] = cand
@@ -1210,37 +1682,448 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                 end
             end)
 
-            -- Fase A: compito locale di default (sess.75). Un ingegnere dell'avamposto
-            -- appena costruito (tier attuale, non superato) non ha nessun compito
-            -- assegnato — nulla lo tiene sul posto. Osservato in game: i builder stock
-            -- del template UvesoExpansionArea (ancora agganciato per intero insieme ai
-            -- nostri, mai ripulito) lo reclamano per compiti generici ovunque sulla
-            -- mappa (es. estrattori di massa lontani dall'avamposto), oppure — se
-            -- nemmeno lo stock lo reclama — resta semplicemente fermo senza ordini
-            -- (osservato: 5 ingegneri T3 tutti fermi in un avamposto). Watcher
-            -- dedicato: ogni 15s, qualunque ingegnere libero (IsIdleState(), non gia'
-            -- OWPlusOutpostBusy) vicino alla posizione nota viene messo ad assist
-            -- permanente della fabbrica locale — stesso idioma IssueGuard gia' usato
-            -- dal riassorbimento tier qui sopra, esteso qui agli ingegneri del tier
-            -- CORRENTE (non solo quelli superati). Un ingegnere gia' in guardia non
-            -- risulta piu' IsIdleState(), quindi non viene ri-processato ad ogni ciclo.
+            -- Fix sess.78: sorveglianza unificata difese/guardia. Sostituisce questo
+            -- watcher (Fase A: assist fabbrica di default) insieme al vecchio ciclo
+            -- "Fase difese" (sopra) e al riassorbimento ingegneri/Fase C reclaim
+            -- (dentro la sorveglianza tier piu' sotto) — 4 sistemi indipendenti che
+            -- competevano per gli stessi ingegneri liberi, causando furti/blocchi
+            -- intermittenti (difesa costruita 1-3 volte poi "si pianta": un altro
+            -- sistema si portava via l'ingegnere a meta' lista). Ora un solo ciclo:
+            -- ogni ingegnere non impegnato in costruzione/spostamento (guardia
+            -- inclusa, che non ha "coda" da perdere se interrotta) sceglie dalla coda
+            -- condivisa aiBrain.OWPlusOutpostPendingDefenses[outpostKey] il task di
+            -- tier piu' alto che sa fare (mai spreca un T3 su un T1 se c'e' anche un
+            -- T2/T3 da fare); altrimenti va di guardia alla fabbrica. "Controlla coda
+            -- -> rimuovi elemento" senza WaitSeconds in mezzo e' atomico in questo
+            -- motore (thread cooperativi, nessuna prelazione a meta' blocco) — nessun
+            -- sistema di prenotazione necessario, i doppioni sono tollerati (confermato
+            -- dall'utente: costruire/reclamare due volte la stessa cosa non e' un
+            -- problema pratico).
             ForkThread(function()
+                local waitReg = 0
+                while not (aiBrain.OWPlusOutpostRealLocType and aiBrain.OWPlusOutpostRealLocType[outpostKey]) and waitReg < 300 do
+                    WaitSeconds(5)
+                    waitReg = waitReg + 5
+                end
+                LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, avviata sorveglianza unificata difese/guardia')
+                local factionLookup = { UEF = 1, AEON = 2, CYBRAN = 3, SERAPHIM = 4, NOMADS = 5 }
                 while aiBrain.OWPlusOutpostRealLocType and aiBrain.OWPlusOutpostRealLocType[outpostKey] do
-                    WaitSeconds(15)
+                    WaitSeconds(10)
+                    local queue = aiBrain.OWPlusOutpostPendingDefenses and aiBrain.OWPlusOutpostPendingDefenses[outpostKey]
                     local curFactory = aiBrain.OWPlusOutpostFactories and aiBrain.OWPlusOutpostFactories[outpostKey]
-                    if curFactory and not curFactory.Dead then
-                        local nearbyEngs = aiBrain:GetUnitsAroundPoint(
-                            categories.MOBILE * categories.ENGINEER, outpostPos, 30, 'Ally') or {}
-                        for _, e in nearbyEngs do
-                            if not e.Dead and not e.OWPlusOutpostBusy and e:IsIdleState() then
+                    local nearbyEngs = aiBrain:GetUnitsAroundPoint(
+                        categories.MOBILE * categories.ENGINEER, outpostPos, 30, 'Ally') or {}
+                    -- Diagnostica sess.78 (sexies, temporanea): nessun task viene mai
+                    -- preso in carico nonostante la coda venga popolata correttamente
+                    -- alla nascita/tier-up (log "aggiunte in coda" confermato) — tutti
+                    -- gli ingegneri finiscono sempre in guardia. LOG per capire se la
+                    -- coda risulta vuota/nil in questo punto, o se il problema e'
+                    -- altrove (tier ingegnere, eligibilita', ecc.).
+                    LOG('[OWPlus-DIAG] Sorveglianza unificata (' .. outpostKey .. '): queue='
+                        .. tostring(queue ~= nil) .. ', len=' .. tostring(queue and table.getn(queue))
+                        .. ', nearbyEngs=' .. table.getn(nearbyEngs))
+                    for _, e in nearbyEngs do
+                        -- Fix sess.87: 'Reclaiming' mancava — un ingegnere che sta reclamando
+                        -- detriti (es. un relitto enorme sulla posizione di build, che il
+                        -- motore fa reclamare prima di costruire) non e' ne' 'Building' ne'
+                        -- 'Moving', quindi risultava "libero" a questo scan e veniva
+                        -- riassegnato altrove — IssueClearCommands nel ramo scelto cancellava
+                        -- il reclaim in corso. Confermato dall'utente in game (ingegnere
+                        -- interrotto mentre reclamava un relitto Aeon Czar).
+                        if not e.Dead and not e:IsUnitState('Building') and not e:IsUnitState('Moving') and not e:IsUnitState('Reclaiming') then
+                            local engTier = 1
+                            if EntityCategoryContains(categories.TECH3, e) then
+                                engTier = 3
+                            elseif EntityCategoryContains(categories.TECH2, e) then
+                                engTier = 2
+                            end
+                            -- Passo A: task di tier piu' alto che questo ingegnere sa fare
+                            local pickedIdx, pickedTier
+                            if queue then
+                                for idx, item in queue do
+                                    local itemTier = item.tier or item.newTier
+                                    if itemTier <= engTier and (not pickedTier or itemTier > pickedTier) then
+                                        pickedIdx = idx
+                                        pickedTier = itemTier
+                                    end
+                                end
+                            end
+                            if pickedIdx then
+                                -- Passo B: rimozione atomica (nessun WaitSeconds prima di qui)
+                                local task = queue[pickedIdx]
+                                table.remove(queue, pickedIdx)
+                                e.OWPlusOutpostGuardTarget = nil
+                                e.OWPlusOutpostBusy = true
+                                IssueClearCommands({e})
+                                -- Fix sess.78 (octies): diagnostica confermata dal log — 'e' arrivava
+                                -- nil (UnitId/Dead/PlatoonHandle tutti nil) dentro il ForkThread, mentre
+                                -- 'task' (locale dichiarata qui sopra) arrivava sempre corretta. La
+                                -- differenza e' che 'e' e' la variabile di controllo del ciclo
+                                -- 'for _, e in nearbyEngs do': in questo motore ForkThread non esegue
+                                -- in modo sincrono, quindi per quando la closure gira il ciclo esterno
+                                -- e' gia' andato avanti (o terminato) e la closure vede il valore
+                                -- "svuotato" della variabile di loop, non lo snapshot dell'iterazione
+                                -- in cui e' stata creata. Fix: passare 'e'/'task' come argomenti
+                                -- espliciti di ForkThread (valutati subito, non tramite closure) — i
+                                -- parametri della funzione hanno di proposito lo stesso nome, cosi'
+                                -- fanno shadow delle variabili esterne senza dover rinominare nulla
+                                -- nel corpo sottostante.
+                                ForkThread(function(e, task)
+                                    local success = false
+                                    if task.action == 'build' then
+                                        -- Fix sess.79: raggio ridotto da 20-40 a 10-18, poi a 7-15
+                                        -- (sess.79 bis, l'utente lo voleva ancora piu' vicino dopo il
+                                        -- test). Confermato dall'utente in game: con distanza fino a 40
+                                        -- le difese finivano FUORI dal raggio di rilevamento ingegneri
+                                        -- liberi (30, vedi 'nearbyEngs' piu' sopra) — un ingegnere che
+                                        -- finiva di costruire li' diventava invisibile al watcher e
+                                        -- veniva "perso" (riassorbito altrove). 7-15 resta ben dentro il
+                                        -- raggio 30 con ampio margine.
+                                        -- Fix Fase E (sess.88, richiesta esplicita utente): anello
+                                        -- riportato a 10-18 per terra/AA (era stato stretto a 7-15 in
+                                        -- sess.79-bis per preferenza, non per un bug — resta comunque
+                                        -- ben dentro il raggio 30 di rilevamento ingegneri liberi, vedi
+                                        -- 'nearbyEngs' piu' sopra, stesso margine di sicurezza di
+                                        -- allora). scudi/artiglieria/SMD (task.zone=='inner', Fase E)
+                                        -- usano invece un anello piu' vicino al centro (3-10),
+                                        -- protetto dietro la linea terra/AA per design esplicito.
+                                        local defRadiusMin, defRadiusMax = 10, 18
+                                        if task.zone == 'inner' then
+                                            defRadiusMin, defRadiusMax = 3, 10
+                                        end
+                                        local defAngle = math.rad(Random(0, 359))
+                                        local defDist = Random(defRadiusMin, defRadiusMax)
+                                        local defensePos = { outpostPos[1] + math.cos(defAngle) * defDist, outpostPos[2], outpostPos[3] + math.sin(defAngle) * defDist }
+                                        -- Fix sess.78 (septies): 'e.factionCategory' non esiste su nessun
+                                        -- unit object (verificato: zero riferimenti in vanilla/FAF/AI-Uveso)
+                                        -- — risultava sempre nil, quindi defFactionIndex cadeva sempre sul
+                                        -- fallback 1 (UEF), corretto per caso solo quando l'avamposto e' UEF.
+                                        -- aiBrain:GetFactionIndex() e' l'API corretta (usata anche da Uveso
+                                        -- stesso in aibuildstructures.lua) — l'aiBrain rappresenta sempre
+                                        -- un'unica fazione per l'intera partita.
+                                        local defFactionIndex = aiBrain:GetFactionIndex()
+                                        -- Fix sess.81 (opzione B — le difese modded "sparite"):
+                                        -- il pool difese mescola TOKEN vanilla ('T1GroundDefense', che
+                                        -- DecideWhatToBuild risolve) e ID BLUEPRINT literali modded
+                                        -- ('BRNT1EXPD'). L'opzione A (voce auto-mappante nel template +
+                                        -- AIExecuteBuildStructure) faceva passare i controlli di Uveso ma
+                                        -- FindPlaceToBuild() falliva comunque per gli ID literali (nessun
+                                        -- footprint associato nel template) — 689 fallimenti e requeue
+                                        -- infinito in game. Per gli ID modded bypassiamo del tutto la catena
+                                        -- DecideWhatToBuild/FindPlaceToBuild e costruiamo con la primitiva
+                                        -- diretta IssueBuildMobile, esattamente come fa il motore (vedi
+                                        -- wreckage_1.lua Rebuild). Per i token vanilla teniamo
+                                        -- AIExecuteBuildStructure invariato (funziona: 11 terra + 10 AA).
+                                        -- Discriminante: se l'ID (minuscolo) esiste in __blueprints e' un
+                                        -- blueprint literale (percorso modded), altrimenti e' un token.
+                                        local defLiteralId = string.lower(tostring(task.unitType))
+                                        local isModdedLiteral = __blueprints and __blueprints[defLiteralId] ~= nil
+                                        if isModdedLiteral then
+                                            -- Fix sess.81: le difese T1 modded (Mayor/Thug/Coyote/Pen) sono
+                                            -- costruibili SOLO da un ingegnere T1 (verificato in game:
+                                            -- T2/T3 davano CanBuild=false sulla base MK1, 81 pick sprecati).
+                                            -- Se l'ingegnere assegnato NON e' T1 e la MK1 in mano ha una
+                                            -- versione MK2 mappata, sostituiamo l'ID PRIMA del gate CanBuild:
+                                            -- un T2/T3 costruisce direttamente la MK2 (che sa fare) invece
+                                            -- di fallire sulla MK1 e tornare in coda in attesa di un T1.
+                                            if engTier > 1 then
+                                                local mk2Id = OWPlusOutpostDefensePool.OWPlusModdedUpgradeFor(defLiteralId)
+                                                -- Fix sess.86 (fallimento silenzioso reale, richiesta esplicita
+                                                -- utente di renderlo rumoroso): OWPlusModdedUpgradeFor puo' in
+                                                -- teoria tornare un valore truthy ma inutilizzabile (es. stringa
+                                                -- vuota, gia' visto in game per un default del motore su
+                                                -- General.UpgradesTo — causa gia' corretta ALLA FONTE, questa e'
+                                                -- una seconda guardia qui al punto di consumo, difesa in
+                                                -- profondita'). Se capita di nuovo per qualunque altro motivo,
+                                                -- un WARN esplicito rende il problema visibile subito nel log
+                                                -- invece di corrompere silenziosamente defLiteralId.
+                                                -- Fix sess.87 (bug reale confermato in game: Tower Boss mai
+                                                -- costruito): un ingegnere tier>1 non garantisce di poter
+                                                -- costruire il bersaglio dell'upgrade — es. BRNT2EPD (Tower
+                                                -- Boss, T2) si aggiorna a BRNT2EPDT3 che pero' ha SOLO
+                                                -- BUILTBYTIER3ENGINEER nel .bp: un T2 costruisce la base ma
+                                                -- non l'upgrade. La vecchia regola binaria "tier>1 -> sostituisci
+                                                -- sempre" andava bene per Mayor/Thug/Coyote/Pen (sess.81, MK1
+                                                -- solo-T1 -> MK2 T2/T3), non generalizza: verificare che QUESTO
+                                                -- ingegnere possa costruire il bersaglio prima di sostituire,
+                                                -- altrimenti restare sull'ID originale.
+                                                if mk2Id and mk2Id ~= '' and e:CanBuild(mk2Id) then
+                                                    LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, ingegnere tier ' .. engTier
+                                                        .. ' -> sostituita MK1 (' .. defLiteralId .. ') con MK2 (' .. mk2Id .. ')')
+                                                    defLiteralId = mk2Id
+                                                elseif mk2Id and mk2Id ~= '' then
+                                                    LOG('[OWPlus] Outpost (' .. outpostKey .. '): ingegnere tier ' .. engTier
+                                                        .. ' non puo costruire il bersaglio upgrade (' .. mk2Id .. ') di ' .. defLiteralId
+                                                        .. ' — sostituzione SALTATA, resto sulla base originale')
+                                                elseif mk2Id then
+                                                    LOG('[OWPlus-WARN] Outpost (' .. outpostKey .. '): OWPlusModdedUpgradeFor(' .. defLiteralId
+                                                        .. ') ha tornato un valore non valido (' .. tostring(mk2Id)
+                                                        .. ') — sostituzione MK2 SALTATA, resto sulla MK1 originale')
+                                                end
+                                            end
+                                            LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, ramo build diretto (opzione B) per '
+                                                .. (task.label or 'difesa') .. ' modded ' .. defLiteralId)
+                                            -- Gate 1 (capacita' ingegnere): tier/fazione/restrizioni. Se
+                                            -- l'ingegnere non puo' costruirla e' inutile cercare posizioni:
+                                            -- il task torna in coda per un ingegnere piu' adatto.
+                                            if not e:CanBuild(defLiteralId) then
+                                                -- Fix Fase E (sess.88): label nel WARN — l'utente verifica solo
+                                                -- via log (remoto, non vede lo schermo), serve distinguere un
+                                                -- CanBuild=false su artiglieria/scudo/SMD da uno su difesa
+                                                -- normale senza dover incrociare unitType a mano col catalogo.
+                                                LOG('[OWPlus-WARN] Outpost (' .. outpostKey .. '): ingegnere (' .. tostring(e.UnitId)
+                                                    .. ') non puo costruire ' .. (task.label or 'difesa') .. ' ' .. defLiteralId
+                                                    .. ' (CanBuild=false), task rimesso in coda')
+                                            else
+                                                -- Gate 2 (posizione valida): anello di offset attorno
+                                                -- all'avamposto, via helper condiviso OWPlusFindModdedBuildSpot
+                                                -- (sess.82, ora usato anche dal ramo 'reclaim' per l'upgrade
+                                                -- MK1->MK2). Fix Fase E (sess.88): stesso anello 10-18/3-10
+                                                -- (task.zone) del ramo vanilla-token sopra, non piu' un 7-15
+                                                -- fisso — vedi commento li' per il perche'.
+                                                local modRadiusMin, modRadiusMax = 10, 18
+                                                if task.zone == 'inner' then
+                                                    modRadiusMin, modRadiusMax = 3, 10
+                                                end
+                                                local buildWorldPos = OWPlusFindModdedBuildSpot(aiBrain, defLiteralId, outpostPos, modRadiusMin, modRadiusMax, 8)
+                                                if not buildWorldPos then
+                                                    LOG('[OWPlus-WARN] Outpost (' .. outpostKey .. '): CanBuildStructureAt ha rifiutato tutte le 8 posizioni per '
+                                                        .. defLiteralId .. ', task rimesso in coda')
+                                                else
+                                                    -- IssueBuildMobile: primitiva diretta "unita' mobile va a
+                                                    -- costruire questa struttura in questa posizione mondo",
+                                                    -- non passa da FindPlaceToBuild. La y viene snappata al
+                                                    -- terreno dal motore.
+                                                    IssueClearCommands({e})
+                                                    IssueBuildMobile({e}, buildWorldPos, defLiteralId, {})
+                                                    local buildWaited = 0
+                                                    -- Fix sess.87: 'Reclaiming' aggiunto — vedi nota sullo scan
+                                                    -- ingegneri liberi piu' sopra, stesso motivo.
+                                                    while not e.Dead and (e:IsUnitState('Building') or e:IsUnitState('Moving') or e:IsUnitState('Reclaiming')) and buildWaited < 180 do
+                                                        WaitSeconds(5)
+                                                        buildWaited = buildWaited + 5
+                                                    end
+                                                    if not e.Dead and buildWaited < 180 then
+                                                        success = true
+                                                        -- Fix Fase F-bis (sess.88): PRIMO tentativo (GetUnitBeingBuilt
+                                                        -- catturato dentro il loop sopra) confermato NON funzionante —
+                                                        -- verificato su un'intera partita reale (18 minuti, centinaia
+                                                        -- di costruzioni): 'registrata=false' SEMPRE, mai una volta
+                                                        -- 'true'. La API esiste ed e' usata cosi' nel platoon.lua
+                                                        -- vanilla di riferimento, ma li' e' dentro un platoon AI
+                                                        -- gia' stabilito (EconUnfinishedBody) — evidentemente non si
+                                                        -- popola allo stesso modo per un ordine IssueBuildMobile
+                                                        -- diretto come il nostro. Fix: scansione a raggio strettissimo
+                                                        -- (5, ben sotto qualunque distanza reale tra due avamposti,
+                                                        -- vedi Fase F) esattamente sulla posizione appena comandata —
+                                                        -- a costruzione confermata finita, la struttura e' li'.
+                                                        local justBuilt = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE, buildWorldPos, 5, 'Ally') or {}
+                                                        local newUnit = nil
+                                                        for _, u in justBuilt do
+                                                            if not u.Dead then
+                                                                newUnit = u
+                                                                break
+                                                            end
+                                                        end
+                                                        if newUnit then
+                                                            OWPlusOutpostOwnership.OWPlusClaimForOutpost(aiBrain, outpostKey, newUnit)
+                                                        end
+                                                        LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, ' .. (task.label or 'difesa')
+                                                            .. ' modded costruita (opzione B, ' .. defLiteralId .. ') da ingegnere ('
+                                                            .. tostring(e.UnitId) .. '), registrata=' .. tostring(newUnit ~= nil))
+                                                    end
+                                                end
+                                            end
+                                        else
+                                            -- Ramo TOKEN vanilla: AIExecuteBuildStructure invariato. Nessuna
+                                            -- mutazione del template condiviso qui, quindi niente table.copy
+                                            -- (l'auto-mapping opzione A serviva solo agli ID modded, ora
+                                            -- gestiti dal ramo diretto sopra).
+                                            local defBuildingTmpl = import('/lua/BuildingTemplates.lua')['BuildingTemplates'][defFactionIndex]
+                                            local defBaseTmpl = import('/lua/BaseTemplates.lua')['BaseTemplates'][defFactionIndex]
+                                            local defBaseTmplAtTarget = AIBuildStructures.AIBuildBaseTemplateFromLocation(defBaseTmpl, defensePos)
+                                            LOG('[OWPlus-DIAG] Outpost (' .. outpostKey .. '): pre-build (token vanilla) unitType=' .. tostring(task.unitType)
+                                                .. ', e=' .. tostring(e.UnitId) .. ' Dead=' .. tostring(e.Dead)
+                                                .. ', defFactionIndex=' .. tostring(defFactionIndex))
+                                            -- Fix sess.80 (parte 1): catturiamo il VALORE DI RITORNO di
+                                            -- AIExecuteBuildStructure, non solo l'esito del pcall — un false
+                                            -- significa "nessun ordine emesso" e non va contato come successo.
+                                            local buildOk, buildIssued = pcall(function()
+                                                return AIBuildStructures.AIExecuteBuildStructure(
+                                                    aiBrain, e, task.unitType, nil, false, defBuildingTmpl, defBaseTmplAtTarget, defensePos, nil)
+                                            end)
+                                            if not buildOk then
+                                                LOG('[OWPlus-WARN] Outpost (' .. outpostKey .. '): AIExecuteBuildStructure (build) CRASH catturato: ' .. tostring(buildIssued))
+                                            elseif not buildIssued then
+                                                LOG('[OWPlus-WARN] Outpost (' .. outpostKey .. '): AIExecuteBuildStructure ha ritornato FALSE per '
+                                                    .. (task.label or 'difesa') .. ' (' .. tostring(task.unitType)
+                                                    .. ') — nessun ordine emesso (unita non risolta o nessun posto valido), task rimesso in coda')
+                                            end
+                                            local buildWaited = 0
+                                            if buildOk and buildIssued then
+                                                -- Fix sess.87: 'Reclaiming' aggiunto — stesso motivo dello
+                                                -- scan ingegneri liberi piu' sopra (indentazione diversa dal
+                                                -- ramo modded, per questo la sostituzione precedente non
+                                                -- aveva preso anche questo punto).
+                                                while not e.Dead and (e:IsUnitState('Building') or e:IsUnitState('Moving') or e:IsUnitState('Reclaiming')) and buildWaited < 180 do
+                                                    WaitSeconds(5)
+                                                    buildWaited = buildWaited + 5
+                                                end
+                                                if not e.Dead and buildWaited < 180 then
+                                                    success = true
+                                                    -- Fix Fase F-bis (sess.88): stesso fix del ramo modded sopra
+                                                    -- — GetUnitBeingBuilt confermato non funzionante su una
+                                                    -- partita reale intera, sostituito con scansione a raggio
+                                                    -- stretto (5) sulla posizione comandata (defensePos).
+                                                    local justBuilt = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE, defensePos, 5, 'Ally') or {}
+                                                    local newUnit = nil
+                                                    for _, u in justBuilt do
+                                                        if not u.Dead then
+                                                            newUnit = u
+                                                            break
+                                                        end
+                                                    end
+                                                    if newUnit then
+                                                        OWPlusOutpostOwnership.OWPlusClaimForOutpost(aiBrain, outpostKey, newUnit)
+                                                    end
+                                                    LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, ' .. (task.label or 'difesa') .. ' costruita ('
+                                                        .. tostring(task.unitType) .. ') da ingegnere (' .. tostring(e.UnitId)
+                                                        .. '), registrata=' .. tostring(newUnit ~= nil))
+                                                end
+                                            end
+                                        end
+                                    elseif task.action == 'reclaim' then
+                                        local oldDef = task.targetUnit
+                                        if oldDef.Dead then
+                                            -- gia' sparita nel frattempo (es. reclamata da un altro
+                                            -- ingegnere in un ciclo precedente) — doppione tollerato,
+                                            -- nessun danno, task consumato senza fare nulla.
+                                            success = true
+                                        else
+                                            -- Fix sess.83: le difese modded con upgrade nativo sono
+                                            -- escluse a monte da questa coda (vedi filtro al
+                                            -- popolamento, scan tier-up piu' sopra) — arrivano qui
+                                            -- SOLO difese vanilla generiche, sempre col token
+                                            -- (es. 'T2GroundDefense'), mai un ID modded literale.
+                                            local newDefType = OWPlusOutpostDefensePool.OWPlusPickUpgradeDefense(aiBrain, task.newTier, task.isAA)
+                                            local defFactionIndex = aiBrain:GetFactionIndex()
+                                            local defBuildingTmpl = import('/lua/BuildingTemplates.lua')['BuildingTemplates'][defFactionIndex]
+                                            local defBaseTmpl = import('/lua/BaseTemplates.lua')['BaseTemplates'][defFactionIndex]
+
+                                            -- Fix sess.79: prova PRIMA a costruire il tier superiore in un
+                                            -- punto libero vicino (stesso raggio 7-15 delle difese
+                                            -- iniziali), lasciando la vecchia difesa in piedi come bonus.
+                                            -- Reclama SOLO come fallback esplicito, quando non si trova un
+                                            -- posto libero — mai come primo tentativo. Motivo (confermato
+                                            -- dall'utente in game): con difese sparse c'era gia' spazio
+                                            -- libero, reclamare prima era solo tempo sprecato.
+                                            local freeAngle = math.rad(Random(0, 359))
+                                            local freeDist = Random(7, 15)
+                                            local freePos = { outpostPos[1] + math.cos(freeAngle) * freeDist, outpostPos[2], outpostPos[3] + math.sin(freeAngle) * freeDist }
+                                            local freeBaseTmplAtTarget = AIBuildStructures.AIBuildBaseTemplateFromLocation(defBaseTmpl, freePos)
+                                            local freeOk, freeFoundSpot = pcall(function()
+                                                return AIBuildStructures.AIExecuteBuildStructure(
+                                                    aiBrain, e, newDefType, nil, false, defBuildingTmpl, freeBaseTmplAtTarget, freePos, nil)
+                                            end)
+                                            if not freeOk then
+                                                LOG('[OWPlus-WARN] Outpost (' .. outpostKey .. '): AIExecuteBuildStructure (upgrade, punto libero) CRASH catturato: ' .. tostring(freeFoundSpot))
+                                            end
+                                            if freeOk and freeFoundSpot then
+                                                -- Posto trovato, ordine emesso: aspetta come il ramo 'build'
+                                                -- normale. Vecchia difesa lasciata in piedi.
+                                                local freeBuildWaited = 0
+                                                -- Fix sess.87: 'Reclaiming' aggiunto — stesso motivo dello
+                                                -- scan ingegneri liberi piu' sopra.
+                                                while not e.Dead and (e:IsUnitState('Building') or e:IsUnitState('Moving') or e:IsUnitState('Reclaiming')) and freeBuildWaited < 180 do
+                                                    WaitSeconds(5)
+                                                    freeBuildWaited = freeBuildWaited + 5
+                                                end
+                                                if not e.Dead and freeBuildWaited < 180 then
+                                                    success = true
+                                                    LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, difesa tier ' .. task.newTier .. ' ('
+                                                        .. tostring(newDefType) .. ') costruita in punto libero, vecchia difesa lasciata in piedi')
+                                                end
+                                                -- Se non e' true (timeout o morto), 'success' resta false: il
+                                                -- task torna in coda e si ritenta piu' avanti, SENZA forzare
+                                                -- un reclaim sopra un ordine di build magari ancora in corso.
+                                            else
+                                                -- Nessun posto libero trovato (o crash): fallback, reclama
+                                                -- la vecchia difesa (posizione garantita valida, gia'
+                                                -- occupata prima) e ricostruisce li'.
+                                                local defPosOk, defPos = pcall(function() return oldDef:GetPosition() end)
+                                                if defPosOk and defPos then
+                                                    IssueReclaim({e}, oldDef)
+                                                    local reclaimWaited = 0
+                                                    while not oldDef.Dead and reclaimWaited < 120 do
+                                                        WaitSeconds(3)
+                                                        reclaimWaited = reclaimWaited + 3
+                                                    end
+                                                    if oldDef.Dead and not e.Dead then
+                                                        local rebuildBaseTmplAtTarget = AIBuildStructures.AIBuildBaseTemplateFromLocation(defBaseTmpl, defPos)
+                                                        local rebuildOk, rebuildErr = pcall(function()
+                                                            AIBuildStructures.AIExecuteBuildStructure(
+                                                                aiBrain, e, newDefType, nil, false, defBuildingTmpl, rebuildBaseTmplAtTarget, defPos, nil)
+                                                        end)
+                                                        if rebuildOk then
+                                                            LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, difesa reclamata e ricostruita a tier '
+                                                                .. task.newTier .. ' (' .. tostring(newDefType) .. ')')
+                                                        else
+                                                            LOG('[OWPlus-WARN] Outpost (' .. outpostKey .. '): AIExecuteBuildStructure (reclaim-rebuild) CRASH catturato: ' .. tostring(rebuildErr))
+                                                        end
+                                                        -- Stesso comportamento pre-esistente (non introdotto ora):
+                                                        -- success=true una volta reclamata la vecchia struttura,
+                                                        -- indipendentemente dall'esito del rebuild — la vecchia
+                                                        -- difesa e' comunque persa, ritentare da capo non aiuta.
+                                                        success = true
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                    if not success then
+                                        -- Fix sess.81 (tetto retry): contatore per-task. Con l'opzione A
+                                        -- un task modded impossibile veniva rimesso in coda all'infinito
+                                        -- (1378 requeue). Ora dopo OWPLUS_MAX_DEFENSE_RETRIES tentativi il
+                                        -- task viene scartato, cosi' la coda non resta intasata per sempre
+                                        -- da un task che non potra' mai completarsi.
+                                        local liveQueue = aiBrain.OWPlusOutpostPendingDefenses and aiBrain.OWPlusOutpostPendingDefenses[outpostKey]
+                                        task.OWPlusRetries = (task.OWPlusRetries or 0) + 1
+                                        if liveQueue and task.OWPlusRetries <= OWPLUS_MAX_DEFENSE_RETRIES then
+                                            table.insert(liveQueue, task)
+                                            LOG('[OWPlus-WARN] Outpost (' .. outpostKey .. '): task difesa (' .. tostring(task.action)
+                                                .. ', ' .. tostring(task.unitType) .. ') non completato (tentativo '
+                                                .. task.OWPlusRetries .. '/' .. OWPLUS_MAX_DEFENSE_RETRIES .. '), rimesso in coda')
+                                        else
+                                            LOG('[OWPlus-WARN] Outpost (' .. outpostKey .. '): task difesa (' .. tostring(task.action)
+                                                .. ', ' .. tostring(task.unitType) .. ') SCARTATO dopo ' .. tostring(task.OWPlusRetries)
+                                                .. ' tentativi (tetto retry raggiunto)')
+                                        end
+                                    end
+                                    -- Fix sess.78: NON ripulire OWPlusOutpostBusy qui. Il nostro
+                                    -- watcher non usa questo flag per decidere chi rivalutare (solo
+                                    -- IsUnitState('Building'/'Moving')), ma altri sistemi si' — es.
+                                    -- 'OWPlus Outpost Factory' (sceglie ingegneri per fondare un
+                                    -- NUOVO avamposto, via OWPlusHasFreeEngineerAtLocation) esclude
+                                    -- esplicitamente chi ha questo flag attivo. Ripulirlo qui aprirebbe
+                                    -- una finestra (fino a 10s, prossimo ciclo del watcher) in cui
+                                    -- l'ingegnere torna "rubabile" — la stessa vulnerabilita' gia'
+                                    -- osservata e chiusa oggi con la guardia fabbrica. Resta true per
+                                    -- sempre una volta impostato la prima volta (stesso principio gia'
+                                    -- in uso per la guardia, poco sotto).
+                                end, e, task)
+                            elseif curFactory and not curFactory.Dead and e.OWPlusOutpostGuardTarget ~= curFactory then
                                 -- Fix sess.76: IssueClearCommands prima di IssueGuard — senza,
-                                -- un ordine STALE rimasto in coda nativa (es. una struttura
-                                -- irraggiungibile abbandonata da OWPlusDispersedBuildAI, vedi
-                                -- nota li' sopra) poteva riemergere dopo l'assist, causando un
-                                -- oscillare infinito tra "assist fabbrica" e "riprova a
-                                -- raggiungere il punto impossibile" — osservato dal vivo in game.
+                                -- un ordine STALE rimasto in coda nativa poteva riemergere dopo
+                                -- l'assist, causando un oscillare infinito.
                                 IssueClearCommands({e})
                                 IssueGuard({e}, curFactory)
+                                -- Traccia il bersaglio (non un booleano) per accorgersi se la
+                                -- fabbrica cambia identita' (upgrade struttura, Conoscenze_AI_35
+                                -- §35.1: distrugge la vecchia entita' e ne crea una nuova) — un
+                                -- semplice flag "sto gia' guardando" resterebbe vero per sempre
+                                -- anche puntando a un'entita' morta, bloccando il riaggancio.
+                                e.OWPlusOutpostGuardTarget = curFactory
+                                e.OWPlusOutpostBusy = true
                                 LOG('[OWPlus] Outpost (' .. outpostKey .. '): ingegnere libero (' .. tostring(e.UnitId)
                                     .. ') messo ad assist della fabbrica per default (nessun compito locale trovato)')
                             end

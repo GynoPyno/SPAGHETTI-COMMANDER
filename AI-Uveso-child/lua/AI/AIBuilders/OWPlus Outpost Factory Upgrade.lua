@@ -56,6 +56,7 @@ BuilderGroup {
         InstanceCount = OUTPOST_UPGRADE_INSTANCE_COUNT,
         FormRadius = 40,
         BuilderConditions = {
+            { OWPlusLogCond, 'OWPlusOutpostTierUpAllowed', { 'Land Upgrade T1' } },
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
             { OWPlusLogCond, 'OWPlusDebugEconStorageRatio', { OUTPOST_UPGRADE_STORAGE_RATIO, OUTPOST_UPGRADE_STORAGE_RATIO, 'Land Upgrade T1' } },
             { OWPlusLogCond, 'OWPlusDebugLocationFactoriesBuildingLess', { 'LocationType', 1, categories.FACTORY * categories.TECH2 + categories.FACTORY * categories.TECH3, 'Land Upgrade T1' } },
@@ -71,6 +72,7 @@ BuilderGroup {
         InstanceCount = OUTPOST_UPGRADE_INSTANCE_COUNT,
         FormRadius = 40,
         BuilderConditions = {
+            { OWPlusLogCond, 'OWPlusOutpostTierUpAllowed', { 'Air Upgrade T1' } },
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
             { OWPlusLogCond, 'OWPlusDebugEconStorageRatio', { OUTPOST_UPGRADE_STORAGE_RATIO, OUTPOST_UPGRADE_STORAGE_RATIO, 'Air Upgrade T1' } },
             { OWPlusLogCond, 'OWPlusDebugLocationFactoriesBuildingLess', { 'LocationType', 1, categories.FACTORY * categories.TECH2 + categories.FACTORY * categories.TECH3, 'Air Upgrade T1' } },
@@ -86,6 +88,7 @@ BuilderGroup {
         InstanceCount = OUTPOST_UPGRADE_INSTANCE_COUNT,
         FormRadius = 40,
         BuilderConditions = {
+            { OWPlusLogCond, 'OWPlusOutpostTierUpAllowed', { 'Land Upgrade T2' } },
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
             { OWPlusLogCond, 'OWPlusDebugEconStorageRatio', { OUTPOST_UPGRADE_STORAGE_RATIO, OUTPOST_UPGRADE_STORAGE_RATIO, 'Land Upgrade T2' } },
             { OWPlusLogCond, 'OWPlusDebugLocationFactoriesBuildingLess', { 'LocationType', 1, categories.FACTORY * categories.TECH3, 'Land Upgrade T2' } },
@@ -101,6 +104,7 @@ BuilderGroup {
         InstanceCount = OUTPOST_UPGRADE_INSTANCE_COUNT,
         FormRadius = 40,
         BuilderConditions = {
+            { OWPlusLogCond, 'OWPlusOutpostTierUpAllowed', { 'Air Upgrade T2' } },
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
             { OWPlusLogCond, 'OWPlusDebugEconStorageRatio', { OUTPOST_UPGRADE_STORAGE_RATIO, OUTPOST_UPGRADE_STORAGE_RATIO, 'Air Upgrade T2' } },
             { OWPlusLogCond, 'OWPlusDebugLocationFactoriesBuildingLess', { 'LocationType', 1, categories.FACTORY * categories.TECH3, 'Air Upgrade T2' } },

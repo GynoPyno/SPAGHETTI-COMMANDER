@@ -80,7 +80,12 @@ end
 --
 -- RICORDARSI di rimettere OWPlusExterminatusMode a false a test concluso —
 -- con true, MAIN non produce ne' economia ne' difese ne' unita' di alcun tipo.
-local OWPlusExterminatusMode = true
+-- Sess.80: rimesso a false. Col testing AUTONOMO (launcher OWTEST, umano AFK)
+-- nessuno semina a mano le unita' iniziali (fabbrica terra/aria + ingegnere +
+-- trasporto) come si faceva nei test manuali, quindi con true la AI restava
+-- affamata di ingegneri e non fondava alcun avamposto (uovo-e-gallina). Con
+-- false la AI costruisce da se' la base e poi fonda gli avamposti.
+local OWPlusExterminatusMode = false
 local OWPlusExterminatusMainWhitelist = {
     ['OWPlus Outpost Factory'] = true,  -- claim + logistica trasporto propria verso l'avamposto
 }

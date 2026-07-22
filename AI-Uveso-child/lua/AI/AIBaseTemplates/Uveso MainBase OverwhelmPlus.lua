@@ -33,7 +33,13 @@ BaseBuilderTemplate {
         -- ==== Engineer ==== --
         -----------------------------------------------------------------------------
         'U123 Engineer Builders',   -- sess.76: rinominato da 'OWPlus Engineer Builders' — ora sostituisce davvero lo stock (registry override-by-same-name), non solo per MAIN ma anche per il template UvesoExpansionArea usato dagli avamposti. T1 bloccati se T3 factory esiste
-        'OWPlus Outpost Engineer Builders',  -- Fase A (B16): ingegneri propri per avamposto (OUT#), cap 5 per-location, tier segue la fabbrica
+        -- Fix sess.84 (bug reale confermato in game): 'OWPlus Outpost Engineer
+        -- Builders' NON va qui — la condizione OWPlusIsOutpostLocation doveva
+        -- escludere MAIN, ma le BuilderConditions non fanno vero short-circuit
+        -- AND (Conoscenze_AI_34 §34): l'ultima condizione della catena ha
+        -- comunque effetto anche quando le precedenti sono false. Rimosso —
+        -- resta agganciato correttamente ai singoli avamposti tramite
+        -- AddGlobalBuilderGroup dinamico (platoon.lua), mai a MAIN.
         'U2 Hive+Kennel',
         'U23 Hive+Kennel Upgrade',
         'UC123 Assistees',
@@ -73,7 +79,11 @@ BaseBuilderTemplate {
         'OWPlus Factory Builders RECOVER',  -- rimpiazza RECOVER: stessa logica, usa FACTORY*LAND senza -SUPPORTFACTORY
         'U1 Gate Builders',
         'U123 Factory Upgrader Rush',
-        'OWPlus Outpost Factory Upgrade',   -- Fase B (B16): upgrade tier fabbrica avamposto, soglia storage 15%, priorità sopra sperimentali MAIN
+        -- Fix sess.84 (bug reale confermato in game, 13 upgrade reali su
+        -- fabbriche MAIN in un solo test): stessa causa della rimozione di
+        -- 'OWPlus Outpost Engineer Builders' sopra — rimosso, resta
+        -- agganciato correttamente ai singoli avamposti tramite
+        -- AddGlobalBuilderGroup dinamico (platoon.lua), mai a MAIN.
         'U2 Air Staging Platform Builders',
         'U1 Factory Builders Naval',
         'U123 Factory Upgrader Naval',

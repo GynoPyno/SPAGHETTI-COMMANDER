@@ -28,7 +28,64 @@ FactoryBuilderManager = Class(prevClass) {
                     .. ' -- NumBuilders totali registrati su questo manager: ' .. tostring(self.NumBuilders))
             end
         end
+
+        -- Diagnostica sess.85: la diagnostica sopra si attiva solo se il MANAGER
+        -- CHIAMANTE (self.LocationType) e' gia' riconosciuto come avamposto — nel
+        -- test di sess.84 ha confermato che i 6 manager dedicati (OUT#) scelgono
+        -- sempre e solo builder Engineer, mai unita' da combattimento, quindi la
+        -- causa reale resta ignota. Questo secondo controllo e' complementare e
+        -- INDIPENDENTE da self.LocationType: guarda la POSIZIONE FISICA della
+        -- fabbrica contro gli slot avamposto noti (Brain.OWPlusSubBases, prefisso
+        -- 'OUT') — se una fabbrica che si trova fisicamente su un avamposto viene
+        -- decisa da un manager DIVERSO (es. 'MAIN', mai passato dal nostro
+        -- riconoscimento), lo vediamo comunque, indipendentemente da chi la sta
+        -- comandando in quel momento.
+        if factory and not factory.Dead and self.Brain and self.Brain.OWPlusSubBases then
+            local fPos = factory:GetPosition()
+            for slotKey, slotPos in self.Brain.OWPlusSubBases do
+                if string.sub(slotKey, 1, 3) == 'OUT' and slotPos
+                    and VDist2(fPos[1], fPos[3], slotPos[1], slotPos[3]) < 25 then
+                    factory.OWPlusWideDiagLastLog = factory.OWPlusWideDiagLastLog or {}
+                    local now2 = GetGameTimeSeconds()
+                    local key2 = 'wide_' .. tostring(bType)
+                    if not factory.OWPlusWideDiagLastLog[key2] or now2 - factory.OWPlusWideDiagLastLog[key2] >= 5 then
+                        factory.OWPlusWideDiagLastLog[key2] = now2
+                        local builder2 = self:GetHighestBuilder(bType, {factory})
+                        LOG('[OWPlus-DIAG-WIDE] Fabbrica fisicamente su ' .. slotKey .. ' (bp=' .. tostring(factory.UnitId)
+                            .. ') e\' comandata dal manager "' .. tostring(self.LocationType) .. '" -> builder scelto: '
+                            .. tostring(builder2 and builder2.BuilderName or 'nessuno, retry'))
+                    end
+                    break
+                end
+            end
+        end
+
         prevClass.AssignBuildOrder(self, factory, bType)
+    end,
+
+    -- Diagnostica sess.78: nel test dell'8 minuti l'hook AssignBuildOrder sopra
+    -- e' scattato UNA sola volta in tutta la partita (subito prima del riaggancio
+    -- "fabbrica orfana"), mai piu' dopo, nonostante le BuilderConditions per
+    -- Engineer T3 risultino verdi in continuazione nei log successivi — quei log
+    -- vengono pero' da ManagerThread/CalculatePriority (bookkeeping periodico
+    -- della classe base, vedi BuilderManager.lua), un ciclo COMPLETAMENTE
+    -- separato da AssignBuildOrder/DelayBuildOrder. Se AssignBuildOrder fallisce
+    -- una volta, vanilla pianifica SEMPRE un retry a 2s via
+    -- ForkThread(DelayBuildOrder, factory, bType, 2) — a meno che
+    -- factory.DelayThread sia gia' true in quel momento (guard mutex in
+    -- DelayBuildOrder), nel qual caso il retry viene scartato in silenzio.
+    -- Sospetto concreto: collisione tra il fork automatico a 0.1s di
+    -- AddFactory/SetupFactoryCallbacks e la nostra chiamata esplicita di
+    -- sicurezza (sess.77 septies) subito dopo, nello stesso istante. Questo
+    -- hook osserva direttamente il guard ad ogni chiamata.
+    DelayBuildOrder = function(self, factory, bType, time)
+        if self.LocationType and self.Brain and self.Brain.OWPlusOutpostLocationTypes
+            and self.Brain.OWPlusOutpostLocationTypes[self.LocationType] then
+            LOG('[OWPlus-HOOK] DelayBuildOrder(' .. tostring(self.LocationType) .. ', factory=' .. tostring(factory.UnitId)
+                .. ', time=' .. tostring(time) .. '): DelayThread=' .. tostring(factory.DelayThread)
+                .. (factory.DelayThread and ' -- SCARTATO (guard attivo, nessun retry pianificato)' or ' -- OK, pianifico retry'))
+        end
+        prevClass.DelayBuildOrder(self, factory, bType, time)
     end,
 
     -- Fix sess.77 (octies): confermato via l'hook sopra che AssignBuildOrder ORA
