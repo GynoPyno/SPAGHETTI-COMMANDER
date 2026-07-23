@@ -4,6 +4,7 @@ Merge = true,
         ImpactTerrain = Sound {
             Bank = 'Audiowo',
             Cue = 'mavor_impact',
+            LodCutoff = 'Weapon_LodCutoff',
         },
     },
 }

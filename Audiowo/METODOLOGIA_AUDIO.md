@@ -95,7 +95,7 @@ end
 
 ---
 
-## Attenuazione del volume in base alla distanza dalla camera — TENTATIVO FALLITO, non riprovare a mano
+## Attenuazione del volume in base alla distanza dalla camera — RISOLTO il 2026-07-23 (vedi in fondo alla sezione)
 
 **Sintomo (2026-07-19)**: un suono custom (Pattern A, `EntityPlaySound`) ha panning direzionale corretto (si sente da che lato arriva rispetto all'inquadratura), ma **il volume resta sempre al massimo indipendentemente dalla distanza** dalla camera — a differenza dei suoni vanilla, che si affievoliscono con la distanza (confermato anche da segnalazioni della community FAF: mod audio "grezze" come Total Mayhem hanno lo stesso problema, "not attenuated by camera distance", a differenza della maggior parte dei suoni originali del gioco).
 
@@ -107,6 +107,50 @@ end
 
 **Se si vuole riprovare in futuro**: NON riscrivere a mano i blocchi `RPC`/`Variable` nel `.xap` — il rischio è di rompere l'intero banco (tutti gli eventi, non solo quello nuovo) in un modo che il compilatore non segnala. Servirebbe usare la vera GUI **XACT Studio** (`Xact.exe`, nella stessa cartella di `XactBld.exe`: `C:\Program Files (x86)\Microsoft DirectX SDK (August 2007)\Utilities\Bin\x86\Xact.exe`) per costruire l'RPC tramite editor visuale (Variable=Distance, Object=Sound, Parameter=Volume, poi "Attach/Detach RPC" sul sound) — l'editor genera i metadati corretti che a mano non siamo riusciti a replicare. Questo richiede intervento manuale dell'utente nella GUI (non scriptabile da qui), poi si torna a compilare con `XactBld.exe` da PowerShell come sempre. **Prima di riprovare, testare SEMPRE in game su un solo evento alla volta e controllare subito il log per `Error loading soundbank` prima di considerare il resto della sessione di test valido** — un fallimento qui azzera silenziosamente tutti gli altri eventi della mod.
 
+### Pista corretta trovata dopo (2026-07-19, analisi binaria) — la curva RPC NON serviva
+
+Confrontando i binari dei banchi vanilla, di una mod funzionante (MemeSoundEffects) e del nostro, l'attenuazione con la distanza NON dipende da una curva RPC nel banco della mod. Dipende da due cose, entrambe più semplici e sicure:
+
+1. **Campo `LodCutoff` nel blueprint** (metadato, zero rischio). I nomi tipo `Weapon_LodCutoff`, `DefaultLodCutoff`, `WeaponBig_LodCutoff`, `UnitMove_LodCutoff` sono **preset RPC globali definiti una sola volta nel `SupCom.xgs` del gioco**, e il motore li risolve **globalmente** — non serve definirli nel `.xgs` della mod (provato: `MemeSounds.xgs` di una mod funzionante è identico al nostro e non li contiene, eppure il suo blueprint li usa su banco custom). Quando si fa l'override di un `Sound` vanilla, **mantenere il campo `LodCutoff` che il suono originale aveva** (noi l'avevamo perso). Esempio Mavor: il vanilla era `Sound { Bank='Impacts', Cue='Impact_Land_Gen_UEF_Big', LodCutoff='Weapon_LodCutoff' }`, quindi l'override deve portare `LodCutoff = 'Weapon_LodCutoff'`.
+2. **Sorgente audio MONO** (proprietà del file). I suoni vanilla d'impatto sono tutti mono (32 kHz PCM); il nostro pipeline produce stereo. In XACT il posizionamento 3D (panning + attenuazione) è pensato per sorgenti mono, lo stereo viene trattato in parte come non-posizionale. Se il solo `LodCutoff` non basta, convertire il wav a **mono** prima di compilarlo nel banco.
+
+**Ordine di prova consigliato** (dal più economico): prima aggiungere solo il `LodCutoff` all'override (nessun rebuild del banco) e testare; se non basta, rigenerare il cue in mono e ricompilare. Questo è anche il punto di partenza del servizio Audiedit (Task 5, vedi [`Audiedit/PIANO_AUDIEDIT.md`](../../Audiedit/PIANO_AUDIEDIT.md)).
+
+**Esiti dei test (2026-07-19)** — tre livelli di attenuazione, non uno:
+1. **`LodCutoff` da solo (stereo)**: NON attenua. Il `LodCutoff` da solo non fa nulla se il suono non è trattato come 3D.
+2. **mono + `LodCutoff`**: attenua ma **a taglio secco** (on/off). Il mono abilita il 3D → scatta il cull del `LodCutoff`, ma senza gradualità. Motivo (analisi binaria): le variabili `*_LodCutoff` sono **soglie di taglio** (distanze), non curve di volume.
+3. **gradualità** (il "via di mezzo"): richiede una **curva RPC `Distance→Volume` agganciata al sound nel `.xsb`**. I suoni vanilla d'impatto agganciano il codice RPC `1050` (curva `Distance→Volume` graduale definita nel `SupCom.xgs`); i nostri non agganciano nulla. **Nessuna mod di esempio nel repo l'ha mai fatto** — e ora sappiamo probabilmente perché: **non è ottenibile con i nostri strumenti.**
+
+**RISULTATO NEGATIVO CONFERMATO (2026-07-19): QUALUNQUE riferimento RPC in un `.xsb` di mod fa fallire il caricamento del banco (`Invalid data`).** Provato in due modi indipendenti, stesso identico esito:
+   - (a) autorare la curva RPC nel `.xap` e ricompilare con XactBld → `Invalid data`;
+   - (b) patch binario del `.xsb` (validato strutturalmente: sound con `flags=0x03`, RPC code `1050`, tutti gli offset corretti) per referenziare la curva vanilla → `Invalid data`.
+   Interpretazione data allora — **SBAGLIATA, ritirata il 2026-07-23**: si era ipotizzato che FA associasse al banco della mod il `.xgs` della mod stessa. Il log di partita dimostra il contrario: **un `.xgs` di mod non viene mai caricato**, FA usa solo il `SupCom.xgs`. Le cause reali erano due, diverse fra loro: in (a) XactBld calcolava il codice RPC come offset dentro il *nostro* `.xgs`, quindi puntava a un indirizzo inesistente nel `SupCom.xgs`; in (b) il patch binario è comunque rifiutato (il campo u16 @8 dell'header è verosimilmente un checksum non ricalcolabile). Vedi la soluzione in fondo.
+
+### SOLUZIONE (2026-07-23, confermata in game): allineamento dell'offset RPC in fase di build
+
+Il codice RPC che XactBld scrive nel `.xsb` **è l'offset della curva dentro il `.xgs` che genera lui stesso**. Non serve quindi nessuna patch binaria: basta gonfiare il `.xgs` con elementi fittizi finché quell'offset coincide con il codice della curva vanilla che si vuole usare. A quel punto è il tool a scrivere il valore giusto, con checksum valido, e il banco carica.
+
+**Grane di spostamento misurate** (quanto sposta in avanti l'offset della curva ogni elemento aggiunto in `Global Settings`, *prima* del blocco `RPC`):
+
+| elemento aggiunto | sposta di |
+|---|---|
+| `Variable` | 13 byte |
+| `Category` | 10 byte |
+| curva `RPC` fittizia (2 punti) | 23 byte |
+| lunghezza dei nomi | **0 byte** (la tabella nomi sta dopo le curve) |
+
+**Procedura** (automatizzata da `align2.py`, vedi scratchpad; il flusso è: misura le tre grane compilando 3 volte → risolve la combinazione intera → ricompila e verifica):
+1. Nel `.xap`, in `Global Settings`: `Variable { Name = Distance; Reserved = 1; ... }` + un blocco `RPC { RPC Curve { Property = 0; Variable Entry { Name = Distance; } ... } }`.
+2. Nel `Sound` da attenuare (**solo quello**): `RPC Entry { RPC Name = DistanceVolume; }`.
+3. Compilare, leggere il codice emesso nel `.xsb` (offset `soundStart + 10`, dopo `numClips`: `u16 dataLength, u8 numPresets, u32 codice`).
+4. Aggiungere categorie/variabili/curve fittizie finché il codice emesso = quello voluto. Per il Mavor servivano 852 byte (198 → 1050) = **7 categorie + 34 curve fittizie**.
+
+Effetto collaterale utile: anche nel nostro `.xgs` l'offset risultante è una curva `Distance→Volume` vera, quindi il risultato è corretto sotto entrambe le ipotesi su quale global-settings usi il motore.
+
+**Attenzione**: `Name = mavor_impact;` compare in **tre** sezioni del `.xap` (Wave Bank, Sound Bank, Cue). Ancorarsi alla sezione giusta quando si inserisce l'`RPC Entry`, altrimenti finisce su un altro suono.
+
+**Formato dei file XACT (per riferimento futuro, parser in Python già scritti negli script di lavoro):** `.xgs`=`XGSF` (header + variabili + curve RPC: ogni curva = `u16 varIndex, u8 pointCount, u16 param(0=Volume,1=Pitch,2=ReverbSend,3=FilterFreq,4=FilterQ)`, poi `pointCount×(f32 pos, f32 val, u8 type)`). `.xsb`=`SDBK` (header di offset + entry Sound: `u8 flags` [bit0=complex, bit1-3=ha RPC, bit4=ha DSP], `u16 cat, u8 vol, u16 pitch, u8 prio, u16 filter`, poi track/clip, poi se ha RPC: `u16 dataLen, u8 numPresets, numPresets×u32 codiceRPC`). `.xwb`=`WBND` (formato per-onda: canali/rate/bit impacchettati in un dword). Riferimento di formato: implementazione MonoGame (`AudioEngine.cs`/`SoundBank.cs`/`XactSound.cs`).
+
 ---
 
 ## Regole trasversali per qualunque hook `.lua`
@@ -117,3 +161,50 @@ end
   - Usare solo costrutti già visti funzionare nel codice vanilla circostante (for-in, if/then/else, `table.insert`, riassegnazione di funzione globale).
   - Testare in partita locale/sandbox, non in ranked, finché non si è confermato che il file si carica senza errori.
 - Per capire se un hook `.lua` si è caricato senza errori, controllare il log della partita (`C:\Users\hp\AppData\Roaming\Forged Alliance Forever\logs\game_<id>.log`) cercando `Hooked ... con ...` seguito (o meno) da un eventuale `SCR_LuaDoFileConcat ... failed`.
+
+---
+
+## Catalogo delle possibilità (rilevato il 2026-07-23 dai binari del gioco e dalle mod di esempio)
+
+### Meccanismi usati dalle mod di esempio
+
+| mod | meccanismo | cosa insegna |
+|---|---|---|
+| MemeSoundEffects, Oof | **Pattern A puro**: solo `hook/units/*` e `hook/projectiles/*` con `Audio = { X = Sound{...} }` + banco custom | è la via più semplice; nessun Lua |
+| AnimeSounds | **Pattern B**: `hook/lua/ui/game/gamemain.lua` con `AddBeatFunction` che osserva `Sync.Voice` e reagisce a una cue VO specifica | come agganciarsi a un evento annunciatore; usa `ForkThread`+`WaitSeconds` per ritardare, e `math.random(1,11)` per un **pool casuale lato Lua** |
+| ZhanaseeSound | nessun banco: **ripunta il blueprint su una cue vanilla diversa** | conferma che la proprietà "si attenua" vive nel Sound del banco, non nel blueprint |
+| BlackOps, TotalMayhem, BattlePack | `self:PlaySound(bp.Audio.X)` dentro script di unità/proiettile | si può far suonare un evento **da codice**, in punti arbitrari della logica |
+
+### Cosa si può modificare (campi `Audio` esistenti nei blueprint vanilla)
+
+Unità: `Fire` (347), `DeathExplosion` (254), `UISelection` (244), `DoneBeingBuilt` (208), `Destroyed` (158), `AmbientMove` (77), `AirUnitWaterImpact` (58), `BarrelStart`, `HoverKilledOnWater`, `MuzzleChargeStart`, `AmbientMoveSub`, `NuclearLaunchDetected`, `BeamStart`, `TeleportChargingAtDestination`, `FootFallGenericSeabed`, `StartMove`/`StopMove`, `ConstructLoop`, `Open`/`Close`, `FireUnderWater`, `ShieldOn`/`ShieldOff`, `Killed`, `ChargeStart`, `ActiveLoop`, `EnterWater`/`ExitWater`, `Unpack`, `Activate`.
+Proiettili: `ImpactTerrain` (223), `ImpactWater` (26), `NukeExplosion` (14), `Impact` (4), `ExistLoop`.
+**Un blocco `Sound{}` in un blueprint accetta solo tre chiavi: `Bank`, `Cue`, `LodCutoff`.** Niente volume o altro: tutto il resto si controlla nel banco.
+
+### Cosa si può controllare, e dove
+
+| voglio… | dove si fa |
+|---|---|
+| **volume** del singolo suono | `.xap`, `Sound { Volume = N; }` (centesimi di dB, es. `-600` = −6 dB). Anche `Track { Volume }` e il volume di categoria |
+| **attenuazione con la distanza on/off** | presenza o assenza dell'`RPC Entry` sul Sound |
+| **quanto/come attenua** | scelta della curva vanilla a cui allinearsi (vedi tabella sotto) |
+| **direzionalità** | sorgente **mono** (lo stereo non viene spazializzato) + curva `Angle→Volume` (codice 1437) |
+| **taglio netto a distanza X** | `LodCutoff` nel blueprint (`Weapon_LodCutoff`=10000, `UnitRumble_LodCutoff`=256, `WeaponBig_LodCutoff`, `UnitMove_LodCutoff`, `DefaultLodCutoff`) |
+| **pool casuale per evento** | `.xap`: più blocchi `Wave Entry` con `Weight` dentro **un solo** `Play Wave Event` — è così che il vanilla fa variare gli impatti (`Impact_Land_Gen_UEF_Big` pesca fra 4 onde). In alternativa, pool lato Lua con `math.random` (vedi AnimeSounds) |
+| **condizioni (chi ascolta, alleato/nemico)** | **solo lato UI**: la sim è condivisa e deterministica, quindi `PlaySound` nella sim suona uguale per tutti. Per differenziare per spettatore serve un hook UI + `GetFocusArmy()`, `IsAlly()`, `IsEnemy()`, `IsObserver()`, `GetArmiesTable()`. Costo: il suono UI è 2D, non posizionale |
+
+### Curve `Distance→Volume` disponibili nel `SupCom.xgs` (codici da usare con l'allineamento)
+
+| codice | punti | profilo |
+|---|---|---|
+| 868 | 5 | ripida: −24 dB già a 794, muta a ~3750 |
+| 918 | 5 | dolce e lunga: −10 dB a 543, −25 dB a 4566, muta a 6501 |
+| **1050** | 6 | **usata dagli impatti vanilla** (quella del Mavor): +30 dB a 0, −6 dB a 327, −28 dB a 3102, muta a 6129 |
+| 1109 | 4 | corto raggio: muta già a ~2457 |
+| 1200 | 2 | attenuazione lievissima (−3 dB a 325) |
+| 1305 | 5 | cortissimo raggio: muta a ~182 |
+| 1487 | 3 | attenua a −46 dB entro 2258 poi resta udibile in lontananza |
+
+Altre curve utili: **1378** `CameraDistance→Volume` (dipende dallo zoom, non dalla posizione), **1437** `Angle→Volume` (direzionalità), **1355** `Duck→Volume` (abbassa il suono quando parla l'annunciatore), **968/1223** `AttackTime` e **1027/1150/1282** `ReleaseTime` (inviluppi).
+
+Le 39 categorie del gioco (`Destroy`, `Weapons`, `Units`, `Interface`, `VO`, `Music`, …) raggruppano i suoni per il mixaggio; la categoria si sceglie nel `.xap` con `Category Entry`.
