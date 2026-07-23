@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QCursor
+from PySide6.QtGui import QCursor, QIcon
 from PySide6.QtWidgets import (
     QApplication, QHBoxLayout, QMainWindow, QMessageBox, QPlainTextEdit, QPushButton,
     QSplitter, QVBoxLayout, QWidget,
@@ -29,6 +29,9 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Audiedit — editor Audiowo")
+        icon_path = config.AUDIEDIT_DIR / "app_icon.ico"
+        if icon_path.exists():
+            self.setWindowIcon(QIcon(str(icon_path)))
         self.resize(1400, 800)
 
         self._events = state.load()
