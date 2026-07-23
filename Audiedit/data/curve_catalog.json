@@ -1,0 +1,9 @@
+[
+  {"code": 868, "label": "Ripida", "description": "-24 dB già a 794, muta a ~3750"},
+  {"code": 918, "label": "Dolce e lunga", "description": "-10 dB a 543, -25 dB a 4566, muta a 6501"},
+  {"code": 1050, "label": "Impatti vanilla (Mavor)", "description": "+30 dB a 0, -6 dB a 327, -28 dB a 3102, muta a 6129"},
+  {"code": 1109, "label": "Corto raggio", "description": "muta già a ~2457"},
+  {"code": 1200, "label": "Lievissima", "description": "-3 dB a 325"},
+  {"code": 1305, "label": "Cortissimo raggio", "description": "muta a ~182"},
+  {"code": 1487, "label": "Coda lunga udibile", "description": "-46 dB entro 2258, poi resta udibile in lontananza"}
+]

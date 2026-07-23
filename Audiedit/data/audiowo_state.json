@@ -1,0 +1,126 @@
+[
+  {
+    "cue": "acu_death",
+    "pattern": "A",
+    "label": "Morte ACU (esplosione)",
+    "targets": [
+      {
+        "kind": "unit",
+        "directory_id": "UEL0001",
+        "field": "Killed"
+      },
+      {
+        "kind": "unit",
+        "directory_id": "UAL0001",
+        "field": "Killed"
+      },
+      {
+        "kind": "unit",
+        "directory_id": "URL0001",
+        "field": "Killed"
+      },
+      {
+        "kind": "unit",
+        "directory_id": "XSL0001",
+        "field": "Killed"
+      }
+    ],
+    "vo_bank": null,
+    "vo_cue": null,
+    "pool": [
+      {
+        "path": "attivi/kaboom.mp3",
+        "weight": 255
+      }
+    ],
+    "volume_db": 0,
+    "attenuation_curve": null,
+    "lodcutoff": null,
+    "mono": false,
+    "catalog_key": null
+  },
+  {
+    "cue": "acu_upgrade_complete",
+    "pattern": "A",
+    "label": "Fine upgrade ACU",
+    "targets": [
+      {
+        "kind": "unit",
+        "directory_id": "UEL0001",
+        "field": "EnhanceEnd"
+      },
+      {
+        "kind": "unit",
+        "directory_id": "UAL0001",
+        "field": "EnhanceEnd"
+      },
+      {
+        "kind": "unit",
+        "directory_id": "URL0001",
+        "field": "EnhanceEnd"
+      },
+      {
+        "kind": "unit",
+        "directory_id": "XSL0001",
+        "field": "EnhanceEnd"
+      }
+    ],
+    "vo_bank": null,
+    "vo_cue": null,
+    "pool": [
+      {
+        "path": "attivi/carpentiere.mp3",
+        "weight": 255
+      }
+    ],
+    "volume_db": 0,
+    "attenuation_curve": null,
+    "lodcutoff": null,
+    "mono": false,
+    "catalog_key": null
+  },
+  {
+    "cue": "nuke_alarm",
+    "pattern": "B",
+    "label": "Allarme lancio Nuke",
+    "targets": [],
+    "vo_bank": "XGG",
+    "vo_cue": "Computer_Computer_MissileLaunch_01351",
+    "pool": [
+      {
+        "path": "attivi/polizia_dei_peni.mp3",
+        "weight": 255
+      }
+    ],
+    "volume_db": 0,
+    "attenuation_curve": null,
+    "lodcutoff": null,
+    "mono": false,
+    "catalog_key": null
+  },
+  {
+    "cue": "mavor_impact",
+    "pattern": "A",
+    "label": "Impatto colpo Mavor",
+    "targets": [
+      {
+        "kind": "projectile",
+        "directory_id": "TIFHETacticalNuclearShell01",
+        "field": "ImpactTerrain"
+      }
+    ],
+    "vo_bank": null,
+    "vo_cue": null,
+    "pool": [
+      {
+        "path": "attivi/metal_pipe.mp3",
+        "weight": 255
+      }
+    ],
+    "volume_db": 0,
+    "attenuation_curve": 1050,
+    "lodcutoff": "Weapon_LodCutoff",
+    "mono": true,
+    "catalog_key": null
+  }
+]

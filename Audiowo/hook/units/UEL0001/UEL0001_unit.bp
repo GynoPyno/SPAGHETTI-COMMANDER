@@ -1,6 +1,6 @@
 UnitBlueprint {
 Merge = true,
-BlueprintId = "uel0001",    -- uef com
+BlueprintId = "uel0001",
     Audio = {
         Killed = Sound {
             Bank = 'Audiowo',

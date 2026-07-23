@@ -1,4 +1,4 @@
-ProjectileBlueprint {  -- uef T4 Mavor (UEB2401) experimental artillery shell
+ProjectileBlueprint {
 Merge = true,
     Audio = {
         ImpactTerrain = Sound {

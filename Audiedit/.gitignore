@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+
+# rigenerabili on demand (scan_catalog) / non da versionare: catalog.json e' 2MB+ di
+# cache derivata dai blueprint, pool_manifest.json elenca nomi di file audio personali
+data/catalog.json
+data/pool_manifest.json

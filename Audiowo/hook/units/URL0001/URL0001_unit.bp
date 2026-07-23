@@ -1,6 +1,6 @@
 UnitBlueprint {
 Merge = true,
-BlueprintId = "url0001",    -- cybran com
+BlueprintId = "url0001",
     Audio = {
         Killed = Sound {
             Bank = 'Audiowo',
