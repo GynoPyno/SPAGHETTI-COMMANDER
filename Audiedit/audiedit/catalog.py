@@ -44,6 +44,30 @@ class CatalogEntry:
     file: str                  # percorso assoluto del .bp sorgente
 
 
+# Convenzione ID di Forged Alliance: la 2a lettera del nome cartella è sempre la fazione
+# (E=UEF, A=Aeon, R=Cybran, S=Seraphim), indipendentemente dal prefisso davanti (U=normale,
+# X=esperimentale/Seraphim, Z/D=varianti speciali) — verificato sui 4425 campi del catalogo,
+# copertura piena tranne ~20 ID non standard. La 3a lettera è quasi sempre il tipo di unità.
+_FACTION_BY_LETTER = {"E": "UEF", "A": "Aeon", "R": "Cybran", "S": "Seraphim"}
+_TYPE_BY_LETTER = {"L": "Terra", "A": "Aria", "S": "Navale", "B": "Struttura"}
+
+
+def faction_of(entry: CatalogEntry) -> str:
+    if entry.source == "projectile":
+        return "Proiettili"
+    if len(entry.directory_id) >= 2:
+        return _FACTION_BY_LETTER.get(entry.directory_id[1].upper(), "Altro")
+    return "Altro"
+
+
+def unit_type_of(entry: CatalogEntry) -> str:
+    if entry.source == "projectile":
+        return "Proiettile"
+    if len(entry.directory_id) >= 3:
+        return _TYPE_BY_LETTER.get(entry.directory_id[2].upper(), "Altro")
+    return "Altro"
+
+
 class ScanIssue(Exception):
     """Segnala un blocco non interpretabile; catturata e loggata dallo scanner, non fatale."""
 

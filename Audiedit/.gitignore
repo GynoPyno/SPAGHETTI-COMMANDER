@@ -5,3 +5,4 @@ __pycache__/
 # cache derivata dai blueprint, pool_manifest.json elenca nomi di file audio personali
 data/catalog.json
 data/pool_manifest.json
+data/icons_cache/

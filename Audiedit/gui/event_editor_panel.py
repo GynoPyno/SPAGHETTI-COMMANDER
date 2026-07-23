@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel,
     QListWidget, QListWidgetItem, QMessageBox, QPushButton, QSpinBox, QVBoxLayout, QWidget,
@@ -18,7 +19,7 @@ try:
 except ImportError:  # pragma: no cover - ambiente senza QtMultimedia
     _MULTIMEDIA_OK = False
 
-from audiedit import config, pool, vanilla_audio
+from audiedit import config, icons, pool, vanilla_audio
 from audiedit.catalog import CatalogEntry
 from audiedit.state import EventConfig, HookTarget, PoolFile
 
@@ -74,9 +75,14 @@ class EventEditorPanel(QWidget):
             self._player_sostituto.setAudioOutput(self._audio_sostituto)
 
         layout = QVBoxLayout(self)
+        header_row = QHBoxLayout()
+        self.icon_label = QLabel()
+        self.icon_label.setFixedSize(48, 48)
+        header_row.addWidget(self.icon_label)
         self.title = QLabel("Seleziona un evento dal catalogo")
         self.title.setWordWrap(True)
-        layout.addWidget(self.title)
+        header_row.addWidget(self.title, stretch=1)
+        layout.addLayout(header_row)
 
         form = QFormLayout()
         self.cue_edit = QComboBox(editable=True)
@@ -159,6 +165,14 @@ class EventEditorPanel(QWidget):
     def load_from_catalog_entry(self, entry: CatalogEntry) -> None:
         self._catalog_entry = entry
         self.setEnabled(True)
+        icon_path = icons.get_icon_png(entry.directory_id)
+        if icon_path:
+            pixmap = QPixmap(str(icon_path)).scaled(
+                48, 48, Qt.KeepAspectRatio, Qt.SmoothTransformation
+            )
+            self.icon_label.setPixmap(pixmap)
+        else:
+            self.icon_label.clear()
         idx, existing = self._find_event_for_entry(entry)
         self._editing_index = idx
         if existing is not None:

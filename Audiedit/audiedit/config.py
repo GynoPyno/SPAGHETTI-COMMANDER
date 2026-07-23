@@ -40,6 +40,8 @@ STEAM_ROOT = Path(r"C:\Program Files (x86)\Steam\steamapps\common\Supreme Comman
 STEAM_SOUNDS_DIR = STEAM_ROOT / "sounds"
 SUPCOM_XGS = STEAM_SOUNDS_DIR / "SupCom.xgs"
 FAF_DATA_DIR = Path(r"C:\ProgramData\FAForever")
+TEXTURES_ARCHIVE = FAF_DATA_DIR / "gamedata" / "textures.nx2"
+ICONS_CACHE_DIR = DATA_DIR / "icons_cache"
 
 # Strumenti esterni.
 DIRECTX_SDK_BIN = Path(r"C:\Program Files (x86)\Microsoft DirectX SDK (August 2007)\Utilities\Bin\x86")
