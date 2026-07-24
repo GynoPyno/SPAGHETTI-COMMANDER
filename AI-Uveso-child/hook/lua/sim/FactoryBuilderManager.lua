@@ -40,10 +40,23 @@ FactoryBuilderManager = Class(prevClass) {
         -- decisa da un manager DIVERSO (es. 'MAIN', mai passato dal nostro
         -- riconoscimento), lo vediamo comunque, indipendentemente da chi la sta
         -- comandando in quel momento.
+        --
+        -- Fix sess.89 (falso positivo confermato su log reale): OWPlusSubBases
+        -- contiene anche posizioni CANDIDATE mai costruite (registrate dal
+        -- generatore avamposti, ma nessun ingegnere le ha mai rivendicate). Per
+        -- caso geografico, alcune di queste candidate cadono entro 25u dalle
+        -- sotto-basi diagonali proprie di MAIN (BASE_NE/SE/SW/NW,
+        -- overwhelmplusai.lua — stesse 4 direzioni diagonali e distanze simili
+        -- usate da OWPlusOutpostGenerator.lua) — il log segnalava le fabbriche
+        -- LEGITTIME di MAIN come se fossero avamposti nostri "rubati". Aggiunto
+        -- il controllo su OWPlusOutpostClaimed[slotKey] (settato in platoon.lua
+        -- al momento della rivendicazione reale, riga ~169): il log scatta solo
+        -- per slot davvero costruiti, non per candidati mai rivendicati.
         if factory and not factory.Dead and self.Brain and self.Brain.OWPlusSubBases then
             local fPos = factory:GetPosition()
             for slotKey, slotPos in self.Brain.OWPlusSubBases do
                 if string.sub(slotKey, 1, 3) == 'OUT' and slotPos
+                    and self.Brain.OWPlusOutpostClaimed and self.Brain.OWPlusOutpostClaimed[slotKey]
                     and VDist2(fPos[1], fPos[3], slotPos[1], slotPos[3]) < 25 then
                     factory.OWPlusWideDiagLastLog = factory.OWPlusWideDiagLastLog or {}
                     local now2 = GetGameTimeSeconds()

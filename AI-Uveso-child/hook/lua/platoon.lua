@@ -61,6 +61,51 @@ local function OWPlusFindModdedBuildSpot(aiBrain, bpId, centerPos, radiusMin, ra
     end
     return nil
 end
+-- Fix Fase F-ter (sess.89, B20): la cattura a raggio stretto (5 unita') introdotta
+-- in Fase F-bis fallisce il 20-64% delle volte a seconda della categoria (peggio
+-- per le difese T1 — verificato su log reale, vedi AI_Mod_Spec.md B20). Causa
+-- probabile: quando l'ingegnere piazza piu' strutture piccole ravvicinate in
+-- rapida successione (T1, tetto piu' alto = piu' unita' nello stesso anello), il
+-- motore puo' scostare leggermente il piazzamento reale dalla posizione comandata
+-- per evitare la collisione con una struttura appena piazzata li' accanto —
+-- oltre il raggio 5 originale ma sempre ben sotto la distanza minima reale tra
+-- due avamposti consecutivi (13-31 unita', vedi Fase F). Fix: raggio allargato a
+-- 10 (meta' del margine minimo misurato, non l'intero — resta un margine di
+-- sicurezza contro un vicino), scelta della struttura PIU' VICINA alla posizione
+-- comandata invece della prima trovata (l'ordine di GetUnitsAroundPoint non e'
+-- garantito per distanza), esclusione di strutture gia' di proprieta' di un
+-- ALTRO avamposto (tag OWPlusOwnerOutpost, difesa aggiuntiva contro un falso
+-- positivo di raggio), e un secondo tentativo dopo una breve attesa se il primo
+-- scan non trova nulla (copre un'eventuale finestra di propagazione dello spatial
+-- query subito dopo la conferma 'costruzione finita').
+local function OWPlusCaptureBuiltStructure(aiBrain, outpostKey, targetPos)
+    local RADIUS = 10
+    for attempt = 1, 2 do
+        local candidates = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE, targetPos, RADIUS, 'Ally') or {}
+        local best, bestDist = nil, nil
+        for _, u in candidates do
+            if not u.Dead and (not u.OWPlusOwnerOutpost or u.OWPlusOwnerOutpost == outpostKey) then
+                local upos = u:GetPosition()
+                local d = VDist2(targetPos[1], targetPos[3], upos[1], upos[3])
+                if not bestDist or d < bestDist then
+                    best, bestDist = u, d
+                end
+            end
+        end
+        if best then
+            LOG('[OWPlus-DIAG] Outpost (' .. outpostKey .. '): cattura struttura OK al tentativo '
+                .. attempt .. ', dist=' .. math.floor(bestDist or -1) .. ', unitId=' .. tostring(best.UnitId))
+            return best
+        end
+        if attempt == 1 then
+            LOG('[OWPlus-DIAG] Outpost (' .. outpostKey .. '): cattura struttura fallita al tentativo 1 (raggio '
+                .. RADIUS .. '), ritento tra 2s')
+            WaitSeconds(2)
+        end
+    end
+    LOG('[OWPlus-DIAG] Outpost (' .. outpostKey .. '): cattura struttura fallita dopo 2 tentativi (raggio ' .. RADIUS .. ')')
+    return nil
+end
 -- Fase 9-F21: AddFactoryToClosestManager (usata piu' sotto, dentro il ForkThread
 -- di riaggancio) e' una "globale" ma vive nell'ambiente isolato del modulo
 -- aiarchetype-managerloader.lua — in questo motore ogni file import()ato ha il
@@ -1913,18 +1958,12 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                                                         -- vanilla di riferimento, ma li' e' dentro un platoon AI
                                                         -- gia' stabilito (EconUnfinishedBody) — evidentemente non si
                                                         -- popola allo stesso modo per un ordine IssueBuildMobile
-                                                        -- diretto come il nostro. Fix: scansione a raggio strettissimo
-                                                        -- (5, ben sotto qualunque distanza reale tra due avamposti,
-                                                        -- vedi Fase F) esattamente sulla posizione appena comandata —
-                                                        -- a costruzione confermata finita, la struttura e' li'.
-                                                        local justBuilt = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE, buildWorldPos, 5, 'Ally') or {}
-                                                        local newUnit = nil
-                                                        for _, u in justBuilt do
-                                                            if not u.Dead then
-                                                                newUnit = u
-                                                                break
-                                                            end
-                                                        end
+                                                        -- diretto come il nostro. Fix Fase F-ter (sess.89): la
+                                                        -- scansione a raggio 5 di Fase F-bis fallisce troppo spesso
+                                                        -- (vedi OWPlusCaptureBuiltStructure sopra) — sostituita con
+                                                        -- l'helper condiviso (raggio 10, piu' vicina, esclude
+                                                        -- strutture altrui, un retry).
+                                                        local newUnit = OWPlusCaptureBuiltStructure(aiBrain, outpostKey, buildWorldPos)
                                                         if newUnit then
                                                             OWPlusOutpostOwnership.OWPlusClaimForOutpost(aiBrain, outpostKey, newUnit)
                                                         end
@@ -1974,15 +2013,11 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                                                     -- Fix Fase F-bis (sess.88): stesso fix del ramo modded sopra
                                                     -- — GetUnitBeingBuilt confermato non funzionante su una
                                                     -- partita reale intera, sostituito con scansione a raggio
-                                                    -- stretto (5) sulla posizione comandata (defensePos).
-                                                    local justBuilt = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE, defensePos, 5, 'Ally') or {}
-                                                    local newUnit = nil
-                                                    for _, u in justBuilt do
-                                                        if not u.Dead then
-                                                            newUnit = u
-                                                            break
-                                                        end
-                                                    end
+                                                    -- stretto (5) sulla posizione comandata (defensePos). Fix
+                                                    -- Fase F-ter (sess.89): raggio 5 insufficiente, sostituito
+                                                    -- con l'helper condiviso OWPlusCaptureBuiltStructure (raggio
+                                                    -- 10, piu' vicina, esclude strutture altrui, un retry).
+                                                    local newUnit = OWPlusCaptureBuiltStructure(aiBrain, outpostKey, defensePos)
                                                     if newUnit then
                                                         OWPlusOutpostOwnership.OWPlusClaimForOutpost(aiBrain, outpostKey, newUnit)
                                                     end
