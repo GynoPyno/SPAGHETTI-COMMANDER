@@ -4,12 +4,13 @@ mono/stereo, LodCutoff — e le due anteprime "Originale"/"Sostituto" (vedi il p
 from __future__ import annotations
 
 import json
+import math
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel,
-    QListWidget, QListWidgetItem, QMessageBox, QProgressBar, QPushButton, QSpinBox,
+    QListWidget, QListWidgetItem, QMessageBox, QProgressBar, QPushButton,
     QVBoxLayout, QWidget,
 )
 
@@ -33,6 +34,25 @@ _LODCUTOFFS = [
 
 with open(config.CURVE_CATALOG_JSON, encoding="utf-8") as _f:
     _CURVES = json.load(_f)
+
+_VOLUME_DB_MIN, _VOLUME_DB_MAX = -9600, 9600   # limiti del campo Volume di XACT (centesimi di dB)
+
+
+def _pct_to_volume_db(pct: float) -> int:
+    """Converte una percentuale di volume (100% = invariato/0dB, 200% = doppio in ampiezza
+    ovvero +6.02dB circa, 0% = silenzioso) nei centesimi di decibel che XACT si aspetta nel
+    campo Volume del .xap — verificato compilando: l'intervallo -9600/+9600 corrisponde
+    esattamente a -96.00/+96.00 dB, coi due estremi troncati dal compilatore."""
+    if pct <= 0:
+        return _VOLUME_DB_MIN
+    db = 20.0 * math.log10(pct / 100.0)
+    return max(_VOLUME_DB_MIN, min(_VOLUME_DB_MAX, round(db * 100)))
+
+
+def _volume_db_to_pct(volume_db: int) -> float:
+    db = volume_db / 100.0
+    pct = 100.0 * (10.0 ** (db / 20.0))
+    return max(0.0, min(200.0, pct))
 
 
 class EventPoolList(QListWidget):
@@ -103,10 +123,17 @@ class EventEditorPanel(QWidget):
         self.pattern_label = QLabel("-")
         form.addRow("Pattern", self.pattern_label)
 
-        self.volume_spin = QSpinBox()
-        self.volume_spin.setRange(-9600, 9600)
-        self.volume_spin.setSingleStep(100)
-        self.volume_spin.setSuffix(" centesimi di dB")
+        self.volume_spin = QDoubleSpinBox()
+        self.volume_spin.setRange(0.0, 200.0)
+        self.volume_spin.setSingleStep(5.0)
+        self.volume_spin.setDecimals(0)
+        self.volume_spin.setSuffix("%")
+        self.volume_spin.setValue(100.0)
+        self.volume_spin.setToolTip(
+            "100% = volume invariato rispetto all'originale, 200% = doppio in ampiezza (+6dB "
+            "circa), 0% = silenzioso. XACT vuole il valore in decibel: la conversione è "
+            "automatica, qui si lavora sempre in percentuale."
+        )
         form.addRow("Volume", self.volume_spin)
 
         self.mono_check = QCheckBox("Converti a mono (necessario per attenuazione/direzionalità)")
@@ -261,7 +288,7 @@ class EventEditorPanel(QWidget):
     def _load_event(self, event: EventConfig) -> None:
         self.cue_edit.setCurrentText(event.cue)
         self.pattern_label.setText(event.pattern)
-        self.volume_spin.setValue(event.volume_db)
+        self.volume_spin.setValue(_volume_db_to_pct(event.volume_db))
         self.mono_check.setChecked(event.mono)
         idx = self.attenuation_combo.findData(event.attenuation_curve)
         self.attenuation_combo.setCurrentIndex(idx if idx >= 0 else 0)
@@ -456,7 +483,7 @@ class EventEditorPanel(QWidget):
                 self._catalog_entry.cue if self._catalog_entry and self._catalog_entry.pattern == "B" else None
             ),
             pool=list(self._pool_files),
-            volume_db=self.volume_spin.value(),
+            volume_db=_pct_to_volume_db(self.volume_spin.value()),
             attenuation_curve=self.attenuation_combo.currentData(),
             lodcutoff=None if lod_text == "(nessuno)" else lod_text,
             mono=self.mono_check.isChecked(),

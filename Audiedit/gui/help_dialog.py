@@ -40,8 +40,10 @@ aggancio in <code>UserSync.lua</code> invece di un override diretto. Il tool lo 
 solo, ma conviene sempre testare in game dopo il primo deploy di un evento Pattern B.</p>
 
 <h3>Volume</h3>
-<p>Guadagno fisso in centesimi di dB (100 = +1dB). Si applica sempre, indipendentemente dalla
-distanza.</p>
+<p>Guadagno fisso, indipendente dalla distanza. Espresso in percentuale: 100% = invariato
+rispetto all'originale, 200% = doppio in ampiezza (circa +6dB), 0% = silenzioso. Dietro le
+quinte XACT vuole il valore in decibel (è il formato nativo del banco che compiliamo), ma
+la conversione è automatica — qui si lavora sempre e solo in percentuale.</p>
 
 <h3>Converti a mono</h3>
 <p>Necessario se vuoi usare l'attenuazione per distanza o la direzionalità 3D (es. capire da
