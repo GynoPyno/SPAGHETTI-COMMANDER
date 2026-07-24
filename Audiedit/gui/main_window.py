@@ -66,9 +66,20 @@ class MainWindow(QMainWindow):
 
         build_row = QHBoxLayout()
         self.build_btn = QPushButton("Applica e ricompila")
+        self.build_btn.setToolTip(
+            "L'unico pulsante che tocca davvero la mod: converte i file audio assegnati, "
+            "ricompila il banco XACT (Audiowo.xgs/.xsb/.xwb) e lo deposita in Audiowo/sounds/. "
+            "Finché non lo premi, le modifiche fatte nell'editor evento restano solo nello "
+            "stato del tool — il gioco continua a sentire quello che c'era prima."
+        )
         self.build_btn.clicked.connect(self._on_build)
         build_row.addWidget(self.build_btn)
         self.check_log_btn = QPushButton("Controlla log di gioco")
+        self.check_log_btn.setToolTip(
+            "Cerca 'Error loading soundbank' nell'ultimo log di partita: se compare, il banco "
+            "audio non è stato caricato e TUTTI gli eventi della mod restano silenziati, non "
+            "solo l'ultimo modificato — utile per capire se un problema in game è di questo tipo."
+        )
         self.check_log_btn.clicked.connect(self._on_check_log)
         build_row.addWidget(self.check_log_btn)
         layout.addLayout(build_row)

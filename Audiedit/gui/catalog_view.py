@@ -103,6 +103,17 @@ class CatalogView(QWidget):
         self.pattern_combo.addItems([_ALL, "A", "B"])
         self.status_combo.addItems([_ALL, "Configurati", "Non configurati"])
 
+        self.faction_combo.setToolTip("Fazione dedotta dall'ID unità (UEF/Aeon/Cybran/Seraphim).")
+        self.type_combo.setToolTip("Terra / Aria / Navale / Struttura, dedotto dall'ID unità.")
+        self.field_combo.setToolTip("Nome esatto del campo Audio.* nel blueprint (es. \"Killed\", \"Fire\").")
+        self.pattern_combo.setToolTip(
+            "A = override diretto del blueprint. B = passa dal canale annunciatore, richiede "
+            "l'hook UserSync.lua — vedi il tasto \"?\" nell'editor evento per i dettagli."
+        )
+        self.status_combo.setToolTip(
+            "Configurati = hai già assegnato un evento a questa voce. Non configurati = ancora liberi."
+        )
+
         for label, combo in [
             ("Fazione", self.faction_combo), ("Tipo", self.type_combo),
             ("Campo", self.field_combo), ("Pattern", self.pattern_combo),

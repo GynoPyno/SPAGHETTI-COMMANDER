@@ -35,6 +35,11 @@ class PoolView(QWidget):
         layout.addWidget(self.tabs)
 
         refresh_btn = QPushButton("Aggiorna")
+        refresh_btn.setToolTip(
+            "Ricarica queste liste da disco — utile se hai spostato file a mano fuori da "
+            "Audiedit (li ritrova nella cartella in cui li hai messi, li segna come non "
+            "ancora assegnati a nessun evento)."
+        )
         refresh_btn.clicked.connect(self.refresh)
         layout.addWidget(refresh_btn)
 

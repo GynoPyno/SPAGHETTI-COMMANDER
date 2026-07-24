@@ -9,7 +9,8 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel,
-    QListWidget, QListWidgetItem, QMessageBox, QPushButton, QSpinBox, QVBoxLayout, QWidget,
+    QListWidget, QListWidgetItem, QMessageBox, QProgressBar, QPushButton, QSpinBox,
+    QVBoxLayout, QWidget,
 )
 
 try:
@@ -19,7 +20,7 @@ try:
 except ImportError:  # pragma: no cover - ambiente senza QtMultimedia
     _MULTIMEDIA_OK = False
 
-from audiedit import config, icons, pool, vanilla_audio
+from audiedit import config, icons, library, pool, vanilla_audio
 from audiedit.catalog import CatalogEntry
 from audiedit.state import EventConfig, HookTarget, PoolFile
 
@@ -67,6 +68,8 @@ class EventEditorPanel(QWidget):
         self._editing_index: int | None = None  # indice in self._events, se evento esistente
         self._events: list[EventConfig] = []
         self._pool_files: list[PoolFile] = []
+        self._audio_info_cache: dict[str, library.AudioInfo | None] = {}
+        self._original_info_cache: dict[tuple[str, str], library.AudioInfo | None] = {}
 
         if _MULTIMEDIA_OK:
             self._player_original = QMediaPlayer(self)
@@ -129,8 +132,16 @@ class EventEditorPanel(QWidget):
 
         pool_buttons = QHBoxLayout()
         import_btn = QPushButton("Importa nuovo file...")
+        import_btn.setToolTip(
+            "Copia un file audio da fuori (es. Downloads) dentro il pool, in candidati/, "
+            "pronto per essere assegnato a questo o altri eventi."
+        )
         import_btn.clicked.connect(self._on_import_file)
         remove_btn = QPushButton("Rimuovi variante selezionata")
+        remove_btn.setToolTip(
+            "Toglie la variante selezionata dalla lista sopra per QUESTO evento — non cancella "
+            "il file, resta nel pool (va in dismessi/ al salvataggio se nessun altro evento lo usa)."
+        )
         remove_btn.clicked.connect(self._on_remove_variant)
         pool_buttons.addWidget(import_btn)
         pool_buttons.addWidget(remove_btn)
@@ -138,18 +149,47 @@ class EventEditorPanel(QWidget):
 
         preview_buttons = QHBoxLayout()
         self.play_original_btn = QPushButton("▶ Originale")
+        self.play_original_btn.setToolTip(
+            "Riproduce l'audio vanilla del gioco per questo evento (estratto dai banchi "
+            "originali) — non sempre disponibile, dipende dalla struttura interna del suono."
+        )
         self.play_original_btn.clicked.connect(self._on_play_original)
         self.play_sostituto_btn = QPushButton("▶ Sostituto")
+        self.play_sostituto_btn.setToolTip(
+            "Riproduce la prima variante del tuo pool per questo evento, così com'è ora "
+            "(prima di salvare)."
+        )
         self.play_sostituto_btn.clicked.connect(self._on_play_sostituto)
         preview_buttons.addWidget(self.play_original_btn)
         preview_buttons.addWidget(self.play_sostituto_btn)
         layout.addLayout(preview_buttons)
+
+        similarity_row = QHBoxLayout()
+        self.similarity_bar = QProgressBar()
+        self.similarity_bar.setRange(0, 100)
+        self.similarity_bar.setTextVisible(False)
+        self.similarity_bar.setFixedWidth(120)
+        self.similarity_label = QLabel("")
+        self.similarity_label.setWordWrap(True)
+        self.similarity_label.setToolTip(
+            "Indicatore orientativo (durata + volume) di quanto il sostituto somiglia "
+            "all'originale vanilla — non è una verifica che la mod funzioni, solo un aiuto "
+            "per farsi un'idea a colpo d'occhio."
+        )
+        similarity_row.addWidget(self.similarity_bar)
+        similarity_row.addWidget(self.similarity_label, stretch=1)
+        layout.addLayout(similarity_row)
 
         self.status_label = QLabel("")
         self.status_label.setWordWrap(True)
         layout.addWidget(self.status_label)
 
         self.save_btn = QPushButton("Salva evento")
+        self.save_btn.setToolTip(
+            "Scrive le modifiche nello stato del tool (audiowo_state.json) e nel pool — NON "
+            "tocca ancora la mod: serve poi \"Applica e ricompila\" nella finestra principale "
+            "per far sentire davvero il cambiamento in game."
+        )
         self.save_btn.clicked.connect(self._on_save)
         layout.addWidget(self.save_btn)
 
@@ -230,12 +270,70 @@ class EventEditorPanel(QWidget):
         self._pool_files = list(event.pool)
         self._refresh_pool_list()
 
+    def _safe_analyze(self, rel_path: str) -> library.AudioInfo | None:
+        """Analizza (durata/volume) un file del pool, con cache per non richiamare ffmpeg a
+        ogni refresh — un file del pool non cambia contenuto sotto lo stesso path durante una
+        sessione."""
+        if rel_path not in self._audio_info_cache:
+            try:
+                self._audio_info_cache[rel_path] = library.analyze(config.POOL_DIR / rel_path)
+            except (RuntimeError, OSError):
+                self._audio_info_cache[rel_path] = None
+        return self._audio_info_cache[rel_path]
+
     def _refresh_pool_list(self) -> None:
         self.pool_list.clear()
         for pf in self._pool_files:
-            item = QListWidgetItem(f"{pf.path}  (peso {pf.weight})")
+            label = f"{pf.path}  (peso {pf.weight})"
+            info = self._safe_analyze(pf.path)
+            warnings: list[str] = []
+            if info is not None:
+                label += f"  —  {info.duration_seconds:.1f}s"
+                if info.duration_seconds > 10:
+                    warnings.append(f"dura {info.duration_seconds:.1f}s, oltre i 10s consigliati")
+                vol_warn = library.volume_warning(info)
+                if vol_warn:
+                    warnings.append(vol_warn)
+            if warnings:
+                label = f"⚠ {label}  [{'; '.join(warnings)}]"
+            item = QListWidgetItem(label)
             item.setData(Qt.UserRole, pf.path)
+            if warnings:
+                item.setToolTip("; ".join(warnings))
             self.pool_list.addItem(item)
+        self._update_similarity()
+
+    def _update_similarity(self) -> None:
+        if self._catalog_entry is None or not self._pool_files:
+            self.similarity_label.setText("")
+            self.similarity_bar.setVisible(False)
+            return
+        key = (self._catalog_entry.bank, self._catalog_entry.cue)
+        if key not in self._original_info_cache:
+            try:
+                wav_path = vanilla_audio.extract_to_temp_wav(*key)
+                self._original_info_cache[key] = library.analyze(wav_path)
+            except (vanilla_audio.VanillaAudioUnavailable, RuntimeError, OSError):
+                self._original_info_cache[key] = None
+        original_info = self._original_info_cache[key]
+        if original_info is None:
+            self.similarity_bar.setVisible(False)
+            self.similarity_label.setText(
+                "Somiglianza con l'originale non disponibile (anteprima originale non estraibile)."
+            )
+            return
+        substitute_info = self._safe_analyze(self._pool_files[0].path)
+        if substitute_info is None:
+            self.similarity_bar.setVisible(False)
+            self.similarity_label.setText("Somiglianza con l'originale: impossibile analizzare il sostituto.")
+            return
+        dur_score, vol_score, total = library.similarity_score(original_info, substitute_info)
+        self.similarity_bar.setVisible(True)
+        self.similarity_bar.setValue(round(total))
+        self.similarity_label.setText(
+            f"Somiglianza con l'originale: {total:.0f}%  "
+            f"(durata {dur_score:.0f}%, volume {vol_score:.0f}%) — indicatore orientativo, non una verifica."
+        )
 
     # -- azioni utente ----------------------------------------------------------------------
 
