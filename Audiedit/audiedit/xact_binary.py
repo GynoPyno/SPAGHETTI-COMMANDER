@@ -115,6 +115,24 @@ def _cue_names(d: bytes, cue_names_off: int) -> list[str]:
     return [x.decode("ascii", "replace") for x in d[cue_names_off:].split(b"\x00") if x]
 
 
+def _wave_bank_names(d: bytes) -> list[str]:
+    """Tabella dei nomi di Wave Bank referenziati da questo Sound Bank.
+
+    Un .xsb può pescare onde da più .xwb diversi dal proprio (es. Interface.xsb referenzia
+    anche UEFSelect/CYBRANSelect/AEONSelect/SERAPHIMSelect/Music per i suoni di selezione
+    unità per fazione) — la tabella vive a offset fisso 58 (stringhe ASCII a blocchi da 64
+    byte, null-padded), e finisce esattamente dove inizia la regione dei sound (offset 70).
+    Verificato su Interface.xsb: 5 banchi, l'ultimo byte esattamente a sounds_off.
+    """
+    tbl_off = _u32(d, 58)
+    sounds_off = _u32(d, 70)
+    count = max(0, (sounds_off - tbl_off) // 64)
+    return [
+        d[tbl_off + 64 * i: tbl_off + 64 * (i + 1)].split(b"\x00")[0].decode("ascii", "replace")
+        for i in range(count)
+    ]
+
+
 def find_sound_offset(d: bytes, cue: str) -> int:
     """Trova l'offset del record Sound corrispondente a una cue, dato il .xsb già letto in bytes."""
     num_simple = _u16(d, 19)
@@ -135,7 +153,12 @@ def find_sound_offset(d: bytes, cue: str) -> int:
     sounds_end = min(after) if after else len(d)
 
     def looks_like_sound(so: int) -> bool:
-        return sounds_off <= so < sounds_end and (d[so] & 0x01) == 0x01
+        # NB: qui si controllano solo i limiti, non il bit "complesso" (d[so] & 0x01): una
+        # entry della tabella cue "complesse" può puntare tanto a un Sound complesso quanto
+        # a un Sound semplice (es. i suoni di selezione unità), quindi pretendere il bit
+        # acceso scartava candidati validi e faceva fallire la ricerca della dimensione del
+        # record intero per banchi con molti suoni semplici (verificato su UAA/Interface/UAB).
+        return sounds_off <= so < sounds_end
 
     entries = [_u32(d, simple_off + 5 * k + 1) for k in range(num_simple)]
     if num_complex and complex_off not in (0xFFFFFFFF,):
@@ -156,18 +179,63 @@ def find_sound_offset(d: bytes, cue: str) -> int:
     return entries[idx]
 
 
-def wave_indices_of_sound(d: bytes, sound_offset: int) -> list[int]:
-    """Indici delle onde (varianti incluse) usate da un Sound — vedi prototipi/wave_usage.py.
+@dataclass
+class WaveRef:
+    """Un riferimento a un'onda risolto da un Sound: indice nel Wave Bank, ed eventuale nome
+    del banco se diverso da quello del .xsb corrente (None = stesso banco)."""
+    wave_index: int
+    bank_name: str | None = None
 
-    Questa decodifica è stata reverse-engineered su suoni "a pool" (più varianti pesate,
-    es. gli impatti) ed è quella che serve per il caso d'uso principale (confrontare un
-    impatto/arma vanilla col proprio sostituto). Non copre ogni possibile struttura clip
-    XACT: un suono semplice a singola onda senza pool può avere un layout diverso e far
-    fallire i controlli sotto. In quel caso si solleva XactFormatError invece di leggere
-    byte a caso — chi chiama (vanilla_audio.py) lo mostra come "anteprima non disponibile".
+
+def resolve_sound_waves(d: bytes, sound_offset: int) -> list[WaveRef]:
+    """Risolve un Sound in una o più WaveRef — copre le tre forme osservate nei banchi
+    vanilla (reverse-engineered confrontando decine di banchi/cue, vedi prototipi/wave_usage.py
+    per l'origine della forma "a pool"):
+
+    1. Sound "semplice" (flags bit0 = 0): nessuna struttura Clip/Event, solo un riferimento
+       diretto trackIndex(u16)+waveBankIndex(u16) subito dopo l'intestazione comune (+ eventuali
+       blocchi RPC/DSP). waveBankIndex indicizza la tabella nomi banco (_wave_bank_names): un
+       .xsb può pescare onde da banchi diversi dal proprio (es. i cue "*_Select_*" di
+       Interface.xsb puntano a UEFSelect/CYBRANSelect/AEONSelect/Music) — validato su ~15 cue
+       di selezione, ognuno risolto al banco della fazione corretta.
+    2. Sound "complesso" (flags bit0 = 1) con un Clip Event "a pool" di varianti pesate (es.
+       gli impatti): struttura invariata rispetto alla decodifica originale, già validata sul
+       campo.
+    3. Sound "complesso" con un Clip Event a onda diretta, senza pool (la maggioranza dei
+       suoni di sparo/movimento): stessa cornice Clip del caso 2, ma trackIndex+waveBankIndex
+       diretti al posto della tabella varianti — validato su un intero banco arma (11/12 cue,
+       ogni indice traccia usato esattamente una volta contro le entry reali del .xwb). Per i
+       Clip Event "in loop" (movimento/costruzione/cattura ad anello), waveBankIndex assume un
+       valore sentinella con byte alto 0xFF invece di un indice reale in tabella — trattato
+       come "stesso banco del .xsb corrente" (validato su 280+ cue in loop); se anche in quel
+       banco trackIndex risulta fuori portata, il fallimento arriva comunque pulito più avanti
+       (IndexError sul Wave Bank, catturato da vanilla_audio.py).
+
+    Non è un parser esaustivo: restano non gestiti (a) i Sound "semplici" con un blocco RPC
+    presente (il calcolo dello scarto del blocco RPC per questa forma non è ancora stato
+    determinato) e (b) i pochi Clip Event in loop il cui trackIndex risulta fuori dalla
+    tabella onde anche nel banco proprio. In questi casi, come per ogni struttura che non
+    torna, si solleva XactFormatError invece di leggere byte a caso — chi chiama
+    (vanilla_audio.py) lo mostra come "anteprima non disponibile".
     """
     try:
         flags = d[sound_offset]
+        if not (flags & 0x01):
+            q = sound_offset + 9
+            if flags & 0x0E:
+                q += _u16(d, q)  # salta il blocco RPC (lunghezza in testa)
+            if flags & 0x10:
+                q += 7  # salta il blocco DSP
+            track_idx = _u16(d, q)
+            bank_idx = _u16(d, q + 2)
+            names = _wave_bank_names(d)
+            if not (0 <= bank_idx < len(names)):
+                raise XactFormatError(
+                    f"indice banco onde {bank_idx} fuori tabella ({len(names)} banchi) "
+                    f"per il sound semplice a offset {sound_offset}"
+                )
+            return [WaveRef(wave_index=track_idx, bank_name=names[bank_idx])]
+
         q = sound_offset + 9
         _nclips = d[q]
         q += 1
@@ -182,18 +250,35 @@ def wave_indices_of_sound(d: bytes, sound_offset: int) -> list[int]:
             raise XactFormatError(
                 f"struttura clip inattesa a offset {sound_offset} (clip={clip}, atteso {q})"
             )
-        p = q + 9 + 12
-        count = _u16(d, p)
-        p += 2
-        p += 2 + 4  # u16 sconosciuto + sentinella 0xFFFFFFFF
-        if p + 5 * count > len(d):
+        eventinfo = _u16(d, clip + 1)
+        if eventinfo & 0x02:
+            p = clip + 9 + 12
+            count = _u16(d, p)
+            p += 2
+            p += 2 + 4  # u16 sconosciuto + sentinella 0xFFFFFFFF
+            if p + 5 * count > len(d):
+                raise XactFormatError(
+                    f"tabella varianti fuori dal file per il sound a offset {sound_offset}"
+                )
+            out = [WaveRef(wave_index=_u16(d, p + 5 * k)) for k in range(count)]
+            if not out:
+                raise XactFormatError(f"nessuna onda trovata per il sound a offset {sound_offset}")
+            return out
+
+        track_idx = _u16(d, clip + 9)
+        bank_idx = _u16(d, clip + 11)
+        if (bank_idx >> 8) == 0xFF:
+            # Sentinella osservata sui Clip Event "in loop": non è un indice reale nella
+            # tabella banchi, si risolve nel banco proprio del .xsb (bank_name=None). Se
+            # trackIndex non è comunque valido in quel banco, l'IndexError sul Wave Bank
+            # (catturato da vanilla_audio.py) fa comunque fallire in modo pulito.
+            return [WaveRef(wave_index=track_idx, bank_name=None)]
+        names = _wave_bank_names(d)
+        if not (0 <= bank_idx < len(names)):
             raise XactFormatError(
-                f"tabella varianti fuori dal file per il sound a offset {sound_offset} "
-                f"(struttura clip probabilmente diversa, es. onda singola senza pool)"
+                f"indice banco onde {bank_idx} fuori tabella ({len(names)} banchi) per il clip "
+                f"a offset {clip}"
             )
-        out = [_u16(d, p + 5 * k) for k in range(count)]
+        return [WaveRef(wave_index=track_idx, bank_name=names[bank_idx])]
     except struct.error as exc:
         raise XactFormatError(f"lettura fuori dai limiti per il sound a offset {sound_offset}") from exc
-    if not out:
-        raise XactFormatError(f"nessuna onda trovata per il sound a offset {sound_offset}")
-    return out

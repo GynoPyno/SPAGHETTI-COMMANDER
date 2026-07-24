@@ -23,6 +23,8 @@ from audiedit import config, icons, pool, vanilla_audio
 from audiedit.catalog import CatalogEntry
 from audiedit.state import EventConfig, HookTarget, PoolFile
 
+from .help_dialog import EVENT_EDITOR_HELP, show_help_dialog
+
 _LODCUTOFFS = [
     "(nessuno)", "Weapon_LodCutoff", "WeaponBig_LodCutoff",
     "UnitMove_LodCutoff", "UnitRumble_LodCutoff", "DefaultLodCutoff",
@@ -82,6 +84,13 @@ class EventEditorPanel(QWidget):
         self.title = QLabel("Seleziona un evento dal catalogo")
         self.title.setWordWrap(True)
         header_row.addWidget(self.title, stretch=1)
+        help_btn = QPushButton("?")
+        help_btn.setFixedWidth(28)
+        help_btn.setToolTip("Cosa significano questi parametri?")
+        help_btn.clicked.connect(
+            lambda: show_help_dialog(self, "Guida ai parametri evento", EVENT_EDITOR_HELP)
+        )
+        header_row.addWidget(help_btn)
         layout.addLayout(header_row)
 
         form = QFormLayout()
@@ -296,6 +305,41 @@ class EventEditorPanel(QWidget):
                 QMessageBox.warning(self, "Cue duplicata", f"Esiste già un evento con cue '{cue}'.")
                 return
 
+        # Rilascia eventuali file del pool caricati nei player di anteprima: su Windows un
+        # file appena ascoltato con "▶ Sostituto"/"▶ Originale" può restare "in uso" abbastanza
+        # da far fallire lo spostamento subito dopo (visto sul campo: la copia riesce, la
+        # cancellazione dell'originale no, e senza questo rilascio falliva in silenzio).
+        if _MULTIMEDIA_OK:
+            self._player_original.stop()
+            self._player_original.setSource(QUrl())
+            self._player_sostituto.stop()
+            self._player_sostituto.setSource(QUrl())
+
+        # Assegna i file del pool a questo evento PRIMA di costruire l'EventConfig: assign_
+        # event_files() può spostare fisicamente un file (es. da candidati/ ad attivi/), e il
+        # path salvato nello stato deve riflettere la destinazione finale, non quella di
+        # partenza — altrimenti lo stato perde traccia del file (vedi cronologia del bug).
+        # other_events_paths evita di sfrattare in dismessi/ un file ancora usato da un
+        # ALTRO evento (es. lo stesso audio riusato per due unità diverse).
+        other_events_paths = frozenset(
+            pf.path
+            for i, ev in enumerate(self._events)
+            if i != self._editing_index
+            for pf in ev.pool
+        )
+        try:
+            final_paths = pool.assign_event_files(
+                cue, [pf.path for pf in self._pool_files], other_events_paths
+            )
+        except OSError as exc:
+            QMessageBox.critical(
+                self, "Salvataggio fallito",
+                f"Non sono riuscito a spostare i file audio nel pool:\n\n{exc}",
+            )
+            return
+        for pf, final_path in zip(self._pool_files, final_paths):
+            pf.path = final_path
+
         base = self._events[self._editing_index] if self._editing_index is not None else None
         lod_text = self.lodcutoff_combo.currentText()
         event = EventConfig(
@@ -320,9 +364,6 @@ class EventEditorPanel(QWidget):
             mono=self.mono_check.isChecked(),
         )
 
-        for pf in event.pool:
-            pool.assign(pf.path, event.cue)
-
         if self._editing_index is not None:
             self._events[self._editing_index] = event
         else:
@@ -331,5 +372,6 @@ class EventEditorPanel(QWidget):
 
         from audiedit import state
         state.save(self._events)
+        self._refresh_pool_list()
         self.status_label.setText(f"Evento '{cue}' salvato.")
         self.event_saved.emit()

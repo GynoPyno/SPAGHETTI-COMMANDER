@@ -58,6 +58,24 @@ def save_manifest(manifest: dict[str, FileRecord]) -> None:
     )
 
 
+def _safe_move(src: Path, dest: Path) -> None:
+    """Sposta src in dest; se l'operazione fallisce a metà (tipicamente: il sorgente è
+    ancora aperto da un altro processo — es. il media player usato per l'anteprima "▶
+    Sostituto" — quindi `shutil.move` riesce a copiare ma non a cancellare l'originale),
+    ripulisce la copia parziale invece di lasciare un doppione fantasma nel pool, e rilancia
+    un errore chiaro invece di uno stack trace grezzo.
+    """
+    try:
+        shutil.move(str(src), str(dest))
+    except OSError as exc:
+        if dest.exists() and src.exists():
+            dest.unlink()
+        raise OSError(
+            f"impossibile spostare '{src.name}': {exc}. Se lo hai appena ascoltato in "
+            "anteprima, prova a fermare la riproduzione (o riseleziona l'evento) e riprova."
+        ) from exc
+
+
 def _unique_destination(dest_dir: Path, filename: str) -> Path:
     candidate = dest_dir / filename
     if not candidate.exists():
@@ -123,42 +141,77 @@ def import_file(source: Path) -> str:
     return rel
 
 
-def assign(rel_path: str, event_key: str) -> dict[str, FileRecord]:
-    """Assegna il file (già nel pool, percorso relativo a POOL_DIR) a un evento: lo sposta
-    in attivi/ e, se un altro file era già attivo su quello stesso evento, lo sposta in
-    dismessi/ (memoria storica, non lo cancella).
+def assign_event_files(
+    event_key: str, rel_paths: list[str], other_events_paths: frozenset[str] = frozenset()
+) -> list[str]:
+    """Assegna l'insieme `rel_paths` (percorsi nel pool) come varianti dell'evento
+    `event_key`: sposta ciascuno in attivi/ (se non già lì) e sposta in dismessi/ ogni altro
+    file che risultava attivo per lo stesso evento ma non è più fra `rel_paths` (rimosso
+    dall'editor) — A MENO CHE non compaia in `other_events_paths` (i pool di TUTTI GLI ALTRI
+    eventi, calcolati dal chiamante da state.json): un file può essere condiviso da più
+    eventi, e rimuoverlo da uno solo non deve spostarlo in dismessi/ se un altro evento lo sta
+    ancora usando. Ritorna i percorsi finali, nello stesso ordine di `rel_paths` — possono
+    differire dall'ingresso se un file è stato spostato (es. da candidati/ ad attivi/): il
+    chiamante deve salvare QUESTI percorsi, non quelli passati in ingresso.
+
+    Nota storica: prima esisteva un `assign()` per-singolo-file, chiamato una volta per ogni
+    variante dell'evento. Corrompeva i pool a più varianti (ogni chiamata "sfrattava" in
+    dismessi/ qualunque altro file già attivo per lo stesso evento, comportamento corretto
+    per un singolo sostituto ma sbagliato quando le varianti multiple sono intenzionali), e
+    quando il file di partenza era già in attivi/ faceva scattare `_unique_destination` contro
+    se stesso, rinominandolo inutilmente (es. carpentiere.mp3 -> carpentiere_2.mp3 a ogni
+    salvataggio successivo).
     """
     manifest = load_manifest()
-    src = config.POOL_DIR / rel_path
-    if not src.exists():
-        raise FileNotFoundError(f"{src} non esiste nel pool")
+    new_set = set(rel_paths)
 
-    # eventuale file già attivo sullo stesso evento -> dismessi
+    # smobilita gli attivi di questo evento non più presenti nel nuovo insieme, ma solo se
+    # nessun ALTRO evento li usa ancora (altrimenti resta in attivi/: e' condiviso).
     for other_rel, rec in list(manifest.items()):
-        if rec.status == "attivi" and rec.event_key == event_key and other_rel != rel_path:
-            other_path = config.POOL_DIR / other_rel
-            if other_path.exists():
-                dest = _unique_destination(config.POOL_DIR / "dismessi", other_path.name)
-                shutil.move(str(other_path), str(dest))
-                new_rel = dest.relative_to(config.POOL_DIR).as_posix()
-                rec.status = "dismessi"
-                rec.history.append({"azione": "sostituito", "evento": event_key, "quando": _now()})
-                manifest[new_rel] = rec
-                if new_rel != other_rel:
-                    del manifest[other_rel]
+        if rec.status != "attivi" or rec.event_key != event_key or other_rel in new_set:
+            continue
+        if other_rel in other_events_paths:
+            # ancora in uso da un altro evento: l'etichetta event_key qui diventerebbe
+            # fuorviante (un solo nome per un file usato da piu' eventi), la svuotiamo — la
+            # verita' su chi lo usa vive negli EventConfig.pool, non in questo manifest.
+            rec.event_key = None
+            manifest[other_rel] = rec
+            continue
+        other_path = config.POOL_DIR / other_rel
+        if not other_path.exists():
+            continue
+        dest = _unique_destination(config.POOL_DIR / "dismessi", other_path.name)
+        _safe_move(other_path, dest)
+        new_rel = dest.relative_to(config.POOL_DIR).as_posix()
+        rec.status = "dismessi"
+        rec.history.append({"azione": "sostituito", "evento": event_key, "quando": _now()})
+        manifest[new_rel] = rec
+        del manifest[other_rel]
 
-    dest = _unique_destination(config.POOL_DIR / "attivi", src.name)
-    shutil.move(str(src), str(dest))
-    new_rel = dest.relative_to(config.POOL_DIR).as_posix()
-    rec = manifest.get(rel_path, FileRecord(status="attivi"))
-    rec.status = "attivi"
-    rec.event_key = event_key
-    rec.history.append({"azione": "assegnato", "evento": event_key, "quando": _now()})
-    manifest[new_rel] = rec
-    if new_rel != rel_path and rel_path in manifest:
-        del manifest[rel_path]
+    final_paths = []
+    for rel_path in rel_paths:
+        src = config.POOL_DIR / rel_path
+        if not src.exists():
+            raise FileNotFoundError(f"{src} non esiste nel pool")
+        if src.parent == config.POOL_DIR / "attivi":
+            # già lì: nessuno spostamento fisico, altrimenti _unique_destination scambierebbe
+            # il file con se stesso e lo rinominerebbe senza motivo.
+            new_rel = rel_path
+        else:
+            dest = _unique_destination(config.POOL_DIR / "attivi", src.name)
+            _safe_move(src, dest)
+            new_rel = dest.relative_to(config.POOL_DIR).as_posix()
+        rec = manifest.get(rel_path, FileRecord(status="attivi"))
+        rec.status = "attivi"
+        rec.event_key = event_key
+        rec.history.append({"azione": "assegnato", "evento": event_key, "quando": _now()})
+        manifest[new_rel] = rec
+        if new_rel != rel_path and rel_path in manifest:
+            del manifest[rel_path]
+        final_paths.append(new_rel)
+
     save_manifest(manifest)
-    return manifest
+    return final_paths
 
 
 def reconcile() -> dict[str, FileRecord]:

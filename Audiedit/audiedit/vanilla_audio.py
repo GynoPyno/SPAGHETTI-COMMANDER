@@ -14,7 +14,7 @@ from .xact_binary import (
     find_sound_offset,
     pcm_to_wav_bytes,
     read_wave_bank,
-    wave_indices_of_sound,
+    resolve_sound_waves,
 )
 
 
@@ -28,17 +28,24 @@ class VanillaAudioUnavailable(Exception):
 
 def extract_wav_bytes(bank: str, cue: str) -> bytes:
     xsb_path = config.STEAM_SOUNDS_DIR / f"{bank}.xsb"
-    xwb_path = config.STEAM_SOUNDS_DIR / f"{bank}.xwb"
-    if not xsb_path.exists() or not xwb_path.exists():
+    if not xsb_path.exists():
         raise VanillaAudioUnavailable(
             f"banco vanilla '{bank}' non trovato in {config.STEAM_SOUNDS_DIR}"
         )
     try:
         xsb_bytes = xsb_path.read_bytes()
         sound_offset = find_sound_offset(xsb_bytes, cue)
-        wave_indices = wave_indices_of_sound(xsb_bytes, sound_offset)
+        ref = resolve_sound_waves(xsb_bytes, sound_offset)[0]  # anteprima: prima variante
+        # Un Sound può pescare l'onda da un banco diverso dal proprio .xsb (es. i cue di
+        # selezione unità in Interface.xsb puntano a UEFSelect/AEONSelect/...).
+        target_bank = ref.bank_name or bank
+        xwb_path = config.STEAM_SOUNDS_DIR / f"{target_bank}.xwb"
+        if not xwb_path.exists():
+            raise VanillaAudioUnavailable(
+                f"banco onde '{target_bank}' non trovato in {config.STEAM_SOUNDS_DIR}"
+            )
         waves = read_wave_bank(xwb_path)
-        entry = waves[wave_indices[0]]  # anteprima: la prima variante, se il Sound ne ha più d'una
+        entry = waves[ref.wave_index]
         return pcm_to_wav_bytes(entry)
     except (XactFormatError, IndexError) as exc:
         raise VanillaAudioUnavailable(f"'{bank}'/'{cue}': {exc}") from exc

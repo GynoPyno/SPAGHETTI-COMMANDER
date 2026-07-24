@@ -14,11 +14,13 @@ from PySide6.QtCore import QSize, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QAbstractItemView, QCheckBox, QComboBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
-    QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
+    QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
 )
 
 from audiedit import config, icons
 from audiedit.catalog import CatalogEntry, faction_of, unit_type_of
+
+from .help_dialog import CATALOG_SEARCH_HELP, show_help_dialog
 
 COLUMNS = [
     "", "Unità/Proiettile", "Nome", "Fazione", "Tipo", "Contesto", "Campo", "Bank", "Cue",
@@ -66,12 +68,21 @@ class CatalogView(QWidget):
 
         layout = QVBoxLayout(self)
 
+        search_row = QHBoxLayout()
         self.search = QLineEdit()
         self.search.setPlaceholderText(
             "Cerca (anche in italiano: \"morte\", \"impatto\", \"scudo\", \"fuoco\"...)"
         )
         self.search.textChanged.connect(self._apply_filter)
-        layout.addWidget(self.search)
+        search_row.addWidget(self.search, stretch=1)
+        help_btn = QPushButton("?")
+        help_btn.setFixedWidth(28)
+        help_btn.setToolTip("Come funzionano ricerca e filtri?")
+        help_btn.clicked.connect(
+            lambda: show_help_dialog(self, "Guida alla ricerca", CATALOG_SEARCH_HELP)
+        )
+        search_row.addWidget(help_btn)
+        layout.addLayout(search_row)
 
         facet_row = QHBoxLayout()
         self.faction_combo = QComboBox()

@@ -22,7 +22,22 @@ class CompileResult:
 
 def compile_xap(xap_path: Path) -> CompileResult:
     """Compila `xap_path` con XactBld.exe (cwd = cartella del progetto, come si aspetta i
-    percorsi relativi dei .wav dichiarati nel .xap)."""
+    percorsi relativi dei .wav dichiarati nel .xap).
+
+    IMPORTANTE: XactBld fa un build incrementale e decide se ricostruire il Wave Bank (.xwb)
+    guardando la sezione testuale del progetto, non il contenuto dei .wav referenziati — se i
+    nomi/percorsi delle onde nel .xap non cambiano (il caso comune: lo stesso nome cue, solo
+    il file sorgente sotto viene rimpiazzato), salta silenziosamente la ricostruzione e lascia
+    il vecchio .xwb, pur riportando "Success" e ricompilando normalmente .xgs/.xsb. Verificato
+    sul campo: un cambio di file audio applicato con successo nello stato del tool restava
+    "congelato" nel banco onde deployato finché non si cancellava .xwb a mano. Per questo si
+    cancellano gli output di una build precedente PRIMA di invocare XactBld: senza un file da
+    considerare "già buono", non può saltare nulla.
+    """
+    for suffix in (".xwb", ".xsb", ".xgs"):
+        stale = xap_path.with_suffix(suffix)
+        if stale.exists():
+            stale.unlink()
     result = subprocess.run(
         [str(config.XACTBLD_EXE), "/WIN32", xap_path.name],
         cwd=str(xap_path.parent),

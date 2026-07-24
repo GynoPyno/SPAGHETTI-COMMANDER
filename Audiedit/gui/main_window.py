@@ -49,7 +49,16 @@ class MainWindow(QMainWindow):
         splitter.addWidget(self.catalog_view)
         splitter.addWidget(self.editor_panel)
         splitter.addWidget(self.pool_view)
+        # Niente collasso totale: senza questo, trascinare una maniglia oltre la dimensione
+        # minima del pannello lo chiude di colpo a 0px invece di ridimensionarlo con continuita'.
+        splitter.setChildrenCollapsible(False)
+        splitter.setHandleWidth(6)
+        for i, stretch in enumerate((3, 3, 2)):
+            splitter.setStretchFactor(i, stretch)
+        for w in (self.catalog_view, self.editor_panel, self.pool_view):
+            w.setMinimumWidth(220)
         splitter.setSizes([550, 500, 350])
+        self.splitter = splitter
 
         central = QWidget()
         layout = QVBoxLayout(central)
