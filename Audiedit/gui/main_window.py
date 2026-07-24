@@ -53,6 +53,14 @@ class MainWindow(QMainWindow):
         # minima del pannello lo chiude di colpo a 0px invece di ridimensionarlo con continuita'.
         splitter.setChildrenCollapsible(False)
         splitter.setHandleWidth(6)
+        # Le maniglie di default sono quasi invisibili (stesso colore dello sfondo): un
+        # colore fisso + un evidenziatore al passaggio del mouse le rende riconoscibili come
+        # punti trascinabili, invece di sembrare un semplice spazio vuoto tra i pannelli.
+        splitter.setStyleSheet(
+            "QSplitter::handle { background-color: #888888; }"
+            "QSplitter::handle:hover { background-color: #4a90d9; }"
+            "QSplitter::handle:pressed { background-color: #2f6fb0; }"
+        )
         for i, stretch in enumerate((3, 3, 2)):
             splitter.setStretchFactor(i, stretch)
         for w in (self.catalog_view, self.editor_panel, self.pool_view):
