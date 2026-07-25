@@ -106,6 +106,90 @@ local function OWPlusCaptureBuiltStructure(aiBrain, outpostKey, targetPos)
     LOG('[OWPlus-DIAG] Outpost (' .. outpostKey .. '): cattura struttura fallita dopo 2 tentativi (raggio ' .. RADIUS .. ')')
     return nil
 end
+
+-- Fase D3 (B24), sess.90: problema segnalato dall'utente in test — le unita'
+-- da combattimento appena prodotte da un avamposto (Fase D1) venivano
+-- immediatamente mandate all'attacco DA SOLE da un Former nativo di MAIN.
+-- Causa verificata nel motore: PoolGreaterAtLocation/PoolLessAtLocation
+-- (UnitCountBuildConditions.lua) sono basate sulla POSIZIONE FISICA (raggio
+-- attorno al manager), non sulla proprieta' dell'unita' — il raggio di MAIN
+-- (sempre >=90, vedi Conoscenze_AI_45 sez.45.1) puo' includere avamposti
+-- vicini, quindi il Former nativo di MAIN "vede" e ruba le nostre unita' dal
+-- pool condiviso ArmyPool.
+--
+-- Fix: reclamo IMMEDIATO — appena un'unita' da combattimento compare vicino
+-- alla fabbrica dell'avamposto, viene spostata (aiBrain:AssignUnitsToPlatoon,
+-- API nativa gia' usata da Uveso per lo stesso scopo, es. aibuildstructures.lua)
+-- in un plotone "di attesa" dedicato all'avamposto — questo la toglie da
+-- ArmyPool, quindi nessun Former esterno (incluso quello di MAIN) puo' piu'
+-- vederla. Quando il plotone di attesa raggiunge la soglia dinamica (stessa
+-- famiglia di formula logaritmica di B16 Fase G/B20, calcolata dal tempo di
+-- fondazione del singolo avamposto), le unita' vengono spostate in un vero
+-- plotone d'attacco con Plan=HeroFightPlatoon (stesso Plan usato da quasi
+-- tutti i template d'attacco Uveso) e inviate.
+local function OWPlusOutpostAttackThreshold(elapsedSeconds)
+    if not elapsedSeconds or elapsedSeconds < 0 then
+        elapsedSeconds = 0
+    end
+    return 10 + math.floor(2 * math.log(1 + elapsedSeconds / 300))
+end
+
+local function OWPlusOutpostAttackWatcher(aiBrain, outpostKey)
+    ForkThread(function()
+        local OWPlusLogConditionsMod = import('/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua')
+        while aiBrain.Status ~= 'Defeat' do
+            WaitSeconds(2)
+            local mgr = aiBrain.BuilderManagers[outpostKey]
+            local pos = mgr and mgr.Position
+            if pos and OWPlusLogConditionsMod.OWPlusOutpostAttackEnabled(aiBrain) then
+                -- Reclamo immediato: qualunque unita' da combattimento non ancora
+                -- taggata, vicino alla fabbrica, va nel pool protetto.
+                local nearby = aiBrain:GetUnitsAroundPoint(
+                    categories.MOBILE * categories.LAND * (categories.DIRECTFIRE + categories.INDIRECTFIRE)
+                        - categories.SHIELD - categories.STEALTHFIELD - categories.EXPERIMENTAL
+                        - categories.ENGINEER - categories.SCOUT - categories.COMMAND - categories.SUBCOMMANDER,
+                    pos, 20, 'Ally') or {}
+                for _, u in nearby do
+                    if not u.Dead and not u.OWPlusOwnerOutpost then
+                        u.OWPlusOwnerOutpost = outpostKey
+                        aiBrain.OWPlusOutpostAttackPool = aiBrain.OWPlusOutpostAttackPool or {}
+                        if not aiBrain.OWPlusOutpostAttackPool[outpostKey] then
+                            aiBrain.OWPlusOutpostAttackPool[outpostKey] = aiBrain:MakePlatoon('', '')
+                        end
+                        aiBrain:AssignUnitsToPlatoon(aiBrain.OWPlusOutpostAttackPool[outpostKey], { u }, 'Unassigned', 'None')
+                        LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, unita\' (' .. tostring(u.UnitId)
+                            .. ') reclamata nel pool protetto, sottratta a Former esterni (Fase D3)')
+                    end
+                end
+
+                -- Soglia di lancio: conta le unita' vive nel pool protetto,
+                -- confronta con la soglia dinamica, forma ed invia se raggiunta.
+                local holdPlat = aiBrain.OWPlusOutpostAttackPool and aiBrain.OWPlusOutpostAttackPool[outpostKey]
+                if holdPlat then
+                    local heldUnits = {}
+                    for _, u in holdPlat:GetPlatoonUnits() do
+                        if not u.Dead then
+                            table.insert(heldUnits, u)
+                        end
+                    end
+                    local founded = aiBrain.OWPlusOutpostFoundedAt and aiBrain.OWPlusOutpostFoundedAt[outpostKey]
+                    local elapsed = founded and (GetGameTimeSeconds() - founded) or 0
+                    local threshold = OWPlusOutpostAttackThreshold(elapsed)
+                    if table.getn(heldUnits) >= threshold then
+                        local attackPlat = aiBrain:MakePlatoon('', '')
+                        attackPlat.PlatoonData = attackPlat.PlatoonData or {}
+                        aiBrain:AssignUnitsToPlatoon(attackPlat, heldUnits, 'Attack', 'GrowthFormation')
+                        attackPlat:StopAI()
+                        attackPlat:ForkAIThread(attackPlat.HeroFightPlatoon)
+                        aiBrain.OWPlusOutpostAttackPool[outpostKey] = nil
+                        LOG('[OWPlus] Outpost (' .. outpostKey .. '): OK, plotone d\'attacco lanciato ('
+                            .. table.getn(heldUnits) .. ' unita\', soglia=' .. threshold .. ', Fase D3)')
+                    end
+                end
+            end
+        end
+    end)
+end
 -- Fase 9-F21: AddFactoryToClosestManager (usata piu' sotto, dentro il ForkThread
 -- di riaggancio) e' una "globale" ma vive nell'ambiente isolato del modulo
 -- aiarchetype-managerloader.lua — in questo motore ogni file import()ato ha il
@@ -342,6 +426,24 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             aiBrain.OWPlusOutpostRealLocType[outpostKey] = outpostKey
             LOG('[OWPlus] Outpost: ' .. outpostKey .. ' registrato in OWPlusOutpostLocationTypes (registrazione anticipata)')
 
+            -- Fase D1 (B24): assegna il tipo di produzione (mono bot/carri/artiglieria)
+            -- una sola volta, alla prima registrazione reale dell'avamposto.
+            -- Fix (sess.90, regressione trovata dall'utente): le funzioni di
+            -- OWPlusLogConditions.lua non sono globali cross-file, vanno prese
+            -- tramite import() + accesso con il punto (stesso pattern gia' usato
+            -- qui sotto per AddGlobalBuilderGroup).
+            local OWPlusLogConditionsMod = import('/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua')
+            OWPlusLogConditionsMod.OWPlusAssignOutpostType(aiBrain, outpostKey)
+
+            -- Fase D3 (B24): timestamp di fondazione (stabile, mai resettato,
+            -- a differenza di OWPlusOutpostTierTimer) + avvio watcher di
+            -- reclamo/lancio plotoni d'attacco, una sola volta per avamposto.
+            aiBrain.OWPlusOutpostFoundedAt = aiBrain.OWPlusOutpostFoundedAt or {}
+            if not aiBrain.OWPlusOutpostFoundedAt[outpostKey] then
+                aiBrain.OWPlusOutpostFoundedAt[outpostKey] = GetGameTimeSeconds()
+                OWPlusOutpostAttackWatcher(aiBrain, outpostKey)
+            end
+
             -- Fase D-difese, crescita logaritmica (sess.86): timer del tier attivo
             -- (T1) parte alla fondazione — il watcher periodico dedicato (vedi
             -- "sorveglianza crescita difese" piu' sotto) lo legge per calcolare il
@@ -356,7 +458,8 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, outpostKey, 'OWPlus Outpost Engineer Builders')
             OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, outpostKey, 'OWPlus Outpost Factory Upgrade')
             OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, outpostKey, 'OWPlus Outpost Defense Upgrade')
-            LOG('[OWPlus] Outpost: ' .. outpostKey .. ' — agganciati builder dedicati (Engineer/FactoryUpgrade/DefenseUpgrade) al manager (registrazione anticipata)')
+            OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, outpostKey, 'OWPlus Outpost Production')
+            LOG('[OWPlus] Outpost: ' .. outpostKey .. ' — agganciati builder dedicati (Engineer/FactoryUpgrade/DefenseUpgrade/Production) al manager (registrazione anticipata)')
 
             local defenseRecipe = aiBrain.OWPlusOutpostDefenseRecipes and aiBrain.OWPlusOutpostDefenseRecipes[outpostKey]
             if defenseRecipe then
@@ -776,6 +879,19 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                             aiBrain.OWPlusOutpostRealLocType[targetLocType] = realLocType
                             LOG('[OWPlus] Outpost: ' .. targetLocType .. ' registrato in OWPlusOutpostLocationTypes con chiave reale "' .. realLocType .. '"')
 
+                            -- Fase D1 (B24): assegna il tipo di produzione (mono
+                            -- bot/carri/artiglieria) una sola volta. Fix (sess.90):
+                            -- vedi nota nel blocco "registrazione anticipata" sopra.
+                            local OWPlusLogConditionsMod = import('/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua')
+                            OWPlusLogConditionsMod.OWPlusAssignOutpostType(aiBrain, realLocType)
+
+                            -- Fase D3 (B24): vedi nota nel blocco "registrazione anticipata" sopra.
+                            aiBrain.OWPlusOutpostFoundedAt = aiBrain.OWPlusOutpostFoundedAt or {}
+                            if not aiBrain.OWPlusOutpostFoundedAt[realLocType] then
+                                aiBrain.OWPlusOutpostFoundedAt[realLocType] = GetGameTimeSeconds()
+                                OWPlusOutpostAttackWatcher(aiBrain, realLocType)
+                            end
+
                             -- Fase A/B/C fix (sess.71, aggiornato sess.83): dalla sess.83 il
                             -- manager dell'avamposto viene creato da NOI (vedi sopra) senza
                             -- alcun template stock — parte con zero BuilderGroup. Agganciamo
@@ -788,7 +904,9 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                             -- Fase C, sess.83: upgrade nativo in-place MK1->MK2 delle difese
                             -- modded (vedi OWPlus Outpost Defense Upgrade.lua).
                             OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, realLocType, 'OWPlus Outpost Defense Upgrade')
-                            LOG('[OWPlus] Outpost: ' .. targetLocType .. ' — agganciati builder dedicati (Engineer/FactoryUpgrade/DefenseUpgrade) al manager "' .. realLocType .. '"')
+                            -- Fase D1 (B24): produzione unita' da combattimento mono-categoria.
+                            OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, realLocType, 'OWPlus Outpost Production')
+                            LOG('[OWPlus] Outpost: ' .. targetLocType .. ' — agganciati builder dedicati (Engineer/FactoryUpgrade/DefenseUpgrade/Production) al manager "' .. realLocType .. '"')
 
                             -- Fix sess.78: Fase difese unificata. Non costruisce piu' nulla qui
                             -- direttamente — si limita a travasare la ricetta T1 iniziale (gia'
@@ -1551,10 +1669,23 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                             if newRealLocType then
                                 aiBrain.OWPlusOutpostLocationTypes[newRealLocType] = true
                                 aiBrain.OWPlusOutpostRealLocType[outpostKey] = newRealLocType
+                                -- Fase D1 (B24): il tipo va assegnato anche in questo percorso di
+                                -- recupero — OWPlusAssignOutpostType non riassegna se gia' presente.
+                                -- Fix (sess.90): vedi nota nel blocco "registrazione anticipata" sopra.
+                                local OWPlusLogConditionsMod = import('/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua')
+                                OWPlusLogConditionsMod.OWPlusAssignOutpostType(aiBrain, newRealLocType)
+
+                                -- Fase D3 (B24): vedi nota nel blocco "registrazione anticipata" sopra.
+                                aiBrain.OWPlusOutpostFoundedAt = aiBrain.OWPlusOutpostFoundedAt or {}
+                                if not aiBrain.OWPlusOutpostFoundedAt[newRealLocType] then
+                                    aiBrain.OWPlusOutpostFoundedAt[newRealLocType] = GetGameTimeSeconds()
+                                    OWPlusOutpostAttackWatcher(aiBrain, newRealLocType)
+                                end
                                 local OWPlusAddBuilderTable = import('/lua/ai/AIAddBuilderTable.lua')
                                 OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, newRealLocType, 'OWPlus Outpost Engineer Builders')
                                 OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, newRealLocType, 'OWPlus Outpost Factory Upgrade')
                                 OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, newRealLocType, 'OWPlus Outpost Defense Upgrade')
+                                OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, newRealLocType, 'OWPlus Outpost Production')
                                 -- Fix sess.77 (septies): stessa rete di sicurezza del ramo
                                 -- "fabbrica orfana" poco sotto — chiamata diretta ed esplicita a
                                 -- AssignBuildOrder, indipendente da cosa AddFactoryToClosestManager

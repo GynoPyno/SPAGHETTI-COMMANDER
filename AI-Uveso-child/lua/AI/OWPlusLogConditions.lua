@@ -30,6 +30,42 @@ function OWPlusOutpostTierUpAllowed(aiBrain, label)
     return true
 end
 
+-- Fase D1 (B24): flag globale per disattivare la produzione unita' d'attacco
+-- degli avamposti senza rimuovere il codice — richiesto esplicitamente
+-- dall'utente (checklist-sviluppo.md sez.2: sistema centrale, serve un
+-- interruttore per isolare eventuali regressioni nei test senza dover
+-- commentare/rimuovere codice).
+OWPlusOutpostAttackDisabled = false
+
+function OWPlusOutpostAttackEnabled(aiBrain)
+    return not OWPlusOutpostAttackDisabled
+end
+
+-- Fase D1 (B24): assegna il "tipo" di produzione dell'avamposto UNA sola volta
+-- (mono-categoria: bot/carri/artiglieria, 1/3 di probabilita' ciascuna — la
+-- distinzione carri vs bot decisa in sess.90 dopo aver verificato che
+-- categories.BOT esiste davvero nel motore, gia' usato in OWPlus Land Naval.lua).
+-- Il tipo "composito" (B24 punto 1-2, mix 60/40 di due categorie) e' rimandato
+-- alla Fase D2 — per ora ogni avamposto e' sempre mono.
+function OWPlusAssignOutpostType(aiBrain, locationType)
+    aiBrain.OWPlusOutpostType = aiBrain.OWPlusOutpostType or {}
+    if not aiBrain.OWPlusOutpostType[locationType] then
+        local roll = Random(1, 3)
+        local chosenType = 'bot'
+        if roll == 2 then
+            chosenType = 'tank'
+        elseif roll == 3 then
+            chosenType = 'artillery'
+        end
+        aiBrain.OWPlusOutpostType[locationType] = chosenType
+        LOG('[OWPlus] Outpost (' .. tostring(locationType) .. '): OK, tipo produzione assegnato = "' .. chosenType .. '" (Fase D1)')
+    end
+end
+
+function OWPlusOutpostTypeIs(aiBrain, locationType, wantedType)
+    return aiBrain.OWPlusOutpostType ~= nil and aiBrain.OWPlusOutpostType[locationType] == wantedType
+end
+
 -- Instrumentazione diagnostica (sess.72): il fix di sess.71 (AddGlobalBuilderGroup)
 -- ha confermato che i BuilderGroup di Fase A/B vengono correttamente agganciati ai
 -- manager avamposto, ma un test in game ha mostrato che vengono comunque quasi mai
