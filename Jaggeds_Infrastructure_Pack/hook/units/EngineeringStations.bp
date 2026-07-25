@@ -1,0 +1,119 @@
+
+# UEF T2 EngineeringStation
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "xeb0104",
+
+    General = {
+        Icon = "amph",
+    },
+    Physics = {
+        BuildOnLayerCaps = {
+            LAYER_Land = true,
+            LAYER_Seabed = true,
+        },
+    },
+}
+
+# UEF T2 EngineeringStation Upgraded
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "xeb0204",
+
+    Display = {
+        Abilities = {
+            "<LOC ability_upgradable>Upgradeable",
+        },
+    },
+    Economy = {
+        BuildableCategory = {
+            "xeb0304",
+        },
+        RebuildBonusIds = {
+            "xeb0104",
+            "xeb0204",
+            "xeb0304",
+        },
+    },
+    General = {
+        UpgradesTo = "xeb0304",
+        CommandCaps = {
+            RULEUCC_Pause = true,
+        },
+        Icon = "amph",
+    },
+    Physics = {
+        BuildOnLayerCaps = {
+            LAYER_Land = true,
+            LAYER_Seabed = true,
+        },
+    },
+}
+
+# Cybran T2 EngineeringStation
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "xrb0104",
+
+    General = {
+        Icon = "amph",
+    },
+    Physics = {
+        BuildOnLayerCaps = {
+            LAYER_Land = true,
+            LAYER_Seabed = true,
+        },
+    },
+}
+
+# Cybran T2 EngineeringStation Upgrade I
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "xrb0204",
+
+    General = {
+        Icon = "amph",
+    },
+    Physics = {
+        BuildOnLayerCaps = {
+            LAYER_Land = true,
+            LAYER_Seabed = true,
+        },
+    },
+}
+
+# Cybran T2 EngineeringStation Upgrade II
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "xrb0304",
+
+    Display = {
+        Abilities = {
+            "<LOC ability_upgradable>Upgradeable",
+        },
+    },
+    Economy = {
+        BuildableCategory = {
+            "xrb0404",
+        },
+        RebuildBonusIds = {
+            "xrb0104",
+            "xrb0204",
+            "xrb0304",
+            "xrb0404",
+        },
+    },
+    General = {
+        UpgradesTo = "xrb0404",
+        CommandCaps = {
+            RULEUCC_Pause = true,
+        },
+        Icon = "amph",
+    },
+    Physics = {
+        BuildOnLayerCaps = {
+            LAYER_Land = true,
+            LAYER_Seabed = true,
+        },
+    },
+}

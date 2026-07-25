@@ -1,0 +1,70 @@
+UCannon03 = Class(import('/mods/#marlos mods compilation/lua/MKDefaultProjectiles.lua').MultiPolyTrailProjectileMK) {
+	FxImpactTrajectoryAligned =true,
+
+
+        FxTrails = {
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau01_p_03_brightglow_emit.bp',
+        },
+		FxTrailOffset = 0,
+        PolyTrails = {
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau01_p_01_polytrails_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau01_p_02_polytrails_emit.bp',
+        },
+		PolyTrailOffset = {0,0},
+
+        FxImpactUnit = {
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_01_flatflash_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_02_firecloud_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_03_flatfirecloud_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_04_smoke_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_05_sparks_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_06_dirtchunks_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_07_shockwave_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_08_leftoverfire_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_09_firelines_emit.bp',
+        },
+        FxImpactLand = {
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_01_flatflash_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_02_firecloud_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_03_flatfirecloud_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_04_smoke_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_05_sparks_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_06_dirtchunks_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_07_shockwave_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_08_leftoverfire_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_09_firelines_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_t_01_dirtlines_emit.bp',
+        },
+        FxImpactWater = {
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_01_flatflash_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_02_firecloud_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_03_flatfirecloud_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_04_smoke_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_05_sparks_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_06_dirtchunks_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_07_shockwave_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_08_leftoverfire_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_09_firelines_emit.bp',
+        },
+        FxImpactProp = {
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_01_flatflash_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_02_firecloud_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_03_flatfirecloud_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_04_smoke_emit.bp',
+			'/Mods/#Marlos mods compilation/effects/emitters/w_u_hcn01_i_u_07_firecloud_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_05_sparks_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_06_dirtchunks_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_07_shockwave_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_08_leftoverfire_emit.bp',
+            '/mods/#marlos mods compilation/effects/emitters/w_u_gau03_i_u_09_firelines_emit.bp',
+        },
+		
+		FxTrailScale = 1.2,
+		FxLandHitScale = 0.6,
+		FxWaterHitScale = 0.6,
+		FxPropHitScale = 0.6,
+		FxUnitHitScale = 0.6,
+		FxImpactUnderWater = {},
+		FxSplatScale = 1,
+}
+TypeClass = UCannon03

@@ -1,24 +1,6 @@
-# Whitelist: traccia solo Antares Unit Pack e la sua child mod
+# Branch temporaneo tracciamento-tutte-mod-temp: traccia TUTTE le mod
+# presenti nella cartella (whitelist disattivata rispetto al branch
+# principale, dove resta attiva — vedi sviluppo--autonomo-avamposti).
 
-# Ignora tutto di default
-*
-
-# Mantieni questo file
-!.gitignore
-
-# Antares Unit Pack (mod originale — SOLA LETTURA in sviluppo)
-!Antares Unit Pack/
-!Antares Unit Pack/**
-!BattlePack/
-!BattlePack/**
-
-# child (mod child attiva)
-!AntaresUnitPack-child/
-!AntaresUnitPack-child/**
-!OrbitalWarsMod-child/
-!OrbitalWarsMod-child/**
-!AI-Uveso-child/
-!AI-Uveso-child/**
-
-# Escludi file temporanei/backup anche dentro le cartelle tracciate
+# Escludi file temporanei/backup
 *.bak

@@ -1,0 +1,13 @@
+TrailEmitterBlueprint {
+	BlueprintId = 'w_u_gau03_p_02_polytrails',
+	Lifetime = -1.00,
+    TrailLength = 3.0,
+    Size = 0.3,
+    SortOrder = 0,
+    BlendMode = 3,
+    TextureRepeatRate = 1,
+    LODCutoff = 300,
+	RampTexture = [[/mods/#marlos mods compilation/textures/particles/ramp_orang_blue_02.dds]],
+	RepeatTexture = [[/mods/#marlos mods compilation/textures/particles/railgun_trail_01.dds]],
+}
+

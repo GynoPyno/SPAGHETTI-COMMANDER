@@ -1,0 +1,13 @@
+TrailEmitterBlueprint {
+	BlueprintId = 'w_u_gau03_i_u_04_smoke_polytrails',
+	Lifetime = -1.00,
+    TrailLength = 3.0,
+    Size = 0.5,
+    SortOrder = 0,
+    BlendMode = 3,
+    TextureRepeatRate = 1,
+    LODCutoff = 300,
+	RepeatTexture = [[/Mods/#Marlos mods compilation/textures/particles/sm_0013_45.dds]],
+	RampTexture = [[/Mods/#Marlos mods compilation/textures/particles/ramp_white_12.dds]],
+}
+

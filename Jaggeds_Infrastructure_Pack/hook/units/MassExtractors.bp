@@ -1,0 +1,119 @@
+# MEX T3 Aeon
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "uab1302",
+
+    Display = {
+        Abilities = {
+            "<LOC ability_upgradable>Upgradeable",
+        },
+    },
+    Economy = {
+        BuildRate = 50,
+        BuildableCategory = {
+            "uab1402",
+        },
+        RebuildBonusIds = {
+            'uab1103',
+            'uab1202',
+            'uab1302',
+            'uab1402',
+        },
+    },
+    General = {
+        UpgradesTo = "uab1402",
+        CommandCaps = {
+            RULEUCC_Pause = true,
+        },
+    },
+}
+
+# MEX T3 UEF
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "ueb1302",
+
+    Display = {
+        Abilities = {
+            "<LOC ability_upgradable>Upgradeable",
+        },
+    },
+    Economy = {
+        BuildRate = 50,
+        BuildableCategory = {
+            "ueb1402",
+        },
+        RebuildBonusIds = {
+            "ueb1102",
+            "ueb1202",
+            "ueb1302",
+            "ueb1402",
+        },
+    },
+    General = {
+        UpgradesTo = "ueb1402",
+        CommandCaps = {
+            RULEUCC_Pause = true,
+        },
+    },
+}
+
+# MEX T3 Cybran
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "urb1302",
+
+    Display = {
+        Abilities = {
+            "<LOC ability_upgradable>Upgradeable",
+        },
+    },
+    Economy = {
+        BuildRate = 50,
+        BuildableCategory = {
+            "urb1402",
+        },
+        RebuildBonusIds = {
+            "urb1102",
+            "urb1202",
+            "urb1302",
+            "urb1402",
+        },
+    },
+    General = {
+        UpgradesTo = "urb1402",
+        CommandCaps = {
+            RULEUCC_Pause = true,
+        },
+    },
+}
+
+# MEX T3 Seraphim
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "xsb1302",
+
+    Display = {
+        Abilities = {
+            "<LOC ability_upgradable>Upgradeable",
+        },
+    },
+    Economy = {
+        BuildRate = 50,
+        BuildableCategory = {
+            "xsb1402",
+        },
+        RebuildBonusIds = {
+            "xsb1102",
+            "xsb1202",
+            "xsb1302",
+            "xsb1402",
+        },
+    },
+    General = {
+        UpgradesTo = "xsb1402",
+        CommandCaps = {
+            RULEUCC_Pause = true,
+        },
+    },
+}

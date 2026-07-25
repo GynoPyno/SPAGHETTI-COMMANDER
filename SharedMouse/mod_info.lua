@@ -1,0 +1,10 @@
+name = "SharedMouse"
+uid = "eternal-pack-shared_mouse_2"
+description = "Show your actions to your teammates"
+copyright = "Eternal-"
+author = "Eternal-"
+url = ""
+icon = "/mods/SharedMouse/logo.png"
+version = 2
+exclusive = false
+ui_only = true

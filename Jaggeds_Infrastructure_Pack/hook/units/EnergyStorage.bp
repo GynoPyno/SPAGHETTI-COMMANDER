@@ -1,0 +1,183 @@
+# Energy Storage Aeon
+UnitBlueprint {
+	Merge = true,
+	BlueprintId = "uab1105",
+
+	Categories = {
+		"SHOWQUEUE",
+		"AEON",
+		"BUILTBYTIER1ENGINEER",
+		"BUILTBYTIER2ENGINEER",
+		"BUILTBYTIER3ENGINEER",
+		"BUILTBYTIER2COMMANDER",
+		"BUILTBYTIER3COMMANDER",
+		"DRAGBUILD",
+		"ECONOMIC",
+		"ENERGYSTORAGE",
+		"PRODUCTSC1",
+		"RECLAIMABLE",
+		"SELECTABLE",
+		"SIZE4",
+		"SORTECONOMY",
+		"STRUCTURE",
+		"TECH1",
+		"VISIBLETORECON",
+		"VOLATILE",
+	},
+	Economy = {
+		BuildableCategory = {
+			"euabest2",
+		},
+		BuildRate = 10,
+		RebuildBonusIds = {
+			"uab1105",
+			"euabest2",
+			"euabest3",
+		},
+	},
+	General = {
+		CommandCaps = {
+			RULEUCC_Pause = true,
+		},
+		UpgradesTo = "euabest2",
+	},
+	StrategicIconName = "icon_structure1_energy",
+}
+
+# Energy Storage UEF
+UnitBlueprint {
+	Merge = true,
+	BlueprintId = "ueb1105",
+
+	Categories = {
+		"SHOWQUEUE",
+		"UEF",
+		"BUILTBYTIER1ENGINEER",
+		"BUILTBYTIER2ENGINEER",
+		"BUILTBYTIER3ENGINEER",
+		"BUILTBYTIER2COMMANDER",
+		"BUILTBYTIER3COMMANDER",
+		"DRAGBUILD",
+		"ECONOMIC",
+		"ENERGYSTORAGE",
+		"PRODUCTSC1",
+		"RECLAIMABLE",
+		"SELECTABLE",
+		"SIZE4",
+		"SORTECONOMY",
+		"STRUCTURE",
+		"TECH1",
+		"VISIBLETORECON",
+		"VOLATILE",
+	},
+	Economy = {
+		BuildableCategory = {
+			"euebest2",
+		},
+		BuildRate = 10,
+		RebuildBonusIds = {
+			"ueb1105",
+			"euebest2",
+			"euebest3",
+		},
+	},
+	General = {
+		CommandCaps = {
+			RULEUCC_Pause = true,
+		},
+		UpgradesTo = "euebest2",
+	},
+	StrategicIconName = "icon_structure1_energy",
+}
+
+# EnergyStorage Cybran
+UnitBlueprint {
+	Merge = true,
+	BlueprintId = "urb1105",
+
+	Categories = {
+		"SHOWQUEUE",
+		"CYBRAN",
+		"BUILTBYTIER1ENGINEER",
+		"BUILTBYTIER2ENGINEER",
+		"BUILTBYTIER3ENGINEER",
+		"BUILTBYTIER2COMMANDER",
+		"BUILTBYTIER3COMMANDER",
+		"DRAGBUILD",
+		"ECONOMIC",
+		"ENERGYSTORAGE",
+		"PRODUCTSC1",
+		"RECLAIMABLE",
+		"SELECTABLE",
+		"SIZE4",
+		"SORTECONOMY",
+		"STRUCTURE",
+		"TECH1",
+		"VISIBLETORECON",
+		"VOLATILE",
+	},
+	Economy = {
+		BuildableCategory = {
+			"eurbest2",
+		},
+		BuildRate = 10,
+		RebuildBonusIds = {
+			"urb1105",
+			"eurbest2",
+			"eurbest3",
+		},
+	},
+	General = {
+		CommandCaps = {
+			RULEUCC_Pause = true,
+		},
+		UpgradesTo = "eurbest2",
+	},
+	StrategicIconName = "icon_structure1_energy",
+}
+
+# EnergyStorage Seraphim
+UnitBlueprint {
+	Merge = true,
+	BlueprintId = "xsb1105",
+
+	Categories = {
+		"SHOWQUEUE",
+		"SERAPHIM",
+		"BUILTBYTIER1ENGINEER",
+		"BUILTBYTIER2ENGINEER",
+		"BUILTBYTIER3ENGINEER",
+		"BUILTBYTIER2COMMANDER",
+		"BUILTBYTIER3COMMANDER",
+		"DRAGBUILD",
+		"ECONOMIC",
+		"ENERGYSTORAGE",
+		"PRODUCTSC1",
+		"RECLAIMABLE",
+		"SELECTABLE",
+		"SIZE4",
+		"SORTECONOMY",
+		"STRUCTURE",
+		"TECH1",
+		"VISIBLETORECON",
+		"VOLATILE",
+	},
+	Economy = {
+		BuildableCategory = {
+			"exsbest2",
+		},
+		BuildRate = 10,
+		RebuildBonusIds = {
+			"xsb1105",
+			"exsbest2",
+			"exsbest3",
+		},
+	},
+	General = {
+		CommandCaps = {
+			RULEUCC_Pause = true,
+		},
+		UpgradesTo = "exsbest2",
+	},
+	StrategicIconName = "icon_structure1_energy",
+}

@@ -1,0 +1,179 @@
+# Mass Storage Aeon
+UnitBlueprint {
+	Merge = true,
+	BlueprintId = "uab1106",
+
+	Categories = {
+		"SHOWQUEUE",
+		"AEON",
+		"BUILTBYTIER1ENGINEER",
+		"BUILTBYTIER2ENGINEER",
+		"BUILTBYTIER3ENGINEER",
+		"BUILTBYTIER2COMMANDER",
+		"BUILTBYTIER3COMMANDER",
+		"DRAGBUILD",
+		"ECONOMIC",
+		"MASSSTORAGE",
+		"PRODUCTSC1",
+		"RECLAIMABLE",
+		"SELECTABLE",
+		"SIZE4",
+		"SORTECONOMY",
+		"STRUCTURE",
+		"TECH1",
+		"VISIBLETORECON",
+	},
+	Economy = {
+		BuildableCategory = {
+			"euabmst2",
+		},
+		BuildRate = 10,
+		RebuildBonusIds = {
+			"uab1106",
+			"euabmst2",
+			"euabmst3",
+		},
+	},
+	General = {
+		CommandCaps = {
+			RULEUCC_Pause = true,
+		},
+		UpgradesTo = "euabmst2",
+	},
+	StrategicIconName = "icon_structure1_mass",
+}
+
+# Mass Storage UEF
+UnitBlueprint {
+	Merge = true,
+	BlueprintId = "ueb1106",
+
+	Categories = {
+		"SHOWQUEUE",
+		"UEF",
+		"BUILTBYTIER1ENGINEER",
+		"BUILTBYTIER2ENGINEER",
+		"BUILTBYTIER3ENGINEER",
+		"BUILTBYTIER2COMMANDER",
+		"BUILTBYTIER3COMMANDER",
+		"DRAGBUILD",
+		"ECONOMIC",
+		"MASSSTORAGE",
+		"PRODUCTSC1",
+		"RECLAIMABLE",
+		"SELECTABLE",
+		"SIZE4",
+		"SORTECONOMY",
+		"STRUCTURE",
+		"TECH1",
+		"VISIBLETORECON",
+	},
+	Economy = {
+		BuildableCategory = {
+			"euebmst2",
+		},
+		BuildRate = 10,
+		RebuildBonusIds = {
+			"ueb1106",
+			"euebmst2",
+			"euebmst3",
+		},
+	},
+	General = {
+		CommandCaps = {
+			RULEUCC_Pause = true,
+		},
+		UpgradesTo = "euebmst2",
+	},
+	StrategicIconName = "icon_structure1_mass",
+}
+
+# Mass Storage Cybran
+UnitBlueprint {
+	Merge = true,
+	BlueprintId = "urb1106",
+
+	Categories = {
+		"SHOWQUEUE",
+		"CYBRAN",
+		"BUILTBYTIER1ENGINEER",
+		"BUILTBYTIER2ENGINEER",
+		"BUILTBYTIER3ENGINEER",
+		"BUILTBYTIER2COMMANDER",
+		"BUILTBYTIER3COMMANDER",
+		"DRAGBUILD",
+		"ECONOMIC",
+		"MASSSTORAGE",
+		"PRODUCTSC1",
+		"RECLAIMABLE",
+		"SELECTABLE",
+		"SIZE4",
+		"SORTECONOMY",
+		"STRUCTURE",
+		"TECH1",
+		"VISIBLETORECON",
+	},
+	Economy = {
+		BuildableCategory = {
+			"eurbmst2",
+		},
+		BuildRate = 10,
+		RebuildBonusIds = {
+			"urb1106",
+			"eurbmst2",
+			"eurbmst3",
+		},
+	},
+	General = {
+		CommandCaps = {
+			RULEUCC_Pause = true,
+		},
+		UpgradesTo = "eurbmst2",
+	},
+	StrategicIconName = "icon_structure1_mass",
+}
+
+# Mass Storage Seraphim
+UnitBlueprint {
+	Merge = true,
+	BlueprintId = "xsb1106",
+
+	Categories = {
+		"SHOWQUEUE",
+		"SERAPHIM",
+		"BUILTBYTIER1ENGINEER",
+		"BUILTBYTIER2ENGINEER",
+		"BUILTBYTIER3ENGINEER",
+		"BUILTBYTIER2COMMANDER",
+		"BUILTBYTIER3COMMANDER",
+		"DRAGBUILD",
+		"ECONOMIC",
+		"MASSSTORAGE",
+		"PRODUCTSC1",
+		"RECLAIMABLE",
+		"SELECTABLE",
+		"SIZE4",
+		"SORTECONOMY",
+		"STRUCTURE",
+		"TECH1",
+		"VISIBLETORECON",
+	},
+	Economy = {
+		BuildableCategory = {
+			"exsbmst2",
+		},
+		BuildRate = 10,
+		RebuildBonusIds = {
+			"xsb1106",
+			"exsbmst2",
+			"exsbmst3",
+		},
+	},
+	General = {
+		CommandCaps = {
+			RULEUCC_Pause = true,
+		},
+		UpgradesTo = "exsbmst2",
+	},
+	StrategicIconName = "icon_structure1_mass",
+}
