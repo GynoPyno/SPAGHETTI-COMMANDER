@@ -30,7 +30,11 @@ local categories = categories
 -- rimettere dirette a diagnosi completata.
 local OWPlusLogCond = '/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua'
 
-local OUTPOST_UPGRADE_STORAGE_RATIO = 0.15
+-- Alzata 0.15->0.20 (sess.91, richiesta esplicita utente): con l'upgrade
+-- ora gia' subordinato alla presenza di ingegneri sufficienti (vedi
+-- OWPlusDebugEngineersAtLeast piu' sotto), un margine economico leggermente
+-- piu' alto lascia l'avamposto meno esposto durante la finestra di upgrade.
+local OUTPOST_UPGRADE_STORAGE_RATIO = 0.20
 
 -- Fix sess.77 (bug reale trovato in game: valutazione builder per l'intera
 -- location bloccata per sempre dopo un salto di tier). InstanceCount=20 era
@@ -45,6 +49,12 @@ local OUTPOST_UPGRADE_STORAGE_RATIO = 0.15
 -- che smette di essere rivalutata (Engineer E Factory-Upgrade insieme).
 local OUTPOST_UPGRADE_INSTANCE_COUNT = 1
 
+-- Fix sess.91 (richiesta esplicita utente): stesso tetto gia' usato come cap
+-- massimo in 'OWPlus Outpost Engineer Builders.lua' (MAX_OUTPOST_ENGINEERS),
+-- qui riusato come SOGLIA MINIMA -- l'avamposto deve avere gia' 5 ingegneri
+-- vivi prima di poter avviare l'upgrade della propria fabbrica.
+local OUTPOST_UPGRADE_MIN_ENGINEERS = 5
+
 BuilderGroup {
     BuilderGroupName = 'OWPlus Outpost Factory Upgrade',
     BuildersType = 'PlatoonFormBuilder',
@@ -58,6 +68,7 @@ BuilderGroup {
         BuilderConditions = {
             { OWPlusLogCond, 'OWPlusOutpostTierUpAllowed', { 'Land Upgrade T1' } },
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
+            { OWPlusLogCond, 'OWPlusDebugEngineersAtLeast', { 'LocationType', OUTPOST_UPGRADE_MIN_ENGINEERS, 'Land Upgrade T1' } },
             { OWPlusLogCond, 'OWPlusDebugEconStorageRatio', { OUTPOST_UPGRADE_STORAGE_RATIO, OUTPOST_UPGRADE_STORAGE_RATIO, 'Land Upgrade T1' } },
             { OWPlusLogCond, 'OWPlusDebugLocationFactoriesBuildingLess', { 'LocationType', 1, categories.FACTORY * categories.TECH2 + categories.FACTORY * categories.TECH3, 'Land Upgrade T1' } },
             { OWPlusLogCond, 'OWPlusDebugFactoryUpgradeCandidateExists', { 'LocationType', 1, categories.LAND, 'Land Upgrade T1' } },
@@ -74,6 +85,7 @@ BuilderGroup {
         BuilderConditions = {
             { OWPlusLogCond, 'OWPlusOutpostTierUpAllowed', { 'Air Upgrade T1' } },
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
+            { OWPlusLogCond, 'OWPlusDebugEngineersAtLeast', { 'LocationType', OUTPOST_UPGRADE_MIN_ENGINEERS, 'Air Upgrade T1' } },
             { OWPlusLogCond, 'OWPlusDebugEconStorageRatio', { OUTPOST_UPGRADE_STORAGE_RATIO, OUTPOST_UPGRADE_STORAGE_RATIO, 'Air Upgrade T1' } },
             { OWPlusLogCond, 'OWPlusDebugLocationFactoriesBuildingLess', { 'LocationType', 1, categories.FACTORY * categories.TECH2 + categories.FACTORY * categories.TECH3, 'Air Upgrade T1' } },
             { OWPlusLogCond, 'OWPlusDebugFactoryUpgradeCandidateExists', { 'LocationType', 1, categories.AIR, 'Air Upgrade T1' } },
@@ -90,6 +102,7 @@ BuilderGroup {
         BuilderConditions = {
             { OWPlusLogCond, 'OWPlusOutpostTierUpAllowed', { 'Land Upgrade T2' } },
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
+            { OWPlusLogCond, 'OWPlusDebugEngineersAtLeast', { 'LocationType', OUTPOST_UPGRADE_MIN_ENGINEERS, 'Land Upgrade T2' } },
             { OWPlusLogCond, 'OWPlusDebugEconStorageRatio', { OUTPOST_UPGRADE_STORAGE_RATIO, OUTPOST_UPGRADE_STORAGE_RATIO, 'Land Upgrade T2' } },
             { OWPlusLogCond, 'OWPlusDebugLocationFactoriesBuildingLess', { 'LocationType', 1, categories.FACTORY * categories.TECH3, 'Land Upgrade T2' } },
             { OWPlusLogCond, 'OWPlusDebugFactoryUpgradeCandidateExists', { 'LocationType', 2, categories.LAND, 'Land Upgrade T2' } },
@@ -106,6 +119,7 @@ BuilderGroup {
         BuilderConditions = {
             { OWPlusLogCond, 'OWPlusOutpostTierUpAllowed', { 'Air Upgrade T2' } },
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
+            { OWPlusLogCond, 'OWPlusDebugEngineersAtLeast', { 'LocationType', OUTPOST_UPGRADE_MIN_ENGINEERS, 'Air Upgrade T2' } },
             { OWPlusLogCond, 'OWPlusDebugEconStorageRatio', { OUTPOST_UPGRADE_STORAGE_RATIO, OUTPOST_UPGRADE_STORAGE_RATIO, 'Air Upgrade T2' } },
             { OWPlusLogCond, 'OWPlusDebugLocationFactoriesBuildingLess', { 'LocationType', 1, categories.FACTORY * categories.TECH3, 'Air Upgrade T2' } },
             { OWPlusLogCond, 'OWPlusDebugFactoryUpgradeCandidateExists', { 'LocationType', 2, categories.AIR, 'Air Upgrade T2' } },

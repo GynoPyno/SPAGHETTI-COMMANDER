@@ -34,6 +34,11 @@ local OWPlusLogCond = '/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua'
 local OUTPOST_DEFENSE_UPGRADE_STORAGE_RATIO = 0.15
 local OUTPOST_DEFENSE_UPGRADE_INSTANCE_COUNT = 1
 
+-- Fix sess.91 (richiesta esplicita utente): stesso tetto gia' usato come cap
+-- massimo in 'OWPlus Outpost Engineer Builders.lua' (MAX_OUTPOST_ENGINEERS),
+-- qui riusato come SOGLIA MINIMA prima di autorizzare l'upgrade difese.
+local OUTPOST_DEFENSE_UPGRADE_MIN_ENGINEERS = 5
+
 BuilderGroup {
     BuilderGroupName = 'OWPlus Outpost Defense Upgrade',
     BuildersType = 'PlatoonFormBuilder',
@@ -46,6 +51,8 @@ BuilderGroup {
         FormRadius = 40,
         BuilderConditions = {
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
+            { OWPlusLogCond, 'OWPlusDebugNoDefenseUpgradeInProgress', { 'LocationType', 'Defense Upgrade Mayor' } },
+            { OWPlusLogCond, 'OWPlusDebugEngineersAtLeast', { 'LocationType', OUTPOST_DEFENSE_UPGRADE_MIN_ENGINEERS, 'Defense Upgrade Mayor' } },
             { OWPlusLogCond, 'OWPlusDebugEconStorageRatio', { OUTPOST_DEFENSE_UPGRADE_STORAGE_RATIO, OUTPOST_DEFENSE_UPGRADE_STORAGE_RATIO, 'Defense Upgrade Mayor' } },
             { OWPlusLogCond, 'OWPlusDefenseUpgradeCandidateExists', { 'LocationType', 'brnt1expd', 'Defense Upgrade Mayor' } },
             { OWPlusLogCond, 'OWPlusClaimDefenseUpgrade', { 'LocationType', 'brnt1expd', 'OWPlus Outpost Defense Upgrade Mayor' } },
@@ -60,6 +67,8 @@ BuilderGroup {
         FormRadius = 40,
         BuilderConditions = {
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
+            { OWPlusLogCond, 'OWPlusDebugNoDefenseUpgradeInProgress', { 'LocationType', 'Defense Upgrade Thug' } },
+            { OWPlusLogCond, 'OWPlusDebugEngineersAtLeast', { 'LocationType', OUTPOST_DEFENSE_UPGRADE_MIN_ENGINEERS, 'Defense Upgrade Thug' } },
             { OWPlusLogCond, 'OWPlusDebugEconStorageRatio', { OUTPOST_DEFENSE_UPGRADE_STORAGE_RATIO, OUTPOST_DEFENSE_UPGRADE_STORAGE_RATIO, 'Defense Upgrade Thug' } },
             { OWPlusLogCond, 'OWPlusDefenseUpgradeCandidateExists', { 'LocationType', 'brnt1hpd', 'Defense Upgrade Thug' } },
             { OWPlusLogCond, 'OWPlusClaimDefenseUpgrade', { 'LocationType', 'brnt1hpd', 'OWPlus Outpost Defense Upgrade Thug' } },
@@ -74,6 +83,8 @@ BuilderGroup {
         FormRadius = 40,
         BuilderConditions = {
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
+            { OWPlusLogCond, 'OWPlusDebugNoDefenseUpgradeInProgress', { 'LocationType', 'Defense Upgrade Coyote' } },
+            { OWPlusLogCond, 'OWPlusDebugEngineersAtLeast', { 'LocationType', OUTPOST_DEFENSE_UPGRADE_MIN_ENGINEERS, 'Defense Upgrade Coyote' } },
             { OWPlusLogCond, 'OWPlusDebugEconStorageRatio', { OUTPOST_DEFENSE_UPGRADE_STORAGE_RATIO, OUTPOST_DEFENSE_UPGRADE_STORAGE_RATIO, 'Defense Upgrade Coyote' } },
             { OWPlusLogCond, 'OWPlusDefenseUpgradeCandidateExists', { 'LocationType', 'brmt1pd', 'Defense Upgrade Coyote' } },
             { OWPlusLogCond, 'OWPlusClaimDefenseUpgrade', { 'LocationType', 'brmt1pd', 'OWPlus Outpost Defense Upgrade Coyote' } },
@@ -88,6 +99,8 @@ BuilderGroup {
         FormRadius = 40,
         BuilderConditions = {
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
+            { OWPlusLogCond, 'OWPlusDebugNoDefenseUpgradeInProgress', { 'LocationType', 'Defense Upgrade Pen' } },
+            { OWPlusLogCond, 'OWPlusDebugEngineersAtLeast', { 'LocationType', OUTPOST_DEFENSE_UPGRADE_MIN_ENGINEERS, 'Defense Upgrade Pen' } },
             { OWPlusLogCond, 'OWPlusDebugEconStorageRatio', { OUTPOST_DEFENSE_UPGRADE_STORAGE_RATIO, OUTPOST_DEFENSE_UPGRADE_STORAGE_RATIO, 'Defense Upgrade Pen' } },
             { OWPlusLogCond, 'OWPlusDefenseUpgradeCandidateExists', { 'LocationType', 'brmt1expd', 'Defense Upgrade Pen' } },
             { OWPlusLogCond, 'OWPlusClaimDefenseUpgrade', { 'LocationType', 'brmt1expd', 'OWPlus Outpost Defense Upgrade Pen' } },
@@ -106,6 +119,8 @@ BuilderGroup {
         FormRadius = 40,
         BuilderConditions = {
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
+            { OWPlusLogCond, 'OWPlusDebugNoDefenseUpgradeInProgress', { 'LocationType', 'Defense Upgrade Tower Boss' } },
+            { OWPlusLogCond, 'OWPlusDebugEngineersAtLeast', { 'LocationType', OUTPOST_DEFENSE_UPGRADE_MIN_ENGINEERS, 'Defense Upgrade Tower Boss' } },
             { OWPlusLogCond, 'OWPlusDebugEconStorageRatio', { OUTPOST_DEFENSE_UPGRADE_STORAGE_RATIO, OUTPOST_DEFENSE_UPGRADE_STORAGE_RATIO, 'Defense Upgrade Tower Boss' } },
             { OWPlusLogCond, 'OWPlusDefenseUpgradeCandidateExists', { 'LocationType', 'brnt2epd', 'Defense Upgrade Tower Boss' } },
             { OWPlusLogCond, 'OWPlusClaimDefenseUpgrade', { 'LocationType', 'brnt2epd', 'OWPlus Outpost Defense Upgrade Tower Boss' } },

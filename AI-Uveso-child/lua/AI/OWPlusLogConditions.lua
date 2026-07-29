@@ -7,6 +7,7 @@ local categories = categories
 local AIUtils = import('/lua/ai/aiutilities.lua')
 local UCBCMod = import('/lua/editor/UnitCountBuildConditions.lua')
 local EBCMod = import('/lua/editor/EconomyBuildConditions.lua')
+local OWPlusProductionAvailableMod = import('/mods/AI-Uveso-child/lua/AI/OWPlusOutpostProductionAvailable.lua')
 
 -- Test dedicato sess.79 (richiesta esplicita utente): flag temporaneo per
 -- disattivare SOLO l'upgrade di tier della fabbrica avamposto (i builder in
@@ -47,15 +48,25 @@ end
 -- categories.BOT esiste davvero nel motore, gia' usato in OWPlus Land Naval.lua).
 -- Il tipo "composito" (B24 punto 1-2, mix 60/40 di due categorie) e' rimandato
 -- alla Fase D2 — per ora ogni avamposto e' sempre mono.
+-- Fix sess.91 (richiesta esplicita utente, domanda bonus): terzo valore
+-- 'generic' accanto al mono-tipo esistente -- roll preliminare 50/50 prima
+-- del roll 1/3 bot/carro/artiglieria (invariato per il ramo mono). Un
+-- avamposto 'generic' non si limita a una sola categoria (vedi
+-- OWPlusOutpostEffectiveType sotto, ramo dedicato).
 function OWPlusAssignOutpostType(aiBrain, locationType)
     aiBrain.OWPlusOutpostType = aiBrain.OWPlusOutpostType or {}
     if not aiBrain.OWPlusOutpostType[locationType] then
-        local roll = Random(1, 3)
-        local chosenType = 'bot'
-        if roll == 2 then
-            chosenType = 'tank'
-        elseif roll == 3 then
-            chosenType = 'artillery'
+        local chosenType
+        if Random(1, 2) == 1 then
+            chosenType = 'generic'
+        else
+            local roll = Random(1, 3)
+            chosenType = 'bot'
+            if roll == 2 then
+                chosenType = 'tank'
+            elseif roll == 3 then
+                chosenType = 'artillery'
+            end
         end
         aiBrain.OWPlusOutpostType[locationType] = chosenType
         LOG('[OWPlus] Outpost (' .. tostring(locationType) .. '): OK, tipo produzione assegnato = "' .. chosenType .. '" (Fase D1)')
@@ -64,6 +75,101 @@ end
 
 function OWPlusOutpostTypeIs(aiBrain, locationType, wantedType)
     return aiBrain.OWPlusOutpostType ~= nil and aiBrain.OWPlusOutpostType[locationType] == wantedType
+end
+
+-- Fix Fase D1 (2026-07-26): il roster vanilla non ha bot/carro per ogni fazione
+-- a ogni tier (vedi commenti in OWPlus PlatoonTemplates Outpost.lua) — un
+-- avamposto assegnato a un tipo senza unita' per la propria fazione a un dato
+-- tier produceva zero unita' per tutta la durata di quel tier (bug reale
+-- osservato in test: UEF "carro" bloccato a T3, UEF "bot" bloccato a T2). Se
+-- il tipo assegnato non ha un'unita' per la fazione a questo tier, proviamo
+-- gli altri due tipi in un ordine fisso (bot->carro->artiglieria).
+--
+-- Fix (2026-07-29, espansione catalogo unita' modded): la disponibilita' per
+-- cella e' ora una tabella statica precomputata
+-- (OWPlusOutpostProductionAvailable.lua, generata dallo stesso catalogo
+-- vanilla+modded usato per i Builder) invece di interrogare GetFactoryTemplate
+-- a runtime — con decine di candidati per cella, chiamare il motore per
+-- ognuno solo per sapere "esiste qualcosa?" e' inutile, lo sappiamo gia' dai
+-- dati usati per generare i Builder stessi. Elimina anche il rischio di
+-- ripetere l'errore di parametro (GetFactoryTemplate si aspetta un'unita'
+-- fabbrica vera, non un indice di fazione numerico) che ha causato "nessun
+-- avamposto produce" il 2026-07-26 — resta un solo, singolo, uso di
+-- GetFactoryFaction (stessa API nativa, stesso parametro fabbrica corretto)
+-- solo per sapere la fazione, non per risolvere template per ogni candidato.
+local OWPLUS_OUTPOST_TYPE_FALLBACK_ORDER = { 'bot', 'tank', 'artillery' }
+
+function OWPlusOutpostEffectiveType(aiBrain, locationType, techLevel, wantedType)
+    local assignedType = aiBrain.OWPlusOutpostType and aiBrain.OWPlusOutpostType[locationType]
+    if not assignedType then
+        return nil
+    end
+    local mgr = aiBrain.BuilderManagers[locationType]
+    if not (mgr and mgr.FactoryManager) then
+        return nil
+    end
+    local liveFactory = nil
+    for _, factory in mgr.FactoryManager.FactoryList do
+        if not factory.Dead then
+            liveFactory = factory
+            break
+        end
+    end
+    if not liveFactory then
+        return nil
+    end
+    local ok, faction = pcall(function() return mgr.FactoryManager:GetFactoryFaction(liveFactory) end)
+    if not ok or not faction then
+        if OWPlusDebugThrottle(aiBrain, 'EffectiveTypeFactionFail_' .. tostring(locationType), 30) then
+            LOG('[OWPlus-WARN] OWPlusOutpostEffectiveType(' .. tostring(locationType) .. '): GetFactoryFaction fallita: ' .. tostring(faction))
+        end
+        return nil
+    end
+
+    local function IsAvailable(candidateType)
+        local byTier = OWPlusProductionAvailableMod.OWPlusProductionAvailable[candidateType]
+        return byTier and byTier[techLevel] and byTier[techLevel][faction] == true
+    end
+
+    -- Fix sess.91 (domanda bonus utente): avamposto 'generic' non e'
+    -- limitato a un solo tipo -- ogni builder (uno per wantedType) resta
+    -- candidato indipendentemente se la propria categoria e' disponibile
+    -- per fazione/tier; la scelta tra loro resta affidata alla stessa
+    -- randomizzazione Priority/Random() gia' in uso tra i 172 Builder,
+    -- nessun meccanismo nuovo di selezione.
+    if assignedType == 'generic' then
+        if wantedType and IsAvailable(wantedType) then
+            return wantedType
+        end
+        return nil
+    end
+
+    if IsAvailable(assignedType) then
+        return assignedType
+    end
+
+    for _, candidateType in OWPLUS_OUTPOST_TYPE_FALLBACK_ORDER do
+        if candidateType ~= assignedType and IsAvailable(candidateType) then
+            if OWPlusDebugThrottle(aiBrain, 'EffectiveTypeFallback_' .. tostring(locationType) .. '_T' .. tostring(techLevel), 30) then
+                LOG('[OWPlus] Outpost (' .. tostring(locationType) .. '): OK, tipo assegnato "' .. assignedType
+                    .. '" senza unita\' a T' .. tostring(techLevel) .. ', fallback su "' .. candidateType .. '" (Fase D1 fix)')
+            end
+            return candidateType
+        end
+    end
+
+    -- Fallimento rumoroso (checklist-sviluppo.md sez.3): nessuno dei 3 tipi ha
+    -- un'unita' per questa fazione a questo tier — oggi capita solo per Aeon
+    -- Carro T3 (unico buco residuo anche dopo il catalogo modded).
+    if OWPlusDebugThrottle(aiBrain, 'EffectiveTypeNone_' .. tostring(locationType) .. '_T' .. tostring(techLevel), 30) then
+        LOG('[OWPlus-WARN] Outpost (' .. tostring(locationType) .. '): nessun tipo (bot/carro/artiglieria) ha un\'unita\' per la fazione '
+            .. tostring(faction) .. ' a T' .. tostring(techLevel) .. ' — produzione impossibile a questo tier')
+    end
+    return nil
+end
+
+function OWPlusOutpostEffectiveTypeIs(aiBrain, locationType, wantedType, techLevel)
+    return OWPlusOutpostEffectiveType(aiBrain, locationType, techLevel, wantedType) == wantedType
 end
 
 -- Instrumentazione diagnostica (sess.72): il fix di sess.71 (AddGlobalBuilderGroup)
@@ -114,6 +220,31 @@ function OWPlusDebugPoolLessAtLocation(aiBrain, locationType, unitCount, unitCat
             end
         end
         LOG('[OWPlus-DBG] PoolLessAtLocation(' .. tostring(locationType) .. ', cap=' .. tostring(unitCount) .. ') = ' .. tostring(result) .. ' -- builder "' .. tostring(label) .. '"' .. diagInfo)
+    end
+    return result
+end
+
+-- Fix sess.91 (richiesta esplicita utente in game): nessuna condizione oggi
+-- verifica quanti ingegneri esistono DAVVERO prima di autorizzare upgrade
+-- fabbrica/difese o produzione unita' -- l'unico argine era l'ordine di
+-- Priority nella coda FactoryBuilder (ingegneri 18700+ > produzione 18670+),
+-- che non copre l'upgrade (coda PlatoonFormBuilder separata, mai arbitrata
+-- insieme). Conteggio FISICO (AIUtils.GetOwnUnitsAroundPoint, stessa API gia'
+-- usata nel blocco diagnostico di OWPlusDebugPoolLessAtLocation sopra), non
+-- ArmyPool -- quel conteggio ha gia' mostrato disallineamenti col reale
+-- (vedi commento sess.78 poco sopra).
+function OWPlusDebugEngineersAtLeast(aiBrain, locationType, minCount, label)
+    local mgr = aiBrain.BuilderManagers[locationType]
+    if not (mgr and mgr.EngineerManager) then
+        return false
+    end
+    local cat = categories.ENGINEER - categories.COMMAND - categories.SUBCOMMANDER
+    local coords = mgr.EngineerManager:GetLocationCoords()
+    local radius = mgr.EngineerManager.Radius
+    local count = table.getn(AIUtils.GetOwnUnitsAroundPoint(aiBrain, cat, coords, radius or 0) or {})
+    local result = count >= minCount
+    if OWPlusDebugThrottle(aiBrain, 'EngineersAtLeast_' .. tostring(locationType) .. '_' .. tostring(label), 8) then
+        LOG('[OWPlus-DBG] EngineersAtLeast(' .. tostring(locationType) .. ', min=' .. tostring(minCount) .. ') = ' .. tostring(result) .. ' (reali=' .. tostring(count) .. ') -- builder "' .. tostring(label) .. '"')
     end
     return result
 end
@@ -367,6 +498,45 @@ end
 -- OWPlusClaimFactoryUpgrade — riusa la stessa lezione (sess.77) su
 -- IsUnitState('Upgrading') che non si sincronizza abbastanza in fretta lato
 -- script per fidarsi di un controllo singolo.
+-- Fix sess.91 (richiesta esplicita utente in game): OWPlusUpgradeClaimed
+-- (sotto) blocca solo doppi claim sulla STESSA famiglia (stesso moddedUnitId)
+-- -- non impedisce a Mayor/Thug/Coyote/Pen/Tower Boss di partire tutti
+-- insieme appena la soglia storage e' vera, sovraccaricando l'economia
+-- dell'avamposto invece di procedere un upgrade alla volta. Nuovo controllo
+-- TRASVERSALE a tutte le famiglie: se una qualunque difesa a questo
+-- avamposto e' gia' REALMENTE in upgrade, blocca tutti gli altri builder
+-- Defense Upgrade finche' non completa.
+--
+-- Fix regressione sess.91 (bis, trovato in test in game subito dopo il primo
+-- deploy): la versione iniziale bloccava anche su 'u.OWPlusUpgradeClaimed'
+-- (claim TENTATO, non ancora confermato) -- ma il claim su una famiglia puo'
+-- restare bloccato per sempre nel loop 'MAI partito' gia' noto (vedi
+-- OWPlusClaimDefenseUpgrade sopra, stesso sintomo su IsUnitState('Upgrading')
+-- che non si conferma mai entro 15s -- causa non ancora diagnosticata, gia'
+-- sospettata in un hook diagnostico precedente su CanFormPlatoon/FormRadius).
+-- Con 'OWPlusUpgradeClaimed' nel controllo, una famiglia bloccata nel loop
+-- MAI-partito teneva PERMANENTEMENTE bloccate anche le altre 4 -- prima di
+-- questo fix, ogni famiglia falliva/ritentava per conto proprio, senza
+-- bloccare le altre. Ora si blocca solo su un upgrade REALMENTE confermato
+-- (IsUnitState('Upgrading') == true), mai su un claim ancora da confermare.
+function OWPlusDebugNoDefenseUpgradeInProgress(aiBrain, locationType, label)
+    local mgr = aiBrain.BuilderManagers[locationType]
+    local result = true
+    if mgr and mgr.Position then
+        local nearby = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE * categories.DEFENSE, mgr.Position, 40, 'Ally') or {}
+        for _, u in nearby do
+            if not u.Dead and u:IsUnitState('Upgrading') then
+                result = false
+                break
+            end
+        end
+    end
+    if OWPlusDebugThrottle(aiBrain, 'NoDefUpgradeInProgress_' .. tostring(locationType) .. '_' .. tostring(label), 8) then
+        LOG('[OWPlus-DBG] NoDefenseUpgradeInProgress(' .. tostring(locationType) .. ') = ' .. tostring(result) .. ' -- builder "' .. tostring(label) .. '"')
+    end
+    return result
+end
+
 function OWPlusDefenseUpgradeCandidateExists(aiBrain, locationType, moddedUnitId, label)
     local mgr = aiBrain.BuilderManagers[locationType]
     if not mgr then return false end
