@@ -81,7 +81,11 @@ end
 local function OWPlusCaptureBuiltStructure(aiBrain, outpostKey, targetPos)
     local RADIUS = 10
     for attempt = 1, 2 do
-        local candidates = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE, targetPos, RADIUS, 'Ally') or {}
+        -- Fase H (sess.93): unico scan geometrico rimasto in tutto il sistema
+        -- avamposto, ora dietro un helper condiviso (OWPlusOutpostOwnership.lua)
+        -- — nessun'altra copia di GetUnitsAroundPoint nel resto del sistema
+        -- avamposto, tutte migrate alla mappa ownership.
+        local candidates = OWPlusOutpostOwnership.OWPlusScanUnitsAroundPoint(aiBrain, categories.STRUCTURE, targetPos, RADIUS)
         local best, bestDist = nil, nil
         for _, u in candidates do
             if not u.Dead and (not u.OWPlusOwnerOutpost or u.OWPlusOwnerOutpost == outpostKey) then

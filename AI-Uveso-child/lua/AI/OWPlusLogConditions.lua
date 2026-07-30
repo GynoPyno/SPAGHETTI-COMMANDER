@@ -8,6 +8,7 @@ local AIUtils = import('/lua/ai/aiutilities.lua')
 local UCBCMod = import('/lua/editor/UnitCountBuildConditions.lua')
 local EBCMod = import('/lua/editor/EconomyBuildConditions.lua')
 local OWPlusProductionAvailableMod = import('/mods/AI-Uveso-child/lua/AI/OWPlusOutpostProductionAvailable.lua')
+local OWPlusOutpostOwnership = import('/mods/AI-Uveso-child/lua/AI/OWPlusOutpostOwnership.lua')
 
 -- Test dedicato sess.79 (richiesta esplicita utente): flag temporaneo per
 -- disattivare SOLO l'upgrade di tier della fabbrica avamposto (i builder in
@@ -229,22 +230,48 @@ end
 -- fabbrica/difese o produzione unita' -- l'unico argine era l'ordine di
 -- Priority nella coda FactoryBuilder (ingegneri 18700+ > produzione 18670+),
 -- che non copre l'upgrade (coda PlatoonFormBuilder separata, mai arbitrata
--- insieme). Conteggio FISICO (AIUtils.GetOwnUnitsAroundPoint, stessa API gia'
--- usata nel blocco diagnostico di OWPlusDebugPoolLessAtLocation sopra), non
--- ArmyPool -- quel conteggio ha gia' mostrato disallineamenti col reale
--- (vedi commento sess.78 poco sopra).
+-- insieme).
+--
+-- Fix Fase H (sess.93): sostituisce il conteggio fisico via scan geometrico
+-- (AIUtils.GetOwnUnitsAroundPoint su mgr.EngineerManager.Radius) con la mappa
+-- ownership (kind=Engineer, OWPlusOutpostOwnership.lua, Fase G) — nessuno
+-- scan, nessun raggio, nessun rischio di "prestito" da un avamposto vicino
+-- (stesso bug gia' risolto per la sorveglianza unificata). Nessun filtro
+-- categoria extra qui: il bucket 'engineer' e' gia' garantito privo di
+-- COMMAND/SUBCOMMANDER/STATIONASSISTPOD dai due punti di claim (fondatore in
+-- platoon.lua, prodotti da fabbrica in FactoryBuilderManager.lua).
 function OWPlusDebugEngineersAtLeast(aiBrain, locationType, minCount, label)
-    local mgr = aiBrain.BuilderManagers[locationType]
-    if not (mgr and mgr.EngineerManager) then
-        return false
+    local count = 0
+    for _, _ in OWPlusOutpostOwnership.OWPlusGetOwnedUnits(aiBrain, locationType, OWPlusOutpostOwnership.OWPlusOwnershipKindEngineer) do
+        count = count + 1
     end
-    local cat = categories.ENGINEER - categories.COMMAND - categories.SUBCOMMANDER
-    local coords = mgr.EngineerManager:GetLocationCoords()
-    local radius = mgr.EngineerManager.Radius
-    local count = table.getn(AIUtils.GetOwnUnitsAroundPoint(aiBrain, cat, coords, radius or 0) or {})
     local result = count >= minCount
     if OWPlusDebugThrottle(aiBrain, 'EngineersAtLeast_' .. tostring(locationType) .. '_' .. tostring(label), 8) then
         LOG('[OWPlus-DBG] EngineersAtLeast(' .. tostring(locationType) .. ', min=' .. tostring(minCount) .. ') = ' .. tostring(result) .. ' (reali=' .. tostring(count) .. ') -- builder "' .. tostring(label) .. '"')
+    end
+    return result
+end
+
+-- Fase H (sess.93): sostituisce OWPlusDebugPoolLessAtLocation (ArmyPool
+-- nativo) come gate di tetto produzione per 'OWPlus Outpost Engineer
+-- Builders.lua' — nome nuovo, non riuso quella funzione (wrapper generico di
+-- UCBCMod.PoolLessAtLocation, fonte dati diversa, riusarla col nome vecchio
+-- sarebbe fuorviante). Motivo della migrazione: PoolLessAtLocation/ArmyPool
+-- ha gia' mostrato disallineamenti col reale in questo progetto (sess.78:
+-- 13+ ingegneri T3 costruiti col cap=5 mai scattato). Conteggio via mappa
+-- ownership (kind=Engineer, gia' garantita priva di COMMAND/SUBCOMMANDER/
+-- STATIONASSISTPOD dal claim) filtrato per tier in lettura -- il cap e'
+-- per-tier, non totale (T1/T2/T3 controllati separatamente).
+function OWPlusDebugEngineersLessAtLocation(aiBrain, locationType, unitCount, tierCategory, label)
+    local count = 0
+    for u, _ in OWPlusOutpostOwnership.OWPlusGetOwnedUnits(aiBrain, locationType, OWPlusOutpostOwnership.OWPlusOwnershipKindEngineer) do
+        if EntityCategoryContains(tierCategory, u) then
+            count = count + 1
+        end
+    end
+    local result = count < unitCount
+    if OWPlusDebugThrottle(aiBrain, 'EngineersLess_' .. tostring(locationType) .. '_' .. tostring(label), 8) then
+        LOG('[OWPlus-DBG] EngineersLessAtLocation(' .. tostring(locationType) .. ', cap=' .. tostring(unitCount) .. ') = ' .. tostring(result) .. ' (reali=' .. tostring(count) .. ') -- builder "' .. tostring(label) .. '"')
     end
     return result
 end
@@ -519,16 +546,21 @@ end
 -- questo fix, ogni famiglia falliva/ritentava per conto proprio, senza
 -- bloccare le altre. Ora si blocca solo su un upgrade REALMENTE confermato
 -- (IsUnitState('Upgrading') == true), mai su un claim ancora da confermare.
+--
+-- Fix Fase H (sess.93): le 3 funzioni sotto (questa + le 2 seguenti)
+-- facevano la STESSA query GetUnitsAroundPoint(STRUCTURE*DEFENSE, pos, 40) —
+-- ora migrate alla mappa ownership (kind=Structure, Fase F/sess.88), con
+-- filtro EntityCategoryContains(categories.DEFENSE, u) in lettura (il
+-- bucket 'structure' contiene anche scudi/artiglieria/SMD/bonus, non solo
+-- difese — equivalente al filtro category originale dato che il bucket e'
+-- comunque sempre sottoinsieme di STRUCTURE per costruzione). Nessuna delle
+-- 3 richiede piu' mgr/mgr.Position.
 function OWPlusDebugNoDefenseUpgradeInProgress(aiBrain, locationType, label)
-    local mgr = aiBrain.BuilderManagers[locationType]
     local result = true
-    if mgr and mgr.Position then
-        local nearby = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE * categories.DEFENSE, mgr.Position, 40, 'Ally') or {}
-        for _, u in nearby do
-            if not u.Dead and u:IsUnitState('Upgrading') then
-                result = false
-                break
-            end
+    for u, _ in OWPlusOutpostOwnership.OWPlusGetOwnedUnits(aiBrain, locationType, OWPlusOutpostOwnership.OWPlusOwnershipKindStructure) do
+        if EntityCategoryContains(categories.DEFENSE, u) and u:IsUnitState('Upgrading') then
+            result = false
+            break
         end
     end
     if OWPlusDebugThrottle(aiBrain, 'NoDefUpgradeInProgress_' .. tostring(locationType) .. '_' .. tostring(label), 8) then
@@ -538,14 +570,9 @@ function OWPlusDebugNoDefenseUpgradeInProgress(aiBrain, locationType, label)
 end
 
 function OWPlusDefenseUpgradeCandidateExists(aiBrain, locationType, moddedUnitId, label)
-    local mgr = aiBrain.BuilderManagers[locationType]
-    if not mgr then return false end
-    local pos = mgr.Position
-    if not pos then return false end
-    local nearby = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE * categories.DEFENSE, pos, 40, 'Ally') or {}
     local count = 0
-    for _, u in nearby do
-        if not u.Dead and string.lower(tostring(u.UnitId)) == moddedUnitId
+    for u, _ in OWPlusOutpostOwnership.OWPlusGetOwnedUnits(aiBrain, locationType, OWPlusOutpostOwnership.OWPlusOwnershipKindStructure) do
+        if EntityCategoryContains(categories.DEFENSE, u) and string.lower(tostring(u.UnitId)) == moddedUnitId
             and not u:IsUnitState('Upgrading') and not u.OWPlusUpgradeClaimed then
             count = count + 1
         end
@@ -557,13 +584,8 @@ function OWPlusDefenseUpgradeCandidateExists(aiBrain, locationType, moddedUnitId
 end
 
 function OWPlusClaimDefenseUpgrade(aiBrain, locationType, moddedUnitId, label)
-    local mgr = aiBrain.BuilderManagers[locationType]
-    if not mgr then return false end
-    local pos = mgr.Position
-    if not pos then return false end
-    local nearby = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE * categories.DEFENSE, pos, 40, 'Ally') or {}
-    for _, u in nearby do
-        if not u.Dead and string.lower(tostring(u.UnitId)) == moddedUnitId
+    for u, _ in OWPlusOutpostOwnership.OWPlusGetOwnedUnits(aiBrain, locationType, OWPlusOutpostOwnership.OWPlusOwnershipKindStructure) do
+        if EntityCategoryContains(categories.DEFENSE, u) and string.lower(tostring(u.UnitId)) == moddedUnitId
             and not u:IsUnitState('Upgrading') and not u.OWPlusUpgradeClaimed then
             u.OWPlusUpgradeClaimed = true
             LOG('[OWPlus] Outpost (' .. tostring(locationType) .. '): OK, upgrade difesa avviato (' .. moddedUnitId .. ') — builder "' .. tostring(label) .. '"')

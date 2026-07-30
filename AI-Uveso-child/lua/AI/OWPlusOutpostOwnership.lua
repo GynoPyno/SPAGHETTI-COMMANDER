@@ -110,3 +110,16 @@ function OWPlusGetOwnedUnits(aiBrain, outpostKey, kind)
     end
     return owned
 end
+
+-- Fase H (sess.93): unico scan geometrico condiviso rimasto in tutto il
+-- sistema avamposto. Serve SOLO a OWPlusCaptureBuiltStructure (platoon.lua)
+-- per risolvere l'handle di un'unita' APPENA costruita, non ancora in questa
+-- mappa (IssueBuildMobile/AIExecuteBuildStructure non ritornano un handle
+-- diretto) — nessuna alternativa possibile, non e' un conteggio. Tutti gli
+-- altri scan del sistema avamposto (upgrade difese, gate ingegneri, tetto
+-- produzione) sono stati migrati a OWPlusGetOwnedUnits in questa stessa
+-- fase, proprio per non avere piu' copie duplicate di
+-- aiBrain:GetUnitsAroundPoint sparse nel codice.
+function OWPlusScanUnitsAroundPoint(aiBrain, category, pos, radius)
+    return aiBrain:GetUnitsAroundPoint(category, pos, radius, 'Ally') or {}
+end

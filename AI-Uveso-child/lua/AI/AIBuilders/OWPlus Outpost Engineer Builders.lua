@@ -12,8 +12,10 @@
 -- per-location). Gli ingegneri del tier superato vengono riassorbiti ad assist
 -- permanente da un watcher dedicato in platoon.lua, non da questo file.
 --
--- Cap: 5 ingegneri (PoolLessAtLocation, scoping per-avamposto, stesso pattern
--- gia' usato in OWPlus Outpost Transport.lua).
+-- Cap: 5 ingegneri per tier (OWPlusDebugEngineersLessAtLocation, mappa
+-- ownership per-avamposto — Fase H sess.93, sostituisce PoolLessAtLocation/
+-- ArmyPool: quel conteggio aveva gia' mostrato disallineamenti col reale,
+-- vedi commento sess.78 in OWPlusLogConditions.lua).
 --
 -- Priorita' crescenti per tier (sess.74): con priorita' identica (18700 per
 -- tutti e tre), in caso di sovrapposizione della cache condizioni
@@ -59,7 +61,7 @@ BuilderGroup {
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
             { OWPlusLogCond, 'OWPlusOutpostFactoryIsTech', { 'LocationType', 1 } },
             { OWPlusLogCond, 'OWPlusFactoryNotUpgrading', { 'LocationType', 'Engineer T1' } },
-            { OWPlusLogCond, 'OWPlusDebugPoolLessAtLocation', { 'LocationType', MAX_OUTPOST_ENGINEERS, categories.MOBILE * categories.ENGINEER * categories.TECH1 - categories.STATIONASSISTPOD, 'Engineer T1' } },
+            { OWPlusLogCond, 'OWPlusDebugEngineersLessAtLocation', { 'LocationType', MAX_OUTPOST_ENGINEERS, categories.TECH1, 'Engineer T1' } },
             { OWPlusLogCond, 'OWPlusDebugLocationFactoriesBuildingLess', { 'LocationType', 1, categories.ENGINEER * categories.TECH1, 'Engineer T1' } },
         },
         BuilderType = 'Land',
@@ -72,7 +74,7 @@ BuilderGroup {
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
             { OWPlusLogCond, 'OWPlusOutpostFactoryIsTech', { 'LocationType', 2 } },
             { OWPlusLogCond, 'OWPlusFactoryNotUpgrading', { 'LocationType', 'Engineer T2' } },
-            { OWPlusLogCond, 'OWPlusDebugPoolLessAtLocation', { 'LocationType', MAX_OUTPOST_ENGINEERS, categories.MOBILE * categories.ENGINEER * categories.TECH2 - categories.STATIONASSISTPOD, 'Engineer T2' } },
+            { OWPlusLogCond, 'OWPlusDebugEngineersLessAtLocation', { 'LocationType', MAX_OUTPOST_ENGINEERS, categories.TECH2, 'Engineer T2' } },
             { OWPlusLogCond, 'OWPlusDebugLocationFactoriesBuildingLess', { 'LocationType', 1, categories.ENGINEER * categories.TECH2, 'Engineer T2' } },
         },
         BuilderType = 'Land',
@@ -85,7 +87,7 @@ BuilderGroup {
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
             { OWPlusLogCond, 'OWPlusOutpostFactoryIsTech', { 'LocationType', 3 } },
             { OWPlusLogCond, 'OWPlusFactoryNotUpgrading', { 'LocationType', 'Engineer T3' } },
-            { OWPlusLogCond, 'OWPlusDebugPoolLessAtLocation', { 'LocationType', MAX_OUTPOST_ENGINEERS, categories.MOBILE * categories.ENGINEER * categories.TECH3 - categories.SUBCOMMANDER - categories.STATIONASSISTPOD, 'Engineer T3' } },
+            { OWPlusLogCond, 'OWPlusDebugEngineersLessAtLocation', { 'LocationType', MAX_OUTPOST_ENGINEERS, categories.TECH3, 'Engineer T3' } },
             { OWPlusLogCond, 'OWPlusDebugLocationFactoriesBuildingLess', { 'LocationType', 1, categories.ENGINEER * categories.TECH3, 'Engineer T3' } },
         },
         BuilderType = 'Land',
