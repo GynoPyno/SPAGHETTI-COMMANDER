@@ -114,6 +114,14 @@ FactoryBuilderManager = Class(prevClass) {
     -- questa unita'" o qualcos'altro (economia, CanBuildPlatoon).
     BuilderParamCheck = function(self, builder, params)
         local result = prevClass.BuilderParamCheck(self, builder, params)
+        -- Log diagnostico disattivato (sess.91, richiesta esplicita utente): con
+        -- 172 Builder Production, questo LOG (su ogni FALSE, la stragrande
+        -- maggioranza delle valutazioni) gonfiava il dev.log fino a 654.200
+        -- occorrenze in un test comparabile (vedi AI_Mod_Spec.md, B24). Diagnosi
+        -- di sess.77 gia' conclusa, non piu' necessaria in condizioni normali —
+        -- ripristinare togliendo il commento se serve una nuova diagnosi
+        -- template/fazione su un builder OWPlus Outpost specifico.
+        --[[
         if not result and self.LocationType and self.Brain and self.Brain.OWPlusOutpostLocationTypes
             and self.Brain.OWPlusOutpostLocationTypes[self.LocationType]
             and builder.BuilderName and string.find(builder.BuilderName, 'OWPlus Outpost') then
@@ -127,6 +135,7 @@ FactoryBuilderManager = Class(prevClass) {
             LOG('[OWPlus-HOOK] BuilderParamCheck FALSE per "' .. tostring(builder.BuilderName) .. '" a ' .. tostring(self.LocationType)
                 .. ' -- GetFactoryTemplate: ' .. templateInfo)
         end
+        ]]
         return result
     end,
 }

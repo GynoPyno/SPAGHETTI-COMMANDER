@@ -24,6 +24,19 @@
 -- poi T3 di nuovo, alternando invece di restare sul tier corretto. Dando ad
 -- ogni tier una priorita' leggermente piu' alta del precedente, un eventuale
 -- doppio-vero non e' piu' un pareggio: vince sempre il tier piu' alto.
+--
+-- Fix sess.91 (bug reale trovato in game: ingegneri T3 quasi mai costruiti
+-- nonostante fabbrica e condizioni sempre idonee): +1000 su tutti e tre i
+-- valori. Causa: 'OWPlus Outpost Production.lua' (stessa coda FactoryBuilder,
+-- stessa fabbrica) usa PriorityFunction = BASE + Random(1, 1000) per
+-- competere tra i propri candidati — il margine di soli 30 punti verso gli
+-- Engineer (18670/80/90 vs 18700/10/20) viene sommerso dal roll random di
+-- Production in ~970 casi su 1000 (Random(1,1000) > 30). Gli ingegneri
+-- vincevano solo in early game, quando il gate 'OWPlusDebugEngineersAtLeast'
+-- teneva Production bloccata del tutto. +1000 supera il tetto massimo
+-- possibile del roll di Production (BASE+1000), garantendo che l'ingegnere
+-- vinca SEMPRE quando le sue condizioni sono vere, senza toccare la
+-- randomizzazione tra candidati Production stessi.
 
 local categories = categories
 -- UCBC (UnitCountBuildConditions) rimosso temporaneamente (sess.72): le condizioni
@@ -41,7 +54,7 @@ BuilderGroup {
     Builder {
         BuilderName = 'OWPlus Outpost Engineer T1',
         PlatoonTemplate = 'T1BuildEngineer',
-        Priority = 18700,
+        Priority = 19700,
         BuilderConditions = {
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
             { OWPlusLogCond, 'OWPlusOutpostFactoryIsTech', { 'LocationType', 1 } },
@@ -54,7 +67,7 @@ BuilderGroup {
     Builder {
         BuilderName = 'OWPlus Outpost Engineer T2',
         PlatoonTemplate = 'T2BuildEngineer',
-        Priority = 18710,
+        Priority = 19710,
         BuilderConditions = {
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
             { OWPlusLogCond, 'OWPlusOutpostFactoryIsTech', { 'LocationType', 2 } },
@@ -67,7 +80,7 @@ BuilderGroup {
     Builder {
         BuilderName = 'OWPlus Outpost Engineer T3',
         PlatoonTemplate = 'T3BuildEngineer',
-        Priority = 18720,
+        Priority = 19720,
         BuilderConditions = {
             { OWPlusLogCond, 'OWPlusIsOutpostLocation', { 'LocationType' } },
             { OWPlusLogCond, 'OWPlusOutpostFactoryIsTech', { 'LocationType', 3 } },
