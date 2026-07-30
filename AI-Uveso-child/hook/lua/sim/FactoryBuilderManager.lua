@@ -11,9 +11,35 @@
 -- logica vanilla duplicata, solo un log prima di richiamare l'originale.
 -- Da rimuovere/silenziare una volta diagnosticato.
 
+local OWPlusOutpostOwnership = import('/mods/AI-Uveso-child/lua/AI/OWPlusOutpostOwnership.lua')
+
 local prevClass = FactoryBuilderManager
 
 FactoryBuilderManager = Class(prevClass) {
+    -- Fase G (sess.93): estende l'ownership esplicita (OWPlusOutpostOwnership.lua,
+    -- Fase F/sess.88, finora solo strutture) agli ingegneri prodotti dalla
+    -- fabbrica dedicata di un avamposto — il punto di produzione dominante nel
+    -- tempo (l'ingegnere fondatore, evento singolo per avamposto, e' gestito a
+    -- parte in platoon.lua/OWPlusDispersedBuildAI). Nativo (FactoryBuilderManager.lua
+    -- vanilla): quando una fabbrica finisce di costruire un ingegnere, lo registra
+    -- solo all'EngineerManager della location, mai al nostro modulo Ownership.
+    -- Esclusioni STATIONASSISTPOD/SUBCOMMANDER coerenti con 'OWPlus Outpost
+    -- Engineer Builders.lua' (stesso tipo di conteggio). Nessuna logica nativa
+    -- duplicata, stesso pattern degli altri override sotto: guardia, poi sempre
+    -- prevClass.FactoryFinishBuilding(...) come ultima riga.
+    FactoryFinishBuilding = function(self, factory, finishedUnit)
+        if self.LocationType and self.Brain and self.Brain.OWPlusOutpostLocationTypes
+            and self.Brain.OWPlusOutpostLocationTypes[self.LocationType]
+            and EntityCategoryContains(categories.MOBILE * categories.ENGINEER
+                - categories.STATIONASSISTPOD - categories.SUBCOMMANDER, finishedUnit) then
+            OWPlusOutpostOwnership.OWPlusClaimForOutpost(self.Brain, self.LocationType, finishedUnit,
+                OWPlusOutpostOwnership.OWPlusOwnershipKindEngineer)
+            LOG('[OWPlus-HOOK] FactoryFinishBuilding(' .. tostring(self.LocationType) .. '): OK, nuovo ingegnere ('
+                .. tostring(finishedUnit.UnitId) .. ') registrato in OWPlusOutpostOwnedUnits (kind=engineer)')
+        end
+        prevClass.FactoryFinishBuilding(self, factory, finishedUnit)
+    end,
+
     AssignBuildOrder = function(self, factory, bType)
         if self.LocationType and self.Brain and self.Brain.OWPlusOutpostLocationTypes
             and self.Brain.OWPlusOutpostLocationTypes[self.LocationType] then

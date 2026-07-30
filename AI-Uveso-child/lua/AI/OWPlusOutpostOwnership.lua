@@ -33,36 +33,55 @@
 -- un sistema che ha gia' in mano un riferimento a un'unita' senza sapere a
 -- priori quale avamposto controllare.
 --
--- Scope di questa fase (deciso esplicitamente): SOLO strutture (difese,
--- scudi, artiglieria, SMD) — mai riassegnate, solo costruite e poi morte.
--- L'estensione agli ingegneri (stesso schema, stesse funzioni, riuso diretto)
--- e la guardia contro il furto nativo di MAIN (EngineerManager,
--- DeadBaseMonitor — sistemi nativi Uveso non adattati a questo concetto) sono
--- rimandate a quando si affrontera' per davvero il caso ingegneri: per delle
--- strutture che non si spostano e non vengono mai toccate da MAIN, la sola
--- mappa gia' risolve il bug di oggi senza bisogno di quella guardia.
+-- Scope iniziale (sess.88): SOLO strutture (difese, scudi, artiglieria,
+-- SMD) — mai riassegnate, solo costruite e poi morte.
+--
+-- Fase G (sess.93): estesa agli ingegneri di avamposto (4 parametro 'kind',
+-- vedi sotto). Motivo del parametro: l'insieme era condiviso da TUTTI i tipi
+-- di unita' di un avamposto — un consumer gia' esistente (platoon.lua:1399,
+-- conteggio crescita difese per tier) avrebbe silenziosamente contato un
+-- ingegnere come una difesa in piu' (stesso tier, nessuna categoria
+-- esclusiva a distinguerlo nel suo ramo finale). Partizionare per 'kind'
+-- applica l'invariante in SCRITTURA (una volta sola, qui) invece di doverla
+-- ridondare in lettura in ogni consumer presente e futuro. Default
+-- 'structure' per compatibilita' totale con le chiamate esistenti (mai
+-- modificate): OWPlusClaimForOutpost/OWPlusGetOwnedUnits senza 4 parametro
+-- si comportano esattamente come prima.
+--
+-- Guardia contro il furto nativo di MAIN (EngineerManager, DeadBaseMonitor):
+-- non serve per gli ingegneri di avamposto, gia' garantita da un meccanismo
+-- indipendente (hook/lua/sim/EngineerManager.lua, override 'sticky' di
+-- TaskFinished) — un ingegnere registrato qui resta sempre vincolato al suo
+-- avamposto, mai serve OWPlusReleaseFromOutpost.
+OWPlusOwnershipKindStructure = 'structure'
+OWPlusOwnershipKindEngineer = 'engineer'
 
--- Assegna 'unit' all'avamposto 'outpostKey': la aggiunge all'insieme e scrive
--- il tag diretto sull'unita'. Idempotente (riassegnare la stessa unita' allo
--- stesso avamposto non fa danno — sovrascrive con lo stesso valore).
-function OWPlusClaimForOutpost(aiBrain, outpostKey, unit)
+-- Assegna 'unit' all'avamposto 'outpostKey' (per il tipo 'kind', default
+-- 'structure'): la aggiunge all'insieme e scrive il tag diretto sull'unita'.
+-- Idempotente (riassegnare la stessa unita' allo stesso avamposto/kind non
+-- fa danno — sovrascrive con lo stesso valore).
+function OWPlusClaimForOutpost(aiBrain, outpostKey, unit, kind)
     if not unit or unit.Dead then
         return
     end
+    kind = kind or OWPlusOwnershipKindStructure
     aiBrain.OWPlusOutpostOwnedUnits = aiBrain.OWPlusOutpostOwnedUnits or {}
     aiBrain.OWPlusOutpostOwnedUnits[outpostKey] = aiBrain.OWPlusOutpostOwnedUnits[outpostKey] or {}
-    aiBrain.OWPlusOutpostOwnedUnits[outpostKey][unit] = true
+    aiBrain.OWPlusOutpostOwnedUnits[outpostKey][kind] = aiBrain.OWPlusOutpostOwnedUnits[outpostKey][kind] or {}
+    aiBrain.OWPlusOutpostOwnedUnits[outpostKey][kind][unit] = true
     unit.OWPlusOwnerOutpost = outpostKey
 end
 
 -- Rimuove 'unit' dall'appartenenza (insieme + tag) SENZA che sia morta — da
 -- usare per una futura riassegnazione esplicita (es. un ingegnere che passa
 -- di mano). La morte non richiede questa chiamata: si autopulisce durante
--- l'iterazione, vedi OWPlusGetOwnedUnits sotto. Non ancora usata in questa
--- fase (solo strutture, mai riassegnate), presente per la stessa ragione di
--- genericita' discussa con l'utente.
-function OWPlusReleaseFromOutpost(aiBrain, outpostKey, unit)
+-- l'iterazione, vedi OWPlusGetOwnedUnits sotto. Non ancora usata in nessuna
+-- fase (ne' strutture ne' ingegneri sono mai riassegnati oggi), presente per
+-- la stessa ragione di genericita' discussa con l'utente in sess.88.
+function OWPlusReleaseFromOutpost(aiBrain, outpostKey, unit, kind)
+    kind = kind or OWPlusOwnershipKindStructure
     local owned = aiBrain.OWPlusOutpostOwnedUnits and aiBrain.OWPlusOutpostOwnedUnits[outpostKey]
+        and aiBrain.OWPlusOutpostOwnedUnits[outpostKey][kind]
     if owned then
         owned[unit] = nil
     end
@@ -72,12 +91,15 @@ function OWPlusReleaseFromOutpost(aiBrain, outpostKey, unit)
 end
 
 -- Ritorna l'insieme (tabella chiave=unita', valore=true) delle unita' vive di
--- un avamposto, ripulendo al volo quelle morte incontrate durante
--- l'iterazione (lazy delete — piu' semplice di un thread di pulizia
--- dedicato, costo trascurabile dato il numero di unita' in gioco per
--- avamposto). Il chiamante itera con 'for unit, _ in OWPlusGetOwnedUnits(...) do'.
-function OWPlusGetOwnedUnits(aiBrain, outpostKey)
+-- un avamposto per il tipo 'kind' (default 'structure'), ripulendo al volo
+-- quelle morte incontrate durante l'iterazione (lazy delete — piu' semplice
+-- di un thread di pulizia dedicato, costo trascurabile dato il numero di
+-- unita' in gioco per avamposto). Il chiamante itera con
+-- 'for unit, _ in OWPlusGetOwnedUnits(...) do'.
+function OWPlusGetOwnedUnits(aiBrain, outpostKey, kind)
+    kind = kind or OWPlusOwnershipKindStructure
     local owned = aiBrain.OWPlusOutpostOwnedUnits and aiBrain.OWPlusOutpostOwnedUnits[outpostKey]
+        and aiBrain.OWPlusOutpostOwnedUnits[outpostKey][kind]
     if not owned then
         return {}
     end

@@ -420,6 +420,16 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             LOG('[OWPlus] Outpost: ' .. outpostKey .. ' — ingegnere (' .. tostring(eng.UnitId)
                 .. ') registrato al manager dedicato PRIMA di costruire (registrazione anticipata)')
 
+            -- Fase G (sess.93): ownership esplicita (OWPlusOutpostOwnership.lua,
+            -- gia' in uso per le strutture dalla Fase F/sess.88) estesa
+            -- all'ingegnere fondatore — l'unico ingegnere di un avamposto che non
+            -- passa mai da FactoryFinishBuilding (nessuna fabbrica esiste ancora
+            -- in questo istante). Sostituisce lo scan geometrico usato finora
+            -- dalla sorveglianza unificata (vedi piu' sotto), che contava anche
+            -- ingegneri di avamposti vicini entro raggio 30.
+            OWPlusOutpostOwnership.OWPlusClaimForOutpost(aiBrain, outpostKey, eng,
+                OWPlusOutpostOwnership.OWPlusOwnershipKindEngineer)
+
             aiBrain.OWPlusOutpostLocationTypes = aiBrain.OWPlusOutpostLocationTypes or {}
             aiBrain.OWPlusOutpostLocationTypes[outpostKey] = true
             aiBrain.OWPlusOutpostRealLocType = aiBrain.OWPlusOutpostRealLocType or {}
@@ -1887,8 +1897,21 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                     WaitSeconds(10)
                     local queue = aiBrain.OWPlusOutpostPendingDefenses and aiBrain.OWPlusOutpostPendingDefenses[outpostKey]
                     local curFactory = aiBrain.OWPlusOutpostFactories and aiBrain.OWPlusOutpostFactories[outpostKey]
-                    local nearbyEngs = aiBrain:GetUnitsAroundPoint(
-                        categories.MOBILE * categories.ENGINEER, outpostPos, 30, 'Ally') or {}
+                    -- Fix Fase G (sess.93): sostituisce lo scan geometrico (raggio 30,
+                    -- categories.MOBILE * categories.ENGINEER) con l'ownership esplicita
+                    -- kind=Engineer (OWPlusOutpostOwnership.lua) — stesso principio della
+                    -- Fase F/sess.88 per le strutture. Il generatore avamposti piazza a
+                    -- passi di 20, quindi avamposti consecutivi cadono spesso entro
+                    -- raggio 30 l'uno dall'altro: lo scan geometrico contava anche
+                    -- ingegneri di un avamposto vicino (o non ancora assegnati), fino a
+                    -- 18-21 "liberi" per un solo avamposto osservati in un test da 15
+                    -- minuti (tetto di progetto: 5). Resta un array numerico (invariato
+                    -- 'for _, e in nearbyEngs do' piu' sotto).
+                    local nearbyEngs = {}
+                    for unit, _ in OWPlusOutpostOwnership.OWPlusGetOwnedUnits(aiBrain, outpostKey,
+                        OWPlusOutpostOwnership.OWPlusOwnershipKindEngineer) do
+                        table.insert(nearbyEngs, unit)
+                    end
                     -- Diagnostica sess.78 (sexies, temporanea): nessun task viene mai
                     -- preso in carico nonostante la coda venga popolata correttamente
                     -- alla nascita/tier-up (log "aggiunte in coda" confermato) — tutti
@@ -1898,6 +1921,21 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                     LOG('[OWPlus-DIAG] Sorveglianza unificata (' .. outpostKey .. '): queue='
                         .. tostring(queue ~= nil) .. ', len=' .. tostring(queue and table.getn(queue))
                         .. ', nearbyEngs=' .. table.getn(nearbyEngs))
+
+                    -- Fix sess.92 (richiesta esplicita utente): la costruzione iniziale
+                    -- delle difese non aveva alcun controllo economico, a differenza
+                    -- dell'upgrade (OWPlusDebugEconStorageRatio, gia' usato da 'OWPlus
+                    -- Outpost Defense Upgrade.lua'). Riusiamo la stessa funzione/soglia
+                    -- (0.15) qui: se i magazzini sono sotto soglia, azzeriamo la lista
+                    -- di ingegneri liberi per questo giro cosi' nessuno pesca un nuovo
+                    -- task dalla coda — restano di guardia (stesso comportamento gia'
+                    -- esistente quando pickedIdx e' nil), nessuna modifica al
+                    -- parallelismo quando l'economia lo permette.
+                    local OWPlusLogConditionsMod = import('/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua')
+                    if not OWPlusLogConditionsMod.OWPlusDebugEconStorageRatio(aiBrain, 0.15, 0.15, 'Outpost Defense Construction ' .. outpostKey) then
+                        nearbyEngs = {}
+                    end
+
                     for _, e in nearbyEngs do
                         -- Fix sess.87: 'Reclaiming' mancava — un ingegnere che sta reclamando
                         -- detriti (es. un relitto enorme sulla posizione di build, che il
