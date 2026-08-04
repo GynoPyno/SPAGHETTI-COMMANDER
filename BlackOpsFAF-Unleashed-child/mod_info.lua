@@ -1,0 +1,14 @@
+name = "BlackOps FAF: Unleashed - Child"
+uid = "B2C3D4E5-6F7A-4B8C-9D0E-1F2A3B4C5D6E"
+version = 1
+description = "Rende non costruibile (built by vuoto) il magazzino ibrido Massa+Energia T4 (BAB/BEB/BRB/BSB1106) definito da BlackOps FAF Unleashed"
+author = ""
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+requires = { "9e8ea941-c306-aaaf-b367-u00000026000" }
+requiresNames = { "BlackOps FAF: Unleashed" }
+conflicts = {}
+before = {}
+after = { "9e8ea941-c306-aaaf-b367-u00000026000" }

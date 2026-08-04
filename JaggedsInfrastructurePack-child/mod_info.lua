@@ -1,0 +1,14 @@
+name = "Jaggeds Infrastructure Pack - Child"
+uid = "A1B2C3D4-5E6F-4A7B-8C9D-0E1F2A3B4C5D"
+version = 1
+description = "Riduce a 3/4 storage e costo dei magazzini massa/energia di Jaggeds Infrastructure Pack (2/3 per il magazzino ibrido T4), e aggiunge un vero bonus di adiacenza T4 (mancante nella mod originale)"
+author = ""
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+requires = { "fff6f6c8-148a-11de-8c30-0811211c9a8d" }
+requiresNames = { "Jaggeds Infrastructure Pack" }
+conflicts = {}
+before = {}
+after = { "fff6f6c8-148a-11de-8c30-0811211c9a8d" }
