@@ -294,6 +294,333 @@ function OWPlusDebugEconStorageRatio(aiBrain, mRatio, eRatio, label)
     return result
 end
 
+-- Sess.94: log diagnostico per la progressione di espansione estrattori/Mass Fab
+-- (OWPlus Override Base Mass.lua) — l'utente vuole vedere nel dev.log QUANDO
+-- (tempo di gioco) e con QUALE ampiezza (estrattori/massfab posseduti) ogni
+-- builder della catena si sblocca, per verificare se il fix alle soglie
+-- (sess.94, curva economia MAIN troppo ripida) elimina davvero il burst
+-- simultaneo o se l'AI riesce comunque a saturarli tutti in pochi minuti.
+function OWPlusDebugMassExpansionGate(aiBrain, mRatio, eRatio, label)
+    local econ = AIUtils.AIGetEconomyNumbers(aiBrain)
+    local result = EBCMod.GreaterThanEconStorageRatio(aiBrain, mRatio, eRatio)
+    -- Sess.95 (septies): log commentato su richiesta esplicita utente (test da
+    -- remoto, serve un dev.log pulito con solo il nuovo log periodico
+    -- massa/energia) -- logica di gating INVARIATA, solo l'output silenziato.
+    -- if OWPlusDebugThrottle(aiBrain, 'MassExpansion_' .. tostring(label), 8) then
+    --     local extractors = aiBrain:GetListOfUnits(categories.STRUCTURE * categories.MASSEXTRACTION, false) or {}
+    --     local massFabs = aiBrain:GetListOfUnits(categories.STRUCTURE * categories.MASSFABRICATION, false) or {}
+    --     LOG('[OWPlus-DBG] MassExpansionGate(' .. tostring(label) .. ') = ' .. tostring(result)
+    --         .. ' (mass=' .. tostring(econ.MassStorageRatio) .. ', energy=' .. tostring(econ.EnergyStorageRatio)
+    --         .. ', estrattori=' .. tostring(table.getn(extractors)) .. ', massfab=' .. tostring(table.getn(massFabs))
+    --         .. ', t=' .. tostring(GetGameTimeSeconds()) .. 's)')
+    -- end
+    return result
+end
+
+-- Sess.94: wrapper loggato di GreaterThanEconIncome (nativo), stesso pattern di
+-- OWPlusDebugEconStorageRatio -- usato da OWPlus Hydrocarbon Push per rendere
+-- verificabile nel dev.log quando/perche' la condizione economica nativa riusata
+-- passa o blocca la costruzione.
+function OWPlusDebugEconIncome(aiBrain, massIncome, energyIncome, label)
+    local econ = AIUtils.AIGetEconomyNumbers(aiBrain)
+    local result = EBCMod.GreaterThanEconIncome(aiBrain, massIncome, energyIncome)
+    -- Sess.95 (septies): log commentato su richiesta esplicita utente -- logica invariata
+    -- if OWPlusDebugThrottle(aiBrain, 'EconIncome_' .. tostring(label), 8) then
+    --     LOG('[OWPlus-DBG] GreaterThanEconIncome(soglia mass/energy>=' .. tostring(massIncome) .. '/' .. tostring(energyIncome) .. ') = ' .. tostring(result)
+    --         .. ' (mass=' .. tostring(econ.MassIncome) .. ', energy=' .. tostring(econ.EnergyIncome) .. ') -- builder "' .. tostring(label) .. '"')
+    -- end
+    return result
+end
+
+-- Sess.94: condizione DIAGNOSTICA neutra (LOG + return true, non blocca mai) --
+-- verifica se gli upgrade in-place di 'OWPlus Economy Upgrade.lua' avvengono
+-- davvero nonostante il warning nativo "Can't find StructureUpgradeTemplate"
+-- (atteso per unita' modded senza tabella upgrade nativa -- il motore FAF fa
+-- comunque fallback a Blueprint.General.UpgradesTo, ma serve la controprova
+-- diretta: il conteggio destinazione deve salire da 0 nel tempo).
+function OWPlusDebugUpgradeProgress(aiBrain, sourceCategory, destCategory, label)
+    -- Sess.95 (octies): riattivato su richiesta esplicita utente -- serve per
+    -- osservare il potenziamento estrattori nel test SOLO x1 risorse. NOTA:
+    -- funzione condivisa anche coi magazzini (Mass/Energy Storage Upgrade T2/T3,
+    -- Hydrocarbon Count) -- riappaiono anche quei log come effetto collaterale
+    -- inevitabile (stessa funzione, label diversa).
+    if OWPlusDebugThrottle(aiBrain, 'UpgradeProgress_' .. tostring(label), 15) then
+        local src = aiBrain:GetListOfUnits(sourceCategory, false) or {}
+        local dst = aiBrain:GetListOfUnits(destCategory, false) or {}
+        LOG('[OWPlus-DBG] UpgradeProgress(' .. tostring(label) .. ') sorgente=' .. tostring(table.getn(src))
+            .. ' destinazione=' .. tostring(table.getn(dst)) .. ' (t=' .. tostring(GetGameTimeSeconds()) .. 's)')
+    end
+    return true
+end
+
+-- Sess.94: gate consolidato per 'OWPlus Economy Upgrade.lua' -- sostituisce la
+-- coppia (soglia storage fissa + tetto parallelo fisso 2) con un tetto
+-- PROPORZIONALE al numero di candidati (20%, minimo 1), usato sia come limite
+-- di parallelismo sia come soglia minima per un fallback "force": se lo
+-- storage ratio richiesto non e' raggiunto ma ci sono abbastanza candidati
+-- pronti E il trend economico non e' negativo, procede comunque -- altrimenti
+-- il gate restava quasi sempre bloccato (soglia storage vera solo 5/94 volte
+-- osservate in una partita reale di 21 minuti, zero upgrade completati).
+-- Sess.95: parametro 'maxConcurrent' opzionale (retrocompatibile — le chiamate
+-- esistenti non lo passano, nil = comportamento invariato). Richiesto dall'utente
+-- per i magazzini di energia: il tetto proporzionale 20% scala con la quantita'
+-- totale, ma il costo economico di un upgrade magazzino energia e' alto in
+-- ASSOLUTO (non relativo), quindi con molte strutture il 20% resta comunque
+-- "troppi assieme". Un tetto assoluto basso forza "pochi alla volta" a
+-- prescindere dalla scala, mentre il tetto proporzionale resta il default per
+-- tutti gli altri chiamanti (estrattori, magazzini massa).
+function OWPlusDebugUpgradeGate(aiBrain, sourceCategory, mRatio, eRatio, label, maxConcurrent)
+    local sourceUnits = aiBrain:GetListOfUnits(sourceCategory, false) or {}
+    local total = table.getn(sourceUnits)
+    local cap = math.max(1, math.floor(total * 0.20))
+    if maxConcurrent then
+        cap = math.min(cap, maxConcurrent)
+    end
+    local inUpgrade = 0
+    for _, u in sourceUnits do
+        if u and not u.Dead and u:IsUnitState('Upgrading') then
+            inUpgrade = inUpgrade + 1
+        end
+    end
+    local result = false
+    local reason = 'tetto raggiunto'
+    if inUpgrade < cap then
+        local storageOk = EBCMod.GreaterThanEconStorageRatio(aiBrain, mRatio, eRatio)
+        if storageOk then
+            result = true
+            reason = 'storage ok'
+        elseif total >= cap and EBCMod.GreaterThanEconTrend(aiBrain, 0.0, 0.0) then
+            result = true
+            reason = 'force (trend ok)'
+        else
+            reason = 'storage basso, force bloccato'
+        end
+    end
+    -- Sess.95 (octies): riattivato su richiesta esplicita utente -- serve per
+    -- osservare il potenziamento estrattori nel test SOLO x1 risorse. NOTA:
+    -- funzione condivisa anche con Mass Storage Upgrade T2/T3 -- riappaiono
+    -- anche quei log come effetto collaterale inevitabile.
+    if OWPlusDebugThrottle(aiBrain, 'UpgradeGate_' .. tostring(label), 8) then
+        LOG('[OWPlus-DBG] UpgradeGate(' .. tostring(label) .. ') = ' .. tostring(result)
+            .. ' (' .. reason .. ', totale=' .. tostring(total) .. ', inUpgrade=' .. tostring(inUpgrade)
+            .. ', cap=' .. tostring(cap) .. ')')
+    end
+    return result
+end
+
+-- Sess.95 (quinquies): diagnostica NEUTRA (LOG+true, non blocca mai) per capire
+-- perche' il builder 'OWPlus Extractor Upgrade T4' completa un upgrade
+-- rarissimamente (osservato: 1 su ~100 candidati in 26 minuti, nonostante il
+-- gate economico fosse quasi sempre vero) -- ipotesi principale: il meccanismo
+-- nativo T1->T2->T3 (ExtractorPause, invariato) mette periodicamente in pausa
+-- gli estrattori T3 per bilanciare l'energia, e questo potrebbe escluderli
+-- dalla selezione del plotone 'Plan=UnitUpgradeAI' (non verificabile leggendo
+-- codice: quella selezione e' nativa/compilata, non Lua). L'utente non ha
+-- notato pause "a occhio" osservando la partita, ma con 90+ unita' che
+-- potrebbero alternare stato molto rapidamente un controllo visivo puo' non
+-- coglierlo -- questo log da' il dato oggettivo (quanti risultano IN PAUSA nel
+-- preciso istante in cui viene valutato) invece di affidarsi all'osservazione.
+function OWPlusDebugExtractorPauseState(aiBrain, category, label)
+    -- Sess.95 (septies): log commentato su richiesta esplicita utente -- ipotesi
+    -- pausa energetica gia' smentita dai dati (regola 36 memoria), condizione
+    -- resta NEUTRA (return true).
+    -- if OWPlusDebugThrottle(aiBrain, 'ExtractorPauseState_' .. tostring(label), 10) then
+    --     local units = aiBrain:GetListOfUnits(category, false) or {}
+    --     local total = table.getn(units)
+    --     local paused = 0
+    --     local upgrading = 0
+    --     for _, u in units do
+    --         if u and not u.Dead then
+    --             if u:IsPaused() then
+    --                 paused = paused + 1
+    --             end
+    --             if u:IsUnitState('Upgrading') then
+    --                 upgrading = upgrading + 1
+    --             end
+    --         end
+    --     end
+    --     LOG('[OWPlus-DBG] ExtractorPauseState(' .. tostring(label) .. ') totale=' .. tostring(total)
+    --         .. ', in pausa=' .. tostring(paused) .. ', in upgrade=' .. tostring(upgrading))
+    -- end
+    return true
+end
+
+-- Sess.95 (quinquies): richiesta esplicita utente dopo un terzo test in game --
+-- l'upgrade tier dei magazzini di ENERGIA usava una soglia a RATIO (storage
+-- energia >=80% del MASSIMO stoccabile ATTUALE) tramite OWPlusDebugUpgradeGate.
+-- Il problema: la ratio e' relativa alla capacita' attuale, quindi puo' essere
+-- "80% piena" anche quando la capacita' stessa e' ancora piccola -- potenziare
+-- un magazzino quasi vuoto in termini assoluti (poca energia stoccata davvero)
+-- non serve a molto. Sostituita con un valore ASSOLUTO (aiBrain:GetEconomyStored
+-- ('ENERGY'), non un ratio).
+-- Sess.95 (sexies): dal test successivo, il valore assoluto DA SOLO (40000) si
+-- e' rivelato irrisorio con l'economia scalata del test (storage arrivato a
+-- 2-2.8 MILIONI) -- il gate era quasi sempre vero da subito, non filtrava quasi
+-- nulla. Richiesta esplicita utente: ENTRAMBI i vincoli insieme (AND), non uno
+-- o l'altro -- assoluto (energia stoccata davvero utile in valore) E ratio
+-- (percentuale piena, come richiesto originariamente) devono essere veri.
+function OWPlusEnergyStorageAbsoluteGate(aiBrain, sourceCategory, minStoredEnergy, eRatio, label)
+    local sourceUnits = aiBrain:GetListOfUnits(sourceCategory, false) or {}
+    local total = table.getn(sourceUnits)
+    local cap = math.max(1, math.floor(total * 0.20))
+    local inUpgrade = 0
+    for _, u in sourceUnits do
+        if u and not u.Dead and u:IsUnitState('Upgrading') then
+            inUpgrade = inUpgrade + 1
+        end
+    end
+    local stored = aiBrain:GetEconomyStored('ENERGY')
+    local ratioOk = EBCMod.GreaterThanEconStorageRatio(aiBrain, 0.0, eRatio)
+    local result = false
+    local reason = 'tetto raggiunto'
+    if inUpgrade < cap then
+        if stored >= minStoredEnergy and ratioOk then
+            result = true
+            reason = 'assoluto+ratio ok'
+        elseif total >= cap and EBCMod.GreaterThanEconTrend(aiBrain, 0.0, 0.0) then
+            result = true
+            reason = 'force (trend ok)'
+        else
+            reason = 'assoluto o ratio insufficiente, force bloccato'
+        end
+    end
+    -- Sess.96: riattivato su richiesta esplicita utente per il test dedicato
+    -- al nuovo gate uniformato massa/energia -- logica di gating (result/reason
+    -- sopra) INVARIATA, solo l'output riattivato.
+    if OWPlusDebugThrottle(aiBrain, 'EnergyAbsGate_' .. tostring(label), 8) then
+        LOG('[OWPlus-DBG] EnergyStorageAbsoluteGate(' .. tostring(label) .. ') = ' .. tostring(result)
+            .. ' (' .. reason .. ', stored=' .. tostring(stored) .. '/' .. tostring(minStoredEnergy)
+            .. ', ratioOk=' .. tostring(ratioOk) .. ' (>=' .. tostring(eRatio) .. ')'
+            .. ', totale=' .. tostring(total) .. ', inUpgrade=' .. tostring(inUpgrade) .. ', cap=' .. tostring(cap) .. ')')
+    end
+    return result
+end
+
+-- Sess.96: richiesta esplicita utente -- uniformare il potenziamento tier dei
+-- magazzini di MASSA alla stessa meccanica gia' in uso per l'energia
+-- (OWPlusEnergyStorageAbsoluteGate sopra): valore ASSOLUTO stoccato E ratio
+-- insieme (AND), non piu' solo ratio (il vecchio OWPlusDebugUpgradeGate,
+-- 0.70/0.30). Stessa struttura (tetto di parallelismo 20%/min 1, force-
+-- fallback su trend economico non negativo), differisce solo nella risorsa
+-- osservata (MASS invece di ENERGY). Soglie di partenza (500 assoluto, 0.80
+-- ratio) da affinare in base ai prossimi test, come da indicazione utente.
+function OWPlusMassStorageAbsoluteGate(aiBrain, sourceCategory, minStoredMass, mRatio, label)
+    local sourceUnits = aiBrain:GetListOfUnits(sourceCategory, false) or {}
+    local total = table.getn(sourceUnits)
+    local cap = math.max(1, math.floor(total * 0.20))
+    local inUpgrade = 0
+    for _, u in sourceUnits do
+        if u and not u.Dead and u:IsUnitState('Upgrading') then
+            inUpgrade = inUpgrade + 1
+        end
+    end
+    local stored = aiBrain:GetEconomyStored('MASS')
+    local ratioOk = EBCMod.GreaterThanEconStorageRatio(aiBrain, mRatio, 0.0)
+    local result = false
+    local reason = 'tetto raggiunto'
+    if inUpgrade < cap then
+        if stored >= minStoredMass and ratioOk then
+            result = true
+            reason = 'assoluto+ratio ok'
+        elseif total >= cap and EBCMod.GreaterThanEconTrend(aiBrain, 0.0, 0.0) then
+            result = true
+            reason = 'force (trend ok)'
+        else
+            reason = 'assoluto o ratio insufficiente, force bloccato'
+        end
+    end
+    -- Sess.96: riattivato su richiesta esplicita utente per il test dedicato
+    -- al nuovo gate.
+    if OWPlusDebugThrottle(aiBrain, 'MassAbsGate_' .. tostring(label), 8) then
+        LOG('[OWPlus-DBG] MassStorageAbsoluteGate(' .. tostring(label) .. ') = ' .. tostring(result)
+            .. ' (' .. reason .. ', stored=' .. tostring(stored) .. '/' .. tostring(minStoredMass)
+            .. ', ratioOk=' .. tostring(ratioOk) .. ' (>=' .. tostring(mRatio) .. ')'
+            .. ', totale=' .. tostring(total) .. ', inUpgrade=' .. tostring(inUpgrade) .. ', cap=' .. tostring(cap) .. ')')
+    end
+    return result
+end
+
+-- Sess.95 (ter): la Fase 2 (sess.95, sopra rimossa) legava il potenziamento
+-- estrattori alla copertura magazzini con una soglia di popolazione (80%
+-- magazzini rispetto agli estrattori T2+/T3) -- richiesta esplicita utente
+-- dopo un secondo test in game: con estrattori sparsi per la mappa, molti non
+-- hanno nemmeno lo spazio fisico per un magazzino adiacente, quindi quella
+-- soglia non era MAI raggiungibile per davvero (confermato: 82 estrattori T2,
+-- fase ferma per l'intera partita anche dopo aver sbloccato il collo di
+-- bottiglia della costruzione). Redesign completo: il trigger di tier per gli
+-- estrattori torna ad essere basato SOLO sulla popolazione degli estrattori
+-- stessi (nessuna dipendenza dai magazzini) -- vedi OWPlusPopulationShareAtLeast
+-- sotto. I magazzini diventano un processo indipendente (OWPlusMassStorageEligible
+-- sotto) e il requisito "circondato da magazzini" per il singolo salto T2->T3
+-- e' gestito come preferenza SOFT nella selezione del candidato (hook/lua/
+-- platoon.lua, OWPlusExtractorUpgrade), non piu' come gate di fase globale.
+
+-- Verifica generica "l'80% (o la soglia data) del pool rilevante e' gia' al
+-- tier superiore?" -- usata per tutte e 3 le transizioni di tier estrattori
+-- (T1->T2 decide se tentare anche T2->T3; T2->T3 decide se sbloccare il
+-- builder T3->T4). Sostituisce 'UUtils.HaveUnitRatio' nativo per gli usi di
+-- questo progetto: quella funzione calcola T1/T2<=ratio, che NON equivale a
+-- "T2 e' l'80% del totale" nonostante il commento originale lo suggerisca
+-- (con ratio=0.80 il vero punto di scatto e' T2>=55.6% del totale, non 80%) --
+-- qui il calcolo e' la percentuale letterale richiesta dall'utente.
+function OWPlusPopulationShareAtLeast(aiBrain, ratio, higherCategory, combinedCategory, label)
+    local higher = table.getn(aiBrain:GetListOfUnits(higherCategory, false) or {})
+    local total = table.getn(aiBrain:GetListOfUnits(combinedCategory, false) or {})
+    local result = total > 0 and (higher / total) >= ratio
+    -- Sess.95 (octies): riattivato su richiesta esplicita utente -- serve per
+    -- osservare il potenziamento estrattori nel test SOLO x1 risorse. NOTA:
+    -- funzione condivisa anche con Mass Storage Upgrade T2/T3 -- riappaiono
+    -- anche quei log come effetto collaterale inevitabile.
+    if OWPlusDebugThrottle(aiBrain, 'PopShare_' .. tostring(label), 10) then
+        LOG('[OWPlus-DBG] PopulationShareAtLeast(' .. tostring(label) .. ') = ' .. tostring(result)
+            .. ' (superiore=' .. tostring(higher) .. '/' .. tostring(total) .. ', richiesta>=' .. tostring(ratio) .. ')')
+    end
+    return result
+end
+
+-- Gate leggero e indipendente per i magazzini di massa (costruzione E
+-- potenziamento tier) -- richiesta esplicita utente: i magazzini non devono
+-- piu' aspettare l'80% degli estrattori, solo un pavimento minimo che confermi
+-- che la Fase 1 (T1->T2) sia effettivamente iniziata (non un singolo T2
+-- isolato per caso).
+function OWPlusMassStorageEligible(aiBrain, label)
+    local t2plus = table.getn(aiBrain:GetListOfUnits(categories.STRUCTURE * categories.MASSEXTRACTION * (categories.TECH2 + categories.TECH3), false) or {})
+    local result = t2plus >= 3
+    -- Sess.95 (septies): log commentato su richiesta esplicita utente -- logica invariata
+    -- if OWPlusDebugThrottle(aiBrain, 'MassStorageEligible_' .. tostring(label), 10) then
+    --     LOG('[OWPlus-DBG] MassStorageEligible(' .. tostring(label) .. ') = ' .. tostring(result) .. ' (estrattoriT2+=' .. tostring(t2plus) .. ')')
+    -- end
+    return result
+end
+
+-- Sess.95 (bis): richiesta esplicita utente dopo un secondo test in game -- il
+-- tetto fisso 1 (nativo HaveLessThanUnitsInCategoryBeingBuilt, gia' esistente
+-- prima di questa sessione, condiviso da 'OWPlus Mass Storage T1/T2 Eng')
+-- rendeva la costruzione magazzini massa a THREAD SINGOLO per l'intera armata,
+-- a prescindere da quanti estrattori esistono -- un collo di bottiglia reale
+-- a se stante (confermato in game: 82 estrattori T2, solo 11-16 magazzini
+-- dopo un test completo), indipendente dal gate di fase legato ai magazzini
+-- (rimosso nel redesign 'ter' successivo, vedi OWPlusPopulationShareAtLeast/
+-- OWPlusMassStorageEligible sopra) -- questo fix resta valido a prescindere.
+-- Tetto PROPORZIONALE (20% degli estrattori T2+/T3, minimo 1) al posto del
+-- fisso 1 -- stesso pattern gia' in uso altrove in questo progetto
+-- (OWPlusDebugUpgradeGate) invece di un altro numero fisso che si
+-- romperebbe di nuovo a scale diverse.
+function OWPlusMassStorageBuildThrottle(aiBrain, label)
+    local extractorCat = categories.STRUCTURE * categories.MASSEXTRACTION * (categories.TECH2 + categories.TECH3)
+    local extractors = table.getn(aiBrain:GetListOfUnits(extractorCat, false) or {})
+    local cap = math.max(1, math.floor(extractors * 0.20))
+    local storageCat = categories.STRUCTURE * categories.MASSSTORAGE
+    local building = aiBrain:NumCurrentlyBuilding(storageCat, storageCat + categories.CONSTRUCTION)
+    local result = building < cap
+    -- Sess.95 (septies): log commentato su richiesta esplicita utente -- logica invariata
+    -- if OWPlusDebugThrottle(aiBrain, 'MassStorageBuildThrottle_' .. tostring(label), 10) then
+    --     LOG('[OWPlus-DBG] MassStorageBuildThrottle(' .. tostring(label) .. ') = ' .. tostring(result)
+    --         .. ' (inCostruzione=' .. tostring(building) .. ', cap=' .. tostring(cap) .. ', estrattoriT2+=' .. tostring(extractors) .. ')')
+    -- end
+    return result
+end
+
 -- Fase B: esiste davvero, ADESSO, una fabbrica del tier/dominio richiesto nel
 -- FactoryList di questo LocationType, che NON sia gia' in upgrade?
 --

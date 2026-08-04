@@ -13,6 +13,8 @@ local EBC = '/lua/editor/EconomyBuildConditions.lua'
 local UCBC = '/lua/editor/UnitCountBuildConditions.lua'
 local MIBC = '/lua/editor/MiscBuildConditions.lua'
 local MABC = '/lua/editor/MarkerBuildConditions.lua'
+-- Sess.94: log diagnostico progressione espansione estrattori/Mass Fab (curva economia MAIN)
+local OWPlusLogCond = '/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua'
 local NoRushRadius = ScenarioInfo.norushradius or 30
 local BasePanicZone, BaseMilitaryZone, BaseEnemyZone = import('/mods/AI-Uveso/lua/AI/AITargetManager.lua').GetDangerZoneRadii()
 
@@ -159,7 +161,7 @@ BuilderGroup {
         end,
         BuilderConditions = {
             NotOutpost,
-            { EBC, 'GreaterThanEconStorageRatio', { -9.99, 0.01 } },
+            { OWPlusLogCond, 'OWPlusDebugMassExpansionGate', { -9.99, 0.01, 'U1 Mass 30' } },
             { MABC, 'CanBuildOnMass', { 'LocationType', 30, false, false, false, 'AntiSurface', 1 }},
         },
         BuilderType = 'Any',
@@ -186,7 +188,9 @@ BuilderGroup {
         end,
         BuilderConditions = {
             NotOutpost,
-            { EBC, 'GreaterThanEconStorageRatio', { -9.99, 1.00 } },
+            -- Sess.94: soglia energia era 1.00 (mai raggiungibile sotto carico Overwhelm,
+            -- causa del blocco lungo poi burst simultaneo con gli altri builder a 1.00) -> 0.18
+            { OWPlusLogCond, 'OWPlusDebugMassExpansionGate', { -9.99, 0.18, 'U1 Mass 60' } },
             { MABC, 'CanBuildOnMass', { 'LocationType', 60, -500, 1, 0, 'AntiSurface', 1 }},
         },
         BuilderType = 'Any',
@@ -213,7 +217,7 @@ BuilderGroup {
         end,
         BuilderConditions = {
             NotOutpost,
-            { EBC, 'GreaterThanEconStorageRatio', { -9.99, 0.10 } },
+            { OWPlusLogCond, 'OWPlusDebugMassExpansionGate', { -9.99, 0.10, 'U1 Mass 1000 6+' } },
             { MABC, 'CanBuildOnMass', { 'LocationType', 1000, false, false, false, 'AntiSurface', 1 }},
         },
         BuilderType = 'Any',
@@ -241,7 +245,8 @@ BuilderGroup {
         end,
         BuilderConditions = {
             NotOutpost,
-            { EBC, 'GreaterThanEconStorageRatio', { -9.99, 1.00 } },
+            -- Sess.94: soglia energia era 1.00 -> 0.28 (vedi U1 Mass 60)
+            { OWPlusLogCond, 'OWPlusDebugMassExpansionGate', { -9.99, 0.28, 'U1 Mass 1000 8+' } },
             { MABC, 'CanBuildOnMass', { 'LocationType', 1000, -500, 1, 0, 'AntiSurface', 1 }},
         },
         BuilderType = 'Any',
@@ -269,7 +274,8 @@ BuilderGroup {
         end,
         BuilderConditions = {
             NotOutpost,
-            { EBC, 'GreaterThanEconStorageRatio', { -9.99, 1.00 } },
+            -- Sess.94: soglia energia era 1.00 -> 0.38 (vedi U1 Mass 60)
+            { OWPlusLogCond, 'OWPlusDebugMassExpansionGate', { -9.99, 0.38, 'U1 Mass 1000 10+' } },
             { MABC, 'CanBuildOnMass', { 'LocationType', 1000, -500, 1, 0, 'AntiSurface', 1 }},
             { UCBC, 'PoolGreaterAtLocation', { 'LocationType', 3, categories.ENGINEER * categories.TECH1 - categories.STATIONASSISTPOD }},
         },
@@ -355,7 +361,9 @@ BuilderGroup {
         BuilderConditions = {
             NotOutpost,
             { EBC, 'GreaterThanEconTrend', { 0.0, 0.0 } },
-            { EBC, 'GreaterThanEconStorageRatio', { 0.40, 1.00}},
+            -- Sess.94: soglia energia era 1.00 -> 0.58 (Mass Fab resta il più esigente
+            -- della progressione per il consumo energetico continuo, ma raggiungibile)
+            { OWPlusLogCond, 'OWPlusDebugMassExpansionGate', { 0.40, 0.58, 'U3 Mass Fab' } },
             { UCBC, 'HaveUnitRatioUveso', { 0.3, categories.STRUCTURE * categories.MASSFABRICATION, '<=',categories.STRUCTURE * categories.ENERGYPRODUCTION * categories.TECH3 } },
             { UCBC, 'HaveLessThanUnitsInCategoryBeingBuilt', { 1, categories.STRUCTURE * categories.MASSFABRICATION } },
             { UCBC, 'HaveLessThanUnitsInCategoryBeingUpgrade', { 1, categories.STRUCTURE * categories.MASSEXTRACTION * categories.TECH2 }},

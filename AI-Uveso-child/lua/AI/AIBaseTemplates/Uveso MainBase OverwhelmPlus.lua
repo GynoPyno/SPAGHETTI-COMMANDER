@@ -57,7 +57,8 @@ BaseBuilderTemplate {
         'U1 MassBuilders',
         'U123 ExtractorUpgrades',
         'U1 MassStorage Builder',
-        'OWPlus Mass Storage Adjacency',    -- soglia energia 50% (orig 90% — mai raggiunta con ×2 eco)
+        'OWPlus Mass Storage Adjacency',    -- soglia energia 50% (orig 90% — mai raggiunta con ×2 eco), tetto rimosso sess.94
+        'OWPlus Economy Upgrade',           -- sess.94: upgrade in-place estrattori T4 + magazzini T2/T3 (Jaggeds)
 
         -----------------------------------------------------------------------------
         -- ==== Energy ==== --
@@ -68,6 +69,8 @@ BaseBuilderTemplate {
         'U123 Reclaim Energy Buildings',
         'OWPlus Economy T1 Reclaim',        -- soglia energia 50% (orig 100% — mai raggiunta con ×2 eco)
         'OWPlus Energy T2T3',               -- priority 18100/18200 per bypassare loop T1 (U123 ha T1@17900 > T2@17000)
+        'OWPlus Energy Storage Adjacency',  -- sess.94: gemello energia di Mass Storage Adjacency, tetto 48/96
+        'OWPlus Hydrocarbon Push',          -- sess.94: priorità fissa, bypassa crollo NeedEnergyTech1 del nativo
 
         -----------------------------------------------------------------------------
         -- ==== Factory ==== --

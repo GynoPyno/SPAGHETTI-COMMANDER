@@ -26,6 +26,15 @@ local OWPlusOutpostDefensePool = import('/mods/AI-Uveso-child/lua/AI/OWPlusOutpo
 -- artiglieria) — stesso motivo di OWPlusOutpostDefensePool sopra, modulo
 -- nostro puro, sicuro da importare qui.
 local OWPlusOutpostOwnership = import('/mods/AI-Uveso-child/lua/AI/OWPlusOutpostOwnership.lua')
+-- Sess.94: import a livello di file sicuro -- il platoon.lua NATIVO di AI-Uveso
+-- (caricato PRIMA di questo file nel load order) importa gia' 'uvesoutilities.lua'
+-- allo stesso modo, a livello di file, senza cautele di lazy-loading (a
+-- differenza di 'AddFactoryToClosestManager' sopra, che ha dipendenze circolari
+-- col bootstrap AI in corso) -- quando questo file viene processato la cache e'
+-- gia' pronta. '/lua/upgradetemplates.lua' e' un file MOTORE (path generico,
+-- nessun prefisso mod), sempre disponibile.
+local UUtils = import('/mods/AI-Uveso/lua/AI/uvesoutilities.lua')
+local UpgradeTemplatesMod = import('/lua/upgradetemplates.lua')
 -- Fase C (B16), sess.81: tetto ai retry di un singolo task difesa. Un task che
 -- fallisce ripetutamente (difesa modded senza posto valido, ingegnere sempre
 -- inadatto) veniva rimesso in coda all'infinito (1378 requeue osservati in game
@@ -215,8 +224,280 @@ end
 -- usato dal resto del gioco, non il path del file di hook della mod) invece di
 -- ricaricarlo da zero.
 
+-- Sess.94: copia fedele di 'ExtractorUpgrade' (AI-Uveso, lua/AI/uvesoutilities.lua
+-- righe 102-183), unica modifica alla soglia del fallback "force senza economia
+-- sufficiente" (era fissa "4", causa del batch di upgrade T1->T2->T3 osservato
+-- dall'utente in game: con 90+ estrattori quella soglia era sempre soddisfatta,
+-- il sistema non aspettava mai davvero l'economia). Non si puo' fare un hook
+-- minimale sulla funzione originale: 'platoon.lua' nativo la importa con path
+-- assoluto esplicito della mod ('/mods/AI-Uveso/lua/AI/uvesoutilities.lua'),
+-- che bypassa il meccanismo di override-by-path (funziona solo per path
+-- generici motore, non per self-reference esplicito di un'altra mod al
+-- proprio codice) -- verificato con un test dedicato (log di conferma
+-- caricamento mai comparso). Serve quindi ridefinire l'intero metodo di
+-- classe 'ExtractorUpgradeAI' piu' sotto, che chiama QUESTA funzione al posto
+-- di 'UUtils.ExtractorUpgrade'.
+local function OWPlusExtractorUpgrade(self, aiBrain, MassExtractorUnitList, ratio, techLevel, UnitUpgradeTemplates, StructureUpgradeTemplates)
+    -- Do we have the eco to upgrade ?
+    -- Sess.94: nome nudo non visibile qui (isolamento _G per modulo, stesso
+    -- motivo di UpgradeTemplates sopra) -- accesso tramite UUtils importato.
+    local MassRatioCheckPositive = UUtils.GlobalMassUpgradeCostVsGlobalMassIncomeRatio(self, aiBrain, ratio, techLevel, '<' )
+    -- search for the neares building to the base for upgrade.
+    local BasePosition = aiBrain.BuilderManagers['MAIN'].Position
+    local factionIndex = aiBrain:GetFactionIndex()
+    local UpgradingBuilding = 0
+    local DistanceToBase = nil
+    local LowestDistanceToBase = nil
+    local upgradeID = nil
+    local upgradeBuilding = nil
+    local UnitPos = nil
+    local FactionToIndex  = { UEF = 1, AEON = 2, CYBRAN = 3, SERAPHIM = 4, NOMADS = 5, ARM = 6, CORE = 7}
+    local UnitBeingUpgradeFactionIndex = nil
+
+    -- Sess.95 (ter): conteggio UpgradingBuilding SEMPRE sulla lista COMPLETA
+    -- (non sul sottoinsieme filtrato per magazzini sotto) -- serve al tetto di
+    -- parallelismo piu' in basso e deve riflettere TUTTE le unita' di questo
+    -- techLevel in upgrade, anche quelle fuori dal pool ristretto.
+    for k, v in MassExtractorUnitList do
+        if v and not v.Dead and not v:BeenDestroyed() and EntityCategoryContains(ParseEntityCategory(techLevel), v) and v:IsUnitState('Upgrading') then
+            UpgradingBuilding = UpgradingBuilding + 1
+        end
+    end
+
+    -- Sess.95 (ter): requisito SOFT "almeno 2 magazzini adiacenti" prima di
+    -- promuovere un estrattore da TECH2 a TECH3 (richiesta esplicita utente,
+    -- solo per questo salto) -- con estrattori sparsi per la mappa un requisito
+    -- rigido bloccherebbe per sempre quelli isolati, quindi si applica solo
+    -- come PREFERENZA: se almeno un candidato TECH2 ha >=2 magazzini entro 20
+    -- unita', la selezione (piu' vicino alla base, sotto) avviene SOLO tra
+    -- quelli; altrimenti (nessun candidato qualificato) si ricade sulla lista
+    -- completa, esattamente come prima -- nessuno stallo permanente.
+    local candidatePool = MassExtractorUnitList
+    if techLevel == 'TECH2' then
+        local withStorage = {}
+        for k, v in MassExtractorUnitList do
+            if v and not v.Dead and not v:BeenDestroyed() and EntityCategoryContains(ParseEntityCategory(techLevel), v) then
+                local nearbyStorage = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE * categories.MASSSTORAGE, v:GetPosition(), 20, 'Ally') or {}
+                if table.getn(nearbyStorage) >= 2 then
+                    table.insert(withStorage, v)
+                end
+            end
+        end
+        if table.getn(withStorage) > 0 then
+            candidatePool = withStorage
+            -- Sess.95 (octies): riattivato su richiesta esplicita utente
+            LOG('[OWPlus-DBG] OWPlusExtractorUpgrade(TECH2->TECH3): ' .. tostring(table.getn(withStorage)) .. ' candidati con >=2 magazzini adiacenti, selezione ristretta a questi')
+        end
+    end
+
+    for k, v in candidatePool do
+        local TempID
+        -- Check if we don't want to upgrade this unit (Upgrading gia' contato sopra)
+        if not v
+            or v.Dead
+            or v:BeenDestroyed()
+            or v:IsPaused()
+            or not EntityCategoryContains(ParseEntityCategory(techLevel), v)
+            or v:GetFractionComplete() < 1
+            or v:IsUnitState('Upgrading')
+        then
+            -- Skip this loop and continue with the next array
+            continue
+        end
+        -- Check for the nearest distance from mainbase
+        UnitPos = v:GetPosition()
+        DistanceToBase= VDist2(BasePosition[1] or 0, BasePosition[3] or 0, UnitPos[1] or 0, UnitPos[3] or 0)
+        if not LowestDistanceToBase or DistanceToBase < LowestDistanceToBase then
+            -- Get the factionindex from the unit to get the right update (in case we have captured this unit from another faction)
+            UnitBeingUpgradeFactionIndex = FactionToIndex[string.upper(v.Blueprint.General.FactionName)] or factionIndex
+            -- see if we can find a upgrade
+            if EntityCategoryContains(categories.MOBILE, v) then
+                TempID = aiBrain:FindUpgradeBP(v:GetUnitId(), UnitUpgradeTemplates[UnitBeingUpgradeFactionIndex])
+                if not TempID then
+                    AIWarn('['..string.gsub(debug.getinfo(1).source, ".*\(.*.lua)", "%1")..', line:'..debug.getinfo(1).currentline..'] *OWPlusExtractorUpgrade ERROR: Can\'t find UnitUpgradeTemplate for mobile unit: ' .. repr(v:GetUnitId()) )
+                end
+            else
+                TempID = aiBrain:FindUpgradeBP(v:GetUnitId(), StructureUpgradeTemplates[UnitBeingUpgradeFactionIndex])
+                if not TempID then
+                    AIWarn('['..string.gsub(debug.getinfo(1).source, ".*\(.*.lua)", "%1")..', line:'..debug.getinfo(1).currentline..'] *OWPlusExtractorUpgrade ERROR: Can\'t find StructureUpgradeTemplate for structure: ' .. repr(v:GetUnitId()) )
+                end
+            end
+            -- Check if we can build the upgrade
+            if TempID and EntityCategoryContains(categories.STRUCTURE, v) and not v:CanBuild(TempID) then
+                AIWarn('['..string.gsub(debug.getinfo(1).source, ".*\\(.*.lua)", "%1")..', line:'..debug.getinfo(1).currentline..'] *OWPlusExtractorUpgrade ERROR: Can\'t upgrade structure with StructureUpgradeTemplate: ' .. repr(v:GetUnitId()) )
+            elseif TempID then
+                upgradeID = TempID
+                upgradeBuilding = v
+                LowestDistanceToBase = DistanceToBase
+            end
+        end
+    end
+    -- Sess.95 (ter): tetto di PARALLELISMO -- proporzionale (20%, minimo 4),
+    -- richiesta esplicita utente ("non tutti in blocco, ma quattro alla
+    -- volta"). Sostituisce il vecchio 'UpgradingBuilding > 0' che serializzava
+    -- a un solo upgrade alla volta per l'intera armata -- causa reale dello
+    -- stallo osservato: con l'energy storage quasi mai al 95%, il ramo
+    -- economico sotto era quasi sempre attivo, e quel gate bloccava la
+    -- funzione non appena UNA SOLA unita' era gia' in upgrade. Applicato QUI
+    -- (prima del blocco economico, non piu' dentro), cosi' il tetto vale
+    -- SEMPRE, anche nel raro caso di economia sana che prima lo bypassava.
+    local maxParallel = math.max(4, math.floor(table.getn(MassExtractorUnitList) * 0.20))
+    if UpgradingBuilding >= maxParallel then
+        return false
+    end
+    -- If we have not the Eco then return false. Exept we have none extractor upgrading or 100% mass storrage
+    if not MassRatioCheckPositive and aiBrain:GetEconomyStoredRatio('MASS') < 0.80 or aiBrain:GetEconomyStoredRatio('ENERGY') < 0.95 then
+        -- Sess.94: soglia fissa "4" -> 20% del totale candidati (minimo 4).
+        -- Con molti estrattori il force scatta piu' raramente, invece di
+        -- essere sempre soddisfatto (causa del batch percepito in game).
+        local forceThreshold = math.max(4, math.floor(table.getn(MassExtractorUnitList) * 0.20))
+        if table.getn(MassExtractorUnitList) < forceThreshold then
+            return false
+        end
+        -- Even if we don't have the Eco for it; If we have more then forceThreshold Extractors, then upgrade at least one of them.
+        -- Sess.95 (octies): riattivato su richiesta esplicita utente
+        LOG('[OWPlus-DBG] OWPlusExtractorUpgrade(' .. tostring(techLevel) .. '): force senza eco sufficiente (candidati=' .. tostring(table.getn(MassExtractorUnitList)) .. ', soglia=' .. tostring(forceThreshold) .. ')')
+    end
+    -- Have we found a unit that can upgrade ?
+    if upgradeID and upgradeBuilding then
+        if self.Brain[ScenarioInfo.Options.AIPLatoonNameDebug] or ScenarioInfo.Options.AIPLatoonNameDebug == 'all' then
+            upgradeBuilding:SetCustomName('Upgrading BaseDist: '..(LowestDistanceToBase or 'Unknown ???'))
+        end
+        IssueUpgrade({upgradeBuilding}, upgradeID)
+        coroutine.yield(10)
+        return true
+    end
+    return false
+end
+
 CopyOfOldPlatoonClassOWPlusChild = Platoon
 Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
+
+    -- Sess.94: subclass di 'ExtractorUpgradeAI' (AI-Uveso, hook/lua/platoon.lua
+    -- righe 1073-1156) -- copia fedele del loop coroutine nativo, unica
+    -- differenza le chiamate a 'UUtils.ExtractorUpgrade' sostituite con
+    -- 'OWPlusExtractorUpgrade' (sopra, soglia force proporzionale invece che
+    -- fissa). 'UUtils.ExtractorPause'/'UUtils.HaveUnitRatio' restano invariate
+    -- (non toccate, nessun motivo di modificarle).
+    ExtractorUpgradeAI = function(self)
+        local aiBrain = self:GetBrain()
+        -- Sess.95: import una tantum (thread di lunga durata, un solo import per
+        -- plotone invece che uno per tick) -- stesso path gia' usato altrove nel
+        -- file per lo stesso modulo.
+        local OWPlusLogConditionsMod = import('/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua')
+        -- Sess.95 (octies): riattivato su richiesta esplicita utente
+        LOG('[OWPlus-DBG] ExtractorUpgradeAI (override sess.95 ter): OK, thread avviato, trigger a percentuale + parallelismo proporzionale attivi')
+        -- Sess.95 (septies): richiesta esplicita utente (test da remoto, non puo'
+        -- osservare visivamente) -- nuovo log periodico indipendente, ogni 15s,
+        -- massa/energia stoccata ATTUALE + capacita' MASSIMA (non un ratio o un
+        -- conteggio unita' come tutti gli altri log commentati sopra, un valore
+        -- assoluto diretto leggibile a colpo d'occhio). Guardia one-time su
+        -- aiBrain (questo metodo puo' essere invocato piu' volte se il plotone
+        -- nativo viene riformato) -- stesso pattern flag-su-aiBrain gia' in uso
+        -- altrove nel progetto per azioni "una volta sola per partita".
+        if not aiBrain.OWPlusEconStorageLoggerStarted then
+            aiBrain.OWPlusEconStorageLoggerStarted = true
+            ForkThread(function()
+                while not aiBrain:IsDefeated() do
+                    local massStored = aiBrain:GetEconomyStored('MASS')
+                    local energyStored = aiBrain:GetEconomyStored('ENERGY')
+                    local massRatio = aiBrain:GetEconomyStoredRatio('MASS')
+                    local energyRatio = aiBrain:GetEconomyStoredRatio('ENERGY')
+                    local massMax = massRatio > 0 and (massStored / massRatio) or massStored
+                    local energyMax = energyRatio > 0 and (energyStored / energyRatio) or energyStored
+                    LOG('[OWPlus-ECON] ' .. tostring(aiBrain.Name) .. ' -- Magazzino massa: ' .. tostring(massStored)
+                        .. ' / max ' .. tostring(massMax) .. ' -- Magazzino energia: ' .. tostring(energyStored)
+                        .. ' / max ' .. tostring(energyMax) .. ' (t=' .. tostring(GetGameTimeSeconds()) .. 's)')
+                    WaitSeconds(15)
+                end
+            end)
+        end
+        local personality = ScenarioInfo.ArmySetup[aiBrain.Name].AIPersonality
+        local ratio = 0.0
+        local RatioTable = {0.0, 0.10, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50, 1.0}
+        if personality == 'uvesorush' then
+            RatioTable = {0.00, 0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.50, 0.75}
+        end
+        local platoonUnits
+        local MassExtractorUnitList
+        while aiBrain:PlatoonExists(self) do
+            while not aiBrain:IsOpponentAIRunning() do
+                coroutine.yield(10)
+            end
+            if aiBrain.PriorityManager.HasParagon then
+                ratio = RatioTable[10]
+            elseif aiBrain:GetEconomyIncome('MASS') * 10 > 1000 then
+                ratio = RatioTable[10]
+            elseif aiBrain:GetEconomyIncome('MASS') * 10 > 600 then
+                ratio = RatioTable[9]
+            elseif GetGameTimeSeconds() > 1800 then
+                ratio = RatioTable[8]
+            elseif GetGameTimeSeconds() > 1500 then
+                ratio = RatioTable[7]
+            elseif GetGameTimeSeconds() > 1200 then
+                ratio = RatioTable[6]
+            elseif GetGameTimeSeconds() > 900 then
+                ratio = RatioTable[5]
+            elseif GetGameTimeSeconds() > 600 then
+                ratio = RatioTable[4]
+            elseif GetGameTimeSeconds() > 360 then
+                ratio = RatioTable[3]
+            elseif GetGameTimeSeconds() > 180 then
+                ratio = RatioTable[2]
+            elseif GetGameTimeSeconds() <= 180 then
+                ratio = RatioTable[1]
+            end
+            platoonUnits = self:GetPlatoonUnits()
+            MassExtractorUnitList = aiBrain:GetListOfUnits(categories.MASSEXTRACTION * (categories.TECH1 + categories.TECH2 + categories.TECH3), false, false)
+            -- Check if we can pause/unpause TECH3 Extractors (for more energy)
+            if not UUtils.ExtractorPause( self, aiBrain, MassExtractorUnitList, ratio, 'TECH3') then
+                -- Check if we can pause/unpause TECH2 Extractors
+                if not UUtils.ExtractorPause( self, aiBrain, MassExtractorUnitList, ratio, 'TECH2') then
+                    -- Check if we can pause/unpause TECH1 Extractors
+                    if not UUtils.ExtractorPause( self, aiBrain, MassExtractorUnitList, ratio, 'TECH1') then
+                        -- We have nothing to pause or unpause, lets upgrade more extractors
+                        -- Sess.95 (ter): redesign completo, richiesta esplicita utente dopo un
+                        -- secondo test in game -- il gate di fase legato ai magazzini (sess.95)
+                        -- e' stato rimosso: con estrattori sparsi per la mappa l'80% di copertura
+                        -- magazzini non era mai raggiungibile per davvero. Il trigger torna ad
+                        -- essere basato SOLO sulla popolazione estrattori (nessuna dipendenza dai
+                        -- magazzini) -- OWPlusPopulationShareAtLeast calcola la percentuale
+                        -- LETTERALE richiesta (80% del pool T1+T2 e' gia' T2), a differenza di
+                        -- 'UUtils.HaveUnitRatio' nativo che calcola T1/T2<=ratio (con ratio=0.80
+                        -- il vero punto di scatto e' ~55.6% del totale, non 80% come suggerisce il
+                        -- commento originale -- discrepanza scoperta in questa sessione). Il
+                        -- requisito magazzini per il salto T2->T3 e' ora dentro
+                        -- OWPlusExtractorUpgrade stesso (soft, per singolo candidato).
+                        if OWPlusLogConditionsMod.OWPlusPopulationShareAtLeast(aiBrain, 0.80,
+                            categories.MASSEXTRACTION * categories.TECH2,
+                            categories.MASSEXTRACTION * (categories.TECH1 + categories.TECH2),
+                            'Extractor T1->T2 trigger') then
+                            -- Try to upgrade a TECH2 extractor.
+                            if not OWPlusExtractorUpgrade(self, aiBrain, MassExtractorUnitList, ratio, 'TECH2', UpgradeTemplatesMod.UnitUpgradeTemplates, UpgradeTemplatesMod.StructureUpgradeTemplates) then
+                                -- We can't upgrade a TECH2 extractor. Try to upgrade from TECH1 to TECH2
+                                OWPlusExtractorUpgrade(self, aiBrain, MassExtractorUnitList, ratio, 'TECH1', UpgradeTemplatesMod.UnitUpgradeTemplates, UpgradeTemplatesMod.StructureUpgradeTemplates)
+                            end
+                        else
+                            -- Meno dell'80% degli estrattori T1+T2 e' gia' T2: solo T1->T2.
+                            OWPlusExtractorUpgrade(self, aiBrain, MassExtractorUnitList, ratio, 'TECH1', UpgradeTemplatesMod.UnitUpgradeTemplates, UpgradeTemplatesMod.StructureUpgradeTemplates)
+                        end
+                    end
+                end
+            end
+            -- Check the Eco every x Ticks
+            coroutine.yield(10)
+            -- find dead units inside the platoon and disband if we find one
+            for k,v in self:GetPlatoonUnits() do
+                if not v or v.Dead or v:BeenDestroyed() then
+                    coroutine.yield(1)
+                    self:PlatoonDisbandNoAssign()
+                    return
+                end
+            end
+        end
+        -- No return here. We will never reach this position. After disbanding this platoon, the forked 'ExtractorUpgradeAI' thread will be terminated from outside.
+    end,
+
 
     OWPlusDispersedBuildAI = function(self)
         local aiBrain = self:GetBrain()
