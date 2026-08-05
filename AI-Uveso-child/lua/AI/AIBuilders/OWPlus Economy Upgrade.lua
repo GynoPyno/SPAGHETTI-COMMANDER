@@ -1,15 +1,35 @@
 -- OWPlus Economy Upgrade.lua
--- Sess.94: upgrade in-place di estrattori di massa (T3->T4) e magazzini
--- massa/energia (T1->T2->T3), mod Jaggeds Infrastructure Pack. Stesso pattern
--- gia' validato in 'OWPlus Outpost Defense Upgrade.lua' (PlatoonFormBuilder +
--- Plan='UnitUpgradeAI', IssueUpgrade diretto sull'unita', zero codice custom
--- per l'upgrade in se') ma senza le complicazioni specifiche degli avamposti
--- (nessun FormRadius ristretto, nessuna mappa di ownership per-location: qui
--- il target e' MAIN-wide, coerente col pattern vanilla nativo
--- T1BalancedUpgradeBuilders/T2BalancedUpgradeBuilders).
+-- Sess.94: upgrade in-place di magazzini massa/energia (T1->T2->T3->T4), mod
+-- Jaggeds Infrastructure Pack. Stesso pattern gia' validato in 'OWPlus Outpost
+-- Defense Upgrade.lua' (PlatoonFormBuilder + Plan='UnitUpgradeAI', IssueUpgrade
+-- diretto sull'unita', zero codice custom per l'upgrade in se').
 --
 -- Nessun ingegnere consumato: il builder forma un plotone attorno alla
 -- struttura bersaglio esistente e le fa auto-issuare l'upgrade su se stessa.
+--
+-- Sess.98: RIMOSSO il builder 'OWPlus Extractor Upgrade T4' (estrattori
+-- massa T3->T4) che viveva qui dalla sess.94 -- causa reale finalmente trovata
+-- leggendo il motore (lua/sim/PlatoonFormManager.lua, hook diagnostico
+-- dedicato): poolPlatoon:CanFormPlatoon(...) tornava SEMPRE false per questo
+-- builder (confermato con radius=10000 esplicito, 16 minuti di test reale,
+-- zero eccezioni), a differenza dei builder magazzino qui sotto (identici
+-- Plan='UnitUpgradeAI'+FactionSquads, ma funzionanti) -- causa strutturale
+-- non identificabile a livello Lua (funzione nativa/compilata). L'upgrade
+-- estrattori T3->T4 e' stato spostato su un meccanismo diverso, PROVATO
+-- funzionante per lo stesso tipo di unita' (T1->T2->T3 nativo): l'override
+-- di 'ExtractorUpgradeAI' in hook/lua/platoon.lua (AI-Uveso-child), esteso
+-- con un terzo ramo TECH3->TECH4 accanto a quelli T1->T2/T2->T3 gia'
+-- esistenti -- vedi commento li' per i dettagli del meccanismo (IssueUpgrade
+-- diretto su una lista GLOBALE di unita', mai passa da CanFormPlatoon).
+--
+-- Sess.97: CORREZIONE al commento originale sopra ("nessun FormRadius
+-- ristretto... target MAIN-wide") -- era un'assunzione SBAGLIATA: omettere
+-- FormRadius NON significa "nessun limite" -- significa usare self.Radius del
+-- BuilderManager (MAIN, tipicamente <=120) come raggio di ricerca candidati
+-- (poolPlatoon:CanFormPlatoon/FormPlatoon(template, 1, self.Location, radius)).
+-- Aggiunto FormRadius=10000 a tutti i builder magazzino sotto (stesso valore
+-- del nativo 'U123 ExtractorUpgrades') -- restano lontani da MAIN anche dopo
+-- il fix avamposti sess.97 (OWPlus Outpost Mass Storage Adjacency).
 
 local categories = categories
 local OWPlusLogCond = '/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua'
@@ -19,44 +39,11 @@ BuilderGroup {
     BuildersType = 'PlatoonFormBuilder',
 
     Builder {
-        BuilderName = 'OWPlus Extractor Upgrade T4',
-        PlatoonTemplate = 'OWPlusExtractorUpgradeT4',
-        -- Sess.95 (sexies): Priority 18400->18401 -- causa trovata (indagine dedicata):
-        -- il builder nativo 'U123 ExtractorUpgrades' (AI-Uveso, Base Mass.lua) ha
-        -- ESATTAMENTE la stessa Priority 18400 e usa Plan='PlatoonMerger' con
-        -- GlobalSquads{MASSEXTRACTION*(T1+T2+T3), 1, 300, ...} -- raccoglie fino a 300
-        -- estrattori in UN SOLO plotone globale ad ogni occasione utile. A parita' di
-        -- priorita' quel meccanismo "tutto in un colpo" vince quasi sempre la corsa
-        -- contro il nostro (che ne vuole solo 1 alla volta), lasciandoci quasi senza
-        -- candidati liberi da reclamare (confermato: solo 2 upgrade tentati in 20 min
-        -- su 70-92 candidati disponibili). Priorita' leggermente piu' alta ci fa
-        -- valutare per primi, cosi' reclamiamo la nostra unica unita' prima che il
-        -- meccanismo nativo spazzi via tutto il resto.
-        Priority = 18401,
-        InstanceCount = 1,
-        BuilderConditions = {
-            { OWPlusLogCond, 'OWPlusDebugUpgradeGate', { categories.STRUCTURE * categories.MASSEXTRACTION * categories.TECH3, 0.70, 0.30, 'Extractor Upgrade T4' } },
-            -- Sess.95 (ter): trigger a percentuale (80% del pool T2+T3 e' gia' T3),
-            -- stesso pattern del salto T1->T2/T2->T3 nativo -- nessun requisito
-            -- magazzini per T4 (richiesta esplicita utente). Sostituisce il vecchio
-            -- gate di fase (rimosso, legato ai magazzini).
-            { OWPlusLogCond, 'OWPlusPopulationShareAtLeast', { 0.80, categories.STRUCTURE * categories.MASSEXTRACTION * categories.TECH3, categories.STRUCTURE * categories.MASSEXTRACTION * (categories.TECH2 + categories.TECH3), 'Extractor T3->T4 trigger' } },
-            -- Sess.94: diagnostica temporanea (LOG+true), verifica se il warning nativo
-            -- "Can't find StructureUpgradeTemplate" blocca davvero l'upgrade o e' innocuo
-            { OWPlusLogCond, 'OWPlusDebugUpgradeProgress', { categories.STRUCTURE * categories.MASSEXTRACTION * categories.TECH3, categories.STRUCTURE * categories.MASSEXTRACTION * categories.EXPERIMENTAL, 'Extractor T3->T4' } },
-            -- Sess.95 (quinquies): diagnostica temporanea (LOG+true) -- quanti estrattori
-            -- T3 risultano IN PAUSA nell'istante in cui questo builder viene valutato,
-            -- per capire se e' quello a spiegare il tasso di successo bassissimo.
-            { OWPlusLogCond, 'OWPlusDebugExtractorPauseState', { categories.STRUCTURE * categories.MASSEXTRACTION * categories.TECH3, 'Extractor T3->T4' } },
-        },
-        BuilderType = 'Any',
-    },
-
-    Builder {
         BuilderName = 'OWPlus Mass Storage Upgrade T2',
         PlatoonTemplate = 'OWPlusMassStorageUpgradeT2',
         Priority = 18400,
         InstanceCount = 1,
+        FormRadius = 10000,
         BuilderConditions = {
             -- Sess.96: ratio-only (0.70/0.30) -> gate uniformato a quello dei
             -- magazzini energia, valore ASSOLUTO (500 massa stoccata) E ratio
@@ -77,6 +64,7 @@ BuilderGroup {
         PlatoonTemplate = 'OWPlusMassStorageUpgradeT3',
         Priority = 18400,
         InstanceCount = 1,
+        FormRadius = 10000,
         BuilderConditions = {
             -- Sess.96: stesso gate uniformato del builder T2 sopra (assoluto+ratio)
             { OWPlusLogCond, 'OWPlusMassStorageAbsoluteGate', { categories.STRUCTURE * categories.MASSSTORAGE * categories.TECH2, 500, 0.80, 'Mass Storage Upgrade T3' } },
@@ -87,10 +75,36 @@ BuilderGroup {
     },
 
     Builder {
+        -- Sess.97: nuovo, richiesta esplicita utente -- il magazzino ibrido
+        -- Massa+Energia T4 (bab1106 & co., mod Jaggeds) non aveva NESSUN builder
+        -- AI a guidarne l'upgrade dal magazzino massa T3 (verificato: zero
+        -- riferimenti a bab1106/beb1106/brb1106/bsb1106 in tutto AI-Uveso-child
+        -- prima di questa modifica) -- l'upgrade funzionava solo se avviato a
+        -- mano dal giocatore. Stesso gate economico gia' uniformato di
+        -- Mass/Energy Storage Upgrade T2/T3 (assoluto+ratio), nessun builder
+        -- nativo compete per questa categoria (catena inesistente fuori da
+        -- Jaggeds) -- InstanceCount=5 comunque, stessa lezione del fix sopra.
+        BuilderName = 'OWPlus Mass Storage Upgrade T4',
+        PlatoonTemplate = 'OWPlusMassStorageUpgradeT4',
+        Priority = 18400,
+        InstanceCount = 5,
+        FormRadius = 10000,
+        BuilderConditions = {
+            { OWPlusLogCond, 'OWPlusMassStorageAbsoluteGate', { categories.STRUCTURE * categories.MASSSTORAGE * categories.TECH3, 500, 0.80, 'Mass Storage Upgrade T4' } },
+            -- Categoria destinazione: MASSSTORAGE*ENERGYSTORAGE insieme -- unico
+            -- identificatore pulito per il T4 ibrido, che non ha categoria
+            -- EXPERIMENTAL (TechLevel='RULEUTL_Secret', non TECH4 nativo).
+            { OWPlusLogCond, 'OWPlusDebugUpgradeProgress', { categories.STRUCTURE * categories.MASSSTORAGE * categories.TECH3, categories.STRUCTURE * categories.MASSSTORAGE * categories.ENERGYSTORAGE, 'Mass Storage T3->T4' } },
+        },
+        BuilderType = 'Any',
+    },
+
+    Builder {
         BuilderName = 'OWPlus Energy Storage Upgrade T2',
         PlatoonTemplate = 'OWPlusEnergyStorageUpgradeT2',
         Priority = 18400,
         InstanceCount = 1,
+        FormRadius = 10000,
         BuilderConditions = {
             -- Sess.95 (quinquies): ratio (0.70/0.80) -> valore ASSOLUTO (40000 energia
             -- stoccata) -- una ratio alta puo' essere vera anche con poca energia
@@ -109,6 +123,7 @@ BuilderGroup {
         PlatoonTemplate = 'OWPlusEnergyStorageUpgradeT3',
         Priority = 18400,
         InstanceCount = 1,
+        FormRadius = 10000,
         BuilderConditions = {
             -- Sess.95 (sexies): stessi due vincoli (40000 assoluto + 0.80 ratio) del builder T2 sopra
             { OWPlusLogCond, 'OWPlusEnergyStorageAbsoluteGate', { categories.STRUCTURE * categories.ENERGYSTORAGE * categories.TECH2, 40000, 0.80, 'Energy Storage Upgrade T3' } },

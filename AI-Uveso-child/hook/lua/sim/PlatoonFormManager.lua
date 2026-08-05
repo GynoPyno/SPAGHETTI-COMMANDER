@@ -14,6 +14,13 @@
 -- appena PRIMA che il metodo originale tenti il form. Pattern di subclassing
 -- identico a hook/lua/sim/FactoryBuilderManager.lua. Da rimuovere/silenziare
 -- una volta diagnosticato.
+--
+-- Sess.98: usato temporaneamente per diagnosticare 'OWPlus Extractor Upgrade
+-- T4' (confermato: poolPlatoon:CanFormPlatoon(...) tornava sempre false anche
+-- con FormRadius=10000 esplicito -- causa nativa/compilata, non identificabile
+-- a livello Lua). Diagnosi conclusa, builder rimosso (vedi 'OWPlus Economy
+-- Upgrade.lua' e hook/lua/platoon.lua per il meccanismo sostitutivo) --
+-- rimossa anche la relativa estensione diagnostica qui.
 
 local prevClass = PlatoonFormManager
 

@@ -420,6 +420,24 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
         end
         local platoonUnits
         local MassExtractorUnitList
+        -- Sess.98: helper per il ramo T1->T2/T2->T3 (invariato, gia' esistente sopra
+        -- come corpo if/else inline) -- estratto in funzione per essere richiamabile
+        -- anche come fallback dal nuovo ramo T2->T3->T4 sotto, senza duplicare il
+        -- blocco. Chiusura su 'self'/'aiBrain'/'MassExtractorUnitList'/'ratio' (tutte
+        -- gia' 'local' nello scope esterno, riassegnate ma mai ridichiarate dentro il
+        -- while: sicuro leggerle da qui, stessa cella di memoria ad ogni ciclo).
+        local function OWPlusTryExtractorUpgradeT1T2()
+            if OWPlusLogConditionsMod.OWPlusPopulationShareAtLeast(aiBrain, 0.80,
+                categories.MASSEXTRACTION * categories.TECH2,
+                categories.MASSEXTRACTION * (categories.TECH1 + categories.TECH2),
+                'Extractor T1->T2 trigger') then
+                if not OWPlusExtractorUpgrade(self, aiBrain, MassExtractorUnitList, ratio, 'TECH2', UpgradeTemplatesMod.UnitUpgradeTemplates, UpgradeTemplatesMod.StructureUpgradeTemplates) then
+                    OWPlusExtractorUpgrade(self, aiBrain, MassExtractorUnitList, ratio, 'TECH1', UpgradeTemplatesMod.UnitUpgradeTemplates, UpgradeTemplatesMod.StructureUpgradeTemplates)
+                end
+            else
+                OWPlusExtractorUpgrade(self, aiBrain, MassExtractorUnitList, ratio, 'TECH1', UpgradeTemplatesMod.UnitUpgradeTemplates, UpgradeTemplatesMod.StructureUpgradeTemplates)
+            end
+        end
         while aiBrain:PlatoonExists(self) do
             while not aiBrain:IsOpponentAIRunning() do
                 coroutine.yield(10)
@@ -468,18 +486,38 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                         -- commento originale -- discrepanza scoperta in questa sessione). Il
                         -- requisito magazzini per il salto T2->T3 e' ora dentro
                         -- OWPlusExtractorUpgrade stesso (soft, per singolo candidato).
+                        -- Sess.98 (richiesta esplicita utente): NUOVO ramo TECH3->TECH4
+                        -- (mod Jaggeds, ueb1302->ueb1402 & co.) -- prima causa reale
+                        -- trovata leggendo il motore: questa funzione (ExtractorUpgradeAI,
+                        -- override di quella nativa) e il suo helper OWPlusExtractorUpgrade
+                        -- operano su MassExtractorUnitList, una lista GLOBALE
+                        -- (aiBrain:GetListOfUnits, riga sopra) e issuano l'upgrade
+                        -- direttamente via IssueUpgrade() -- MAI passando da
+                        -- CanFormPlatoon/FormPlatoon (motore nativo/compilato). Il builder
+                        -- separato 'OWPlus Extractor Upgrade T4' (Plan='UnitUpgradeAI',
+                        -- rimosso in questa stessa sessione) falliva SEMPRE
+                        -- CanFormPlatoon=false (confermato via hook diagnostico su
+                        -- PlatoonFormManager, radius=10000, 16 minuti di test reale, zero
+                        -- eccezioni) proprio perche' tentava di formare un plotone nuovo
+                        -- per ogni candidato invece di riusare questo meccanismo esistente,
+                        -- gia' comprovato funzionante per T1->T2 e T2->T3 sullo stesso tipo
+                        -- di unita'. Stesso pattern di trigger (population share 80%) del
+                        -- ramo T1->T2 sotto, per coerenza.
                         if OWPlusLogConditionsMod.OWPlusPopulationShareAtLeast(aiBrain, 0.80,
-                            categories.MASSEXTRACTION * categories.TECH2,
-                            categories.MASSEXTRACTION * (categories.TECH1 + categories.TECH2),
-                            'Extractor T1->T2 trigger') then
-                            -- Try to upgrade a TECH2 extractor.
-                            if not OWPlusExtractorUpgrade(self, aiBrain, MassExtractorUnitList, ratio, 'TECH2', UpgradeTemplatesMod.UnitUpgradeTemplates, UpgradeTemplatesMod.StructureUpgradeTemplates) then
-                                -- We can't upgrade a TECH2 extractor. Try to upgrade from TECH1 to TECH2
-                                OWPlusExtractorUpgrade(self, aiBrain, MassExtractorUnitList, ratio, 'TECH1', UpgradeTemplatesMod.UnitUpgradeTemplates, UpgradeTemplatesMod.StructureUpgradeTemplates)
+                            categories.MASSEXTRACTION * categories.TECH3,
+                            categories.MASSEXTRACTION * (categories.TECH2 + categories.TECH3),
+                            'Extractor T2->T3 trigger') then
+                            -- Try to upgrade a TECH3 extractor to TECH4 first.
+                            if OWPlusLogConditionsMod.OWPlusDebugThrottle(aiBrain, 'ExtractorT3T4Attempt', 15) then
+                                LOG('[OWPlus-DBG] ExtractorUpgradeAI: OK, ramo TECH3->TECH4 attivo (trigger population 80% superato), tento upgrade su un candidato T3')
+                            end
+                            if not OWPlusExtractorUpgrade(self, aiBrain, MassExtractorUnitList, ratio, 'TECH3', UpgradeTemplatesMod.UnitUpgradeTemplates, UpgradeTemplatesMod.StructureUpgradeTemplates) then
+                                -- Nessun TECH3 idoneo in questo ciclo: prova T1->T2/T2->T3 come prima.
+                                OWPlusTryExtractorUpgradeT1T2()
                             end
                         else
-                            -- Meno dell'80% degli estrattori T1+T2 e' gia' T2: solo T1->T2.
-                            OWPlusExtractorUpgrade(self, aiBrain, MassExtractorUnitList, ratio, 'TECH1', UpgradeTemplatesMod.UnitUpgradeTemplates, UpgradeTemplatesMod.StructureUpgradeTemplates)
+                            -- Meno dell'80% degli estrattori T2+T3 e' gia' T3: comportamento invariato.
+                            OWPlusTryExtractorUpgradeT1T2()
                         end
                     end
                 end
@@ -754,7 +792,14 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
             OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, outpostKey, 'OWPlus Outpost Factory Upgrade')
             OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, outpostKey, 'OWPlus Outpost Defense Upgrade')
             OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, outpostKey, 'OWPlus Outpost Production')
-            LOG('[OWPlus] Outpost: ' .. outpostKey .. ' — agganciati builder dedicati (Engineer/FactoryUpgrade/DefenseUpgrade/Production) al manager (registrazione anticipata)')
+            -- Sess.97: richiesta esplicita utente -- i magazzini massa (a differenza
+            -- di quelli energia, gia' coperti da Uveso nativo su ExpansionArea)
+            -- non avevano mai un builder registrato per gli avamposti, quindi
+            -- AdjacencyCheck (raggio 60 dal punto BASE del manager, mai da MAIN
+            -- se l'estrattore e' vicino a un avamposto) non poteva mai risultare
+            -- vera per un estrattore lontano da MAIN.
+            OWPlusAddBuilderTable.AddGlobalBuilderGroup(aiBrain, outpostKey, 'OWPlus Outpost Mass Storage Adjacency')
+            LOG('[OWPlus] Outpost: ' .. outpostKey .. ' — agganciati builder dedicati (Engineer/FactoryUpgrade/DefenseUpgrade/Production/MassStorageAdjacency) al manager (registrazione anticipata)')
 
             local defenseRecipe = aiBrain.OWPlusOutpostDefenseRecipes and aiBrain.OWPlusOutpostDefenseRecipes[outpostKey]
             if defenseRecipe then

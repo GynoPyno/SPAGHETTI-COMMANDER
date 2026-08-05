@@ -310,8 +310,26 @@ BuilderGroup {
         PlatoonTemplate = 'EngineerBuilder',
         Priority = 17950,
         DelayEqualBuildPlattons = { 'Energy', 1 },
-        InstanceCount = 1,
+        -- Sess.98 (richiesta esplicita utente): InstanceCount 1->3. Causa trovata
+        -- via diagnostica dedicata (OWPlusDebugHydrocarbonDiag, test reale 16 min):
+        -- CanBuildOnHydro e CheckBuildPlattonDelay risultavano SEMPRE veri per
+        -- minuti mentre il conteggio idrocarburi restava fermo a 1 e i generatori
+        -- T1 standard salivano a 22+ -- non un cap sul totale (che infatti cresce
+        -- regolarmente nel tempo, 1->11+ in 30 min), ma un collo di bottiglia di
+        -- CONCORRENZA: questo builder e' l'UNICO che punta a 'T1HydroCarbon' (con
+        -- InstanceCount=1, fedele al nativo 'U1 Power Hydrocarbon'), mentre il
+        -- generatore T1 standard ha 6 builder nativi diversi che puntano alla
+        -- stessa struttura, ciascuno con la propria InstanceCount -- effettivamente
+        -- 6-8 ingegneri possono costruire T1 pgens in parallelo contro 1 solo per
+        -- gli idrocarburi, indipendentemente da quanti marker liberi esistano.
+        InstanceCount = 3,
         BuilderConditions = {
+            -- Sess.98: diagnostica NEUTRA (LOG+true, non blocca mai) messa PER PRIMA
+            -- cosi' viene sempre valutata ad ogni ciclo indipendentemente da quale
+            -- altra condizione blocchi la catena sotto -- verifica l'ipotesi "il
+            -- generatore T1 standard (senza vincoli di marker/cooldown) prende il
+            -- sopravvento quando CanBuildOnHydro non trova un marker libero entro 90".
+            { OWPlusLogCond, 'OWPlusDebugHydrocarbonDiag', { 'LocationType', 'Hydrocarbon Push' } },
             { UCBC, 'CheckBuildPlattonDelay', { 'Energy' }},
             -- Sess.95 (quinquies): soglia mass income 0.9->0 -- richiesta esplicita
             -- utente dopo test in game: la soglia 0.9 (ereditata fedelmente dal nativo

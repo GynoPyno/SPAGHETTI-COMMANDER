@@ -7,6 +7,7 @@ local categories = categories
 local AIUtils = import('/lua/ai/aiutilities.lua')
 local UCBCMod = import('/lua/editor/UnitCountBuildConditions.lua')
 local EBCMod = import('/lua/editor/EconomyBuildConditions.lua')
+local MABCMod = import('/lua/editor/MarkerBuildConditions.lua')
 local OWPlusProductionAvailableMod = import('/mods/AI-Uveso-child/lua/AI/OWPlusOutpostProductionAvailable.lua')
 local OWPlusOutpostOwnership = import('/mods/AI-Uveso-child/lua/AI/OWPlusOutpostOwnership.lua')
 
@@ -442,6 +443,31 @@ function OWPlusDebugExtractorPauseState(aiBrain, category, label)
     --     LOG('[OWPlus-DBG] ExtractorPauseState(' .. tostring(label) .. ') totale=' .. tostring(total)
     --         .. ', in pausa=' .. tostring(paused) .. ', in upgrade=' .. tostring(upgrading))
     -- end
+    -- Sess.97: riuso temporaneo di questo slot diagnostico (gia' agganciato al
+    -- builder Extractor Upgrade T4) per verificare DIRETTAMENTE se le unita'
+    -- TECH3 hanno un PlatoonHandle attivo (= "possedute" da qualche altro
+    -- plotone, es. il merger nativo) invece di continuare a ipotizzare dal solo
+    -- comportamento indiretto -- il fix sul PlatoonTemplate nativo non ha
+    -- prodotto alcun tentativo di upgrade nemmeno con totale=37+ e gate vero
+    -- quasi sempre, serve la prova diretta.
+    if OWPlusDebugThrottle(aiBrain, 'ExtractorPlatoonHandle_' .. tostring(label), 10) then
+        local units = aiBrain:GetListOfUnits(category, false) or {}
+        local total = table.getn(units)
+        local claimed = 0
+        local freeSample = nil
+        for _, u in units do
+            if u and not u.Dead then
+                if u.PlatoonHandle then
+                    claimed = claimed + 1
+                elseif not freeSample then
+                    freeSample = u.UnitId
+                end
+            end
+        end
+        LOG('[OWPlus-DBG] ExtractorPlatoonHandle(' .. tostring(label) .. ') totale=' .. tostring(total)
+            .. ', con PlatoonHandle=' .. tostring(claimed) .. ', libere=' .. tostring(total - claimed)
+            .. ', esempio libero=' .. tostring(freeSample))
+    end
     return true
 end
 
@@ -965,4 +991,34 @@ function OWPlusOutpostFactoryIsTech(aiBrain, locationType, techLevel)
         LOG('[OWPlus-DBG] OWPlusOutpostFactoryIsTech(' .. tostring(locationType) .. ', T' .. tostring(techLevel) .. ') = ' .. tostring(result))
     end
     return result
+end
+
+-- Sess.98: diagnostica NEUTRA (LOG+true, non blocca mai) per il secondo problema
+-- segnalato dall'utente in game (test 2h07m, 2026-08-05): l'AI costruisce il primo
+-- idrocarburo poi si concentra sui generatori T1 standard per diversi minuti prima
+-- di costruirne altri, nonostante 'OWPlus Hydrocarbon Push' abbia priorita' FISSA
+-- 17950 (piu' alta del nativo 'U1 Power <90%', 17900). Verificato leggendo Base
+-- Energy.lua: 'U1 Power <90%' non ha ALCUN DelayEqualBuildPlattons (ne' lo scrive
+-- ne' lo controlla, costruisce senza vincoli di marker/cooldown), mentre il nostro
+-- Hydrocarbon Push (copiato fedelmente dal nativo 'U1 Power Hydrocarbon', stessi
+-- parametri inclusa distance=90 per CanBuildOnHydro) resta soggetto sia al
+-- cooldown condiviso CheckBuildPlattonDelay('Energy') sia alla disponibilita' di
+-- un marker Hydrocarbon libero entro 90 unita' (MarkerBuildConditions.lua,
+-- CanBuildOnHydro). Ipotesi: quando CanBuildOnHydro fallisce (marker piu' vicini
+-- gia' costruiti, nessun altro entro 90), il generatore T1 standard (senza questo
+-- vincolo) prende sistematicamente il sopravvento finche' la base non si espande
+-- abbastanza da portare un nuovo marker in raggio. Questo log riporta lo stato
+-- REALE di entrambi i gate ad ogni valutazione, per confermare o escludere.
+function OWPlusDebugHydrocarbonDiag(aiBrain, locationType, label)
+    if OWPlusDebugThrottle(aiBrain, 'HydroDiag_' .. tostring(label), 10) then
+        local t1pgens = table.getn(aiBrain:GetListOfUnits(categories.STRUCTURE * categories.TECH1 * categories.ENERGYPRODUCTION - categories.HYDROCARBON, false) or {})
+        local hydro = table.getn(aiBrain:GetListOfUnits(categories.STRUCTURE * categories.HYDROCARBON, false) or {})
+        local delayOk = UCBCMod.CheckBuildPlattonDelay(aiBrain, 'Energy')
+        local markerOk = MABCMod.CanBuildOnHydro(aiBrain, locationType, 90, -1000, 100, 1, 'AntiSurface', 1)
+        LOG('[OWPlus-DBG] HydrocarbonDiag(' .. tostring(label) .. ') t=' .. tostring(GetGameTimeSeconds())
+            .. 's, T1pgens=' .. tostring(t1pgens) .. ', hydro=' .. tostring(hydro)
+            .. ', CheckBuildPlattonDelay(Energy)=' .. tostring(delayOk)
+            .. ', CanBuildOnHydro(' .. tostring(locationType) .. ')=' .. tostring(markerOk))
+    end
+    return true
 end
