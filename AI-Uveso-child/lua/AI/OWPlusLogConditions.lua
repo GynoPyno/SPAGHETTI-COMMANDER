@@ -44,6 +44,21 @@ function OWPlusOutpostAttackEnabled(aiBrain)
     return not OWPlusOutpostAttackDisabled
 end
 
+-- Sess.98 (richiesta esplicita utente): flag per disattivare la GENERAZIONE di
+-- nuovi avamposti (OWPlusOutpostScanThread, forkato da overwhelmplusai.lua)
+-- senza toccare gli avamposti gia' esistenti in partita -- stesso pattern e
+-- stesso motivo dei due flag sopra (interruttore per isolare test senza dover
+-- commentare/rimuovere codice, checklist-sviluppo.md sez.2).
+OWPlusOutpostExpansionDisabled = true
+
+function OWPlusOutpostExpansionAllowed()
+    if OWPlusOutpostExpansionDisabled then
+        LOG('[OWPlus-DBG] OWPlusOutpostScanThread: NON avviato (test disattivazione espansione avamposti attivo)')
+        return false
+    end
+    return true
+end
+
 -- Fase D1 (B24): assegna il "tipo" di produzione dell'avamposto UNA sola volta
 -- (mono-categoria: bot/carri/artiglieria, 1/3 di probabilita' ciascuna — la
 -- distinzione carri vs bot decisa in sess.90 dopo aver verificato che

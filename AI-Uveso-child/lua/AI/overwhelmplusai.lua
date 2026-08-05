@@ -5,6 +5,9 @@
 
 local UvesoAIBrainClass = import('/mods/AI-Uveso/lua/ai/uveso-ai.lua').AIBrain
 local OWPlusOutpostGen = import('/mods/AI-Uveso-child/lua/AI/OWPlusOutpostGenerator.lua')
+-- Sess.98: import esplicito (non affidarsi a un global condiviso non verificato,
+-- regola 22 -- serve per leggere il flag OWPlusOutpostExpansionDisabled sotto).
+local OWPlusLogConditionsMod = import('/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua')
 
 -- Fase 9-F13: cerca un punto valido lungo la diagonale (segnoX, segnoZ) partendo
 -- da (startX, startZ), provando piu' distanze finche' il terreno non supera il check
@@ -84,7 +87,12 @@ AIBrain = Class(UvesoAIBrainClass) {
         -- la partita, stesso pattern di PriorityManagerThread/LocationRangeManagerThread
         -- di Uveso in aiarchetype-managerloader.lua — MAI forkare da un platoon/unita',
         -- che muore quando quell'oggetto viene distrutto/disbandato).
-        self:ForkThread(OWPlusOutpostGen.OWPlusOutpostScanThread)
+        -- Sess.98 (richiesta esplicita utente): guardia su OWPlusOutpostExpansionDisabled
+        -- (OWPlusLogConditions.lua) -- disattiva SOLO la generazione di nuovi avamposti,
+        -- gli avamposti gia' esistenti in partita non vengono toccati.
+        if OWPlusLogConditionsMod.OWPlusOutpostExpansionAllowed() then
+            self:ForkThread(OWPlusOutpostGen.OWPlusOutpostScanThread)
+        end
     end,
 
     -- Fix sess.77: root cause reale del "buco nero" post tier-up inseguito per
