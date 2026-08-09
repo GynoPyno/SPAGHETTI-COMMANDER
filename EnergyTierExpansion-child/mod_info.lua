@@ -1,0 +1,14 @@
+name = "Energy Tier Expansion"
+uid = "C7D8E9F0-1A2B-4C3D-9E8F-6A5B4C3D2E1F"
+version = 1
+description = "Aggiunge un tier T4 per i generatori di energia standard (tutte le fazioni), potenziamento in-place dal T3, nessuna dipendenza da altre mod"
+author = ""
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+requires = {}
+requiresNames = {}
+conflicts = {}
+before = {}
+after = {}

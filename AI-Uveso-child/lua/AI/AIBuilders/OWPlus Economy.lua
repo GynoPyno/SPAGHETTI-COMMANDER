@@ -157,7 +157,11 @@ BuilderGroup {
             { OWPlusLogCond, 'OWPlusMassStorageBuildThrottle', { 'Mass Storage T1' } },
             -- Sess.94: tetto assoluto (era 16) rimosso su richiesta esplicita utente
             { UCBC, 'HaveUnitRatioVersusCap',           { MaxCapMass, '<', categories.STRUCTURE * (categories.MASSEXTRACTION + categories.MASSFABRICATION + categories.MASSSTORAGE) }},
-            { UCBC, 'AdjacencyCheck',                   { 'LocationType', categories.STRUCTURE * categories.MASSEXTRACTION * (categories.TECH2 + categories.TECH3), 60, 'ueb1106' }},
+            -- Sess.98 (richiesta esplicita utente): 60->9999 (praticamente mappa
+            -- intera) -- AdjacencyCheck calcola sempre dal punto base del
+            -- BuilderManager (mai dalla posizione dell'ingegnere), quindi con
+            -- avamposti disattivati MAIN da solo non copriva estrattori lontani.
+            { UCBC, 'AdjacencyCheck',                   { 'LocationType', categories.STRUCTURE * categories.MASSEXTRACTION * (categories.TECH2 + categories.TECH3), 9999, 'ueb1106' }},
             -- Sess.95 (ter): sostituisce il gate di fase (rimosso, legava i magazzini
             -- all'80% di copertura sugli estrattori -- irraggiungibile con estrattori
             -- sparsi) con un pavimento leggero e indipendente: basta che la Fase 1
@@ -167,7 +171,8 @@ BuilderGroup {
         BuilderData = {
             Construction = {
                 AdjacencyCategory = categories.STRUCTURE * categories.MASSEXTRACTION * (categories.TECH2 + categories.TECH3),
-                AdjacencyDistance = 60,
+                -- Sess.98: 60->9999, stesso motivo del gate sopra (mappa intera).
+                AdjacencyDistance = 9999,
                 BuildClose = false,
                 BuildStructures = { 'MassStorage' },
             }
@@ -194,7 +199,8 @@ BuilderGroup {
             -- condiviso tra le due varianti (stessa MASSSTORAGE category), coerente
             -- con l'originale (anche il tetto fisso 1 era condiviso tra T1 e T2 Eng).
             { OWPlusLogCond, 'OWPlusMassStorageBuildThrottle', { 'Mass Storage T2' } },
-            { UCBC, 'AdjacencyCheck',                   { 'LocationType', categories.MASSEXTRACTION * categories.TECH3, 60, 'ueb1106' }},
+            -- Sess.98: 60->9999, stesso motivo del builder T1 Eng sopra.
+            { UCBC, 'AdjacencyCheck',                   { 'LocationType', categories.MASSEXTRACTION * categories.TECH3, 9999, 'ueb1106' }},
             -- Sess.94: tetto assoluto (era 32) rimosso su richiesta esplicita utente
             { UCBC, 'HaveUnitRatioVersusCap',           { MaxCapMass, '<', categories.STRUCTURE * (categories.MASSEXTRACTION + categories.MASSFABRICATION + categories.MASSSTORAGE) }},
             -- Sess.95 (ter): stesso pavimento leggero del builder T1 Eng sopra
@@ -203,7 +209,8 @@ BuilderGroup {
         BuilderData = {
             Construction = {
                 AdjacencyCategory = 'MASSEXTRACTION TECH3',
-                AdjacencyDistance = 60,
+                -- Sess.98: 60->9999, stesso motivo del builder T1 Eng sopra.
+                AdjacencyDistance = 9999,
                 BuildClose = false,
                 BuildStructures = { 'MassStorage' },
             }
@@ -243,12 +250,13 @@ BuilderGroup {
             { OWPlusLogCond, 'OWPlusDebugEconStorageRatio', { 0.1, 0.50, 'Energy Storage T1' } },
             { UCBC, 'HaveLessThanUnitsInCategoryBeingBuilt', { 1, categories.STRUCTURE * categories.ENERGYSTORAGE }},
             { UCBC, 'HaveLessThanUnitsWithCategory',    { 48, categories.STRUCTURE * categories.ENERGYSTORAGE }},
-            { UCBC, 'AdjacencyCheck',                   { 'LocationType', categories.STRUCTURE * categories.ENERGYPRODUCTION * (categories.TECH2 + categories.TECH3), 60, 'ueb1105' }},
+            -- Sess.98: 60->9999, stesso motivo dei builder magazzino massa.
+            { UCBC, 'AdjacencyCheck',                   { 'LocationType', categories.STRUCTURE * categories.ENERGYPRODUCTION * (categories.TECH2 + categories.TECH3), 9999, 'ueb1105' }},
         },
         BuilderData = {
             Construction = {
                 AdjacencyCategory = categories.STRUCTURE * categories.ENERGYPRODUCTION * (categories.TECH2 + categories.TECH3),
-                AdjacencyDistance = 60,
+                AdjacencyDistance = 9999,
                 BuildClose = false,
                 BuildStructures = { 'EnergyStorage' },
             }
@@ -272,13 +280,14 @@ BuilderGroup {
             { UCBC, 'CheckBuildPlattonDelay',           { 'ENERGYSTORAGE' }},
             { OWPlusLogCond, 'OWPlusDebugEconStorageRatio', { 0.1, 0.50, 'Energy Storage T2' } },
             { UCBC, 'HaveLessThanUnitsInCategoryBeingBuilt', { 1, categories.STRUCTURE * categories.ENERGYSTORAGE }},
-            { UCBC, 'AdjacencyCheck',                   { 'LocationType', categories.ENERGYPRODUCTION * categories.TECH3, 60, 'ueb1105' }},
+            -- Sess.98: 60->9999, stesso motivo dei builder sopra.
+            { UCBC, 'AdjacencyCheck',                   { 'LocationType', categories.ENERGYPRODUCTION * categories.TECH3, 9999, 'ueb1105' }},
             { UCBC, 'HaveLessThanUnitsWithCategory',    { 96, categories.STRUCTURE * categories.ENERGYSTORAGE }},
         },
         BuilderData = {
             Construction = {
                 AdjacencyCategory = 'ENERGYPRODUCTION TECH3',
-                AdjacencyDistance = 60,
+                AdjacencyDistance = 9999,
                 BuildClose = false,
                 BuildStructures = { 'EnergyStorage' },
             }
@@ -339,7 +348,11 @@ BuilderGroup {
             -- dell'hydrocarbon (piu' economico e utile prima). Soglia energy (2.0)
             -- invariata, resta l'unico vincolo economico.
             { OWPlusLogCond, 'OWPlusDebugEconIncome', { 0, 2.0, 'Hydrocarbon Push' } },
-            { MABC, 'CanBuildOnHydro', { 'LocationType', 90, -1000, 100, 1, 'AntiSurface', 1 }},
+            -- Sess.98 (richiesta esplicita utente, mappa Astrocraters Rich Huge
+            -- 6x6): 90->9999 -- 8-10 depositi vicini allo spawn, solo 2 sfruttati
+            -- (stesso limite di raggio fisso gia' documentato in sess.98, ora
+            -- portato a "mappa intera" come per l'adiacenza magazzini).
+            { MABC, 'CanBuildOnHydro', { 'LocationType', 9999, -1000, 100, 1, 'AntiSurface', 1 }},
             { UCBC, 'HaveUnitRatioVersusCap', { MaxCapStructure, '<', categories.STRUCTURE - categories.MASSEXTRACTION - categories.DEFENSE - categories.FACTORY } },
             -- Sess.94: diagnostica temporanea (LOG+true) — quanti hydrocarbon T1 costruiti nel tempo
             { OWPlusLogCond, 'OWPlusDebugUpgradeProgress', { categories.STRUCTURE * categories.HYDROCARBON, categories.STRUCTURE * categories.HYDROCARBON, 'Hydrocarbon Count' } },

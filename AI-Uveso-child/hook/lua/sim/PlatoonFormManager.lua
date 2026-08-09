@@ -21,6 +21,19 @@
 -- a livello Lua). Diagnosi conclusa, builder rimosso (vedi 'OWPlus Economy
 -- Upgrade.lua' e hook/lua/platoon.lua per il meccanismo sostitutivo) --
 -- rimossa anche la relativa estensione diagnostica qui.
+--
+-- Sess.98 (bis): riusato per 'OWPlus Energy Generator Upgrade T4' -- il fix
+-- BuildableCategory ha sbloccato il PRIMO upgrade (T4=1 confermato in game).
+-- Diagnosi InstanceCount confermata (CheckInstanceCount=false permanente
+-- dopo il primo successo) e fix implementato (subclass UnitUpgradeAI,
+-- hook/lua/platoon.lua). Rimossa la chiamata diagnostica a CanFormPlatoon
+-- qui: sospetto (non confermato) che chiamarla "a vuoto" come sonda possa
+-- interferire con la chiamata reale del motore subito dopo (stessa risorsa
+-- condivisa ArmyPool) -- un test successivo con questa sonda attiva ha
+-- mostrato zero tentativi di upgrade nonostante candidati disponibili,
+-- diversamente dal test precedente senza rilanci ravvicinati della sonda.
+-- Da rivalutare se necessario, ma per ora si preferisce non rischiare falsi
+-- negativi nei test futuri.
 
 local prevClass = PlatoonFormManager
 

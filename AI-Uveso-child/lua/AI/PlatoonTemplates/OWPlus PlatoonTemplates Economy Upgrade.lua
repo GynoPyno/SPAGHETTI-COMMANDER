@@ -74,3 +74,17 @@ PlatoonTemplate {
         Seraphim = { { 'exsbest2', 0, 1, 'attack', 'None' } },
     }
 }
+
+-- Sess.98 (richiesta esplicita utente): generatore energia T4 (nuova mod
+-- standalone EnergyTierExpansion-child, non Jaggeds). Sorgente T3 vanilla
+-- (ueb1301 & co.), stesso meccanismo IssueUpgrade via General.UpgradesTo.
+PlatoonTemplate {
+    Name = 'OWPlusEnergyGeneratorUpgradeT4',
+    Plan = 'UnitUpgradeAI',
+    FactionSquads = {
+        UEF = { { 'ueb1301', 0, 1, 'attack', 'None' } },
+        Aeon = { { 'uab1301', 0, 1, 'attack', 'None' } },
+        Cybran = { { 'urb1301', 0, 1, 'attack', 'None' } },
+        Seraphim = { { 'xsb1301', 0, 1, 'attack', 'None' } },
+    }
+}

@@ -1,0 +1,21 @@
+-- Override merge su unita' vanilla (UEF T3 Power Generator) -- aggancia la
+-- catena di upgrade verso il nuovo T4.
+-- Sess.98 fix: General.UpgradesTo da solo NON basta -- v:CanBuild(upgradeID)
+-- (controllato da UnitUpgradeAI nativo prima di issuare l'upgrade) fallisce
+-- senza anche Economy.BuildableCategory. Confermato leggendo il pattern
+-- REALE di Jaggeds (hook/units/MassStorage.bp e simili, TUTTI gli step della
+-- catena inclusi euabmst3->bab1106, l'analogo piu' vicino al nostro T3->T4).
+UnitBlueprint {
+    Merge = true,
+    BlueprintId = "ueb1301",
+
+    Economy = {
+        BuildableCategory = {
+            "ueb1401",
+        },
+        BuildRate = 20,
+    },
+    General = {
+        UpgradesTo = "ueb1401",
+    },
+}

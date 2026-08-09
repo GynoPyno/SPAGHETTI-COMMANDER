@@ -308,8 +308,16 @@ local function OWPlusExtractorUpgrade(self, aiBrain, MassExtractorUnitList, rati
         UnitPos = v:GetPosition()
         DistanceToBase= VDist2(BasePosition[1] or 0, BasePosition[3] or 0, UnitPos[1] or 0, UnitPos[3] or 0)
         if not LowestDistanceToBase or DistanceToBase < LowestDistanceToBase then
-            -- Get the factionindex from the unit to get the right update (in case we have captured this unit from another faction)
-            UnitBeingUpgradeFactionIndex = FactionToIndex[string.upper(v.Blueprint.General.FactionName)] or factionIndex
+            -- Sess.98 (richiesta esplicita utente, indagine dedicata estrattori T4):
+            -- v.Blueprint.FactionCategory sostituisce string.upper(v.Blueprint.
+            -- General.FactionName) -- stesso campo usato dal nativo UnitUpgradeAI,
+            -- gia' pre-calcolato dal motore al caricamento blueprint
+            -- (system/Blueprints.lua: bp.FactionCategory = string.upper(bp.General.
+            -- FactionName or 'Unknown')) con fallback sicuro se il campo manca.
+            -- Ipotesi migliore trovata per la mancata risoluzione dell'upgrade
+            -- estrattori T3->T4 (nessun successo mai osservato su ueb1302
+            -- nonostante migliaia di tentativi in un test manuale) -- da validare.
+            UnitBeingUpgradeFactionIndex = FactionToIndex[v.Blueprint.FactionCategory] or factionIndex
             -- see if we can find a upgrade
             if EntityCategoryContains(categories.MOBILE, v) then
                 TempID = aiBrain:FindUpgradeBP(v:GetUnitId(), UnitUpgradeTemplates[UnitBeingUpgradeFactionIndex])
@@ -341,7 +349,19 @@ local function OWPlusExtractorUpgrade(self, aiBrain, MassExtractorUnitList, rati
     -- funzione non appena UNA SOLA unita' era gia' in upgrade. Applicato QUI
     -- (prima del blocco economico, non piu' dentro), cosi' il tetto vale
     -- SEMPRE, anche nel raro caso di economia sana che prima lo bypassava.
-    local maxParallel = math.max(4, math.floor(table.getn(MassExtractorUnitList) * 0.20))
+    -- Sess.98 (bis): tetto FISSO 5 per il salto T3->T4 (richiesta esplicita
+    -- utente), separato dal tetto proporzionale sopra -- con centinaia di
+    -- estrattori (es. 337) il 20% supera facilmente le decine in parallelo,
+    -- qui vogliamo un numero piccolo e indipendente dalla scala della mappa.
+    local maxParallel
+    if techLevel == 'TECH3' then
+        maxParallel = 5
+        if OWPlusLogConditionsMod.OWPlusDebugThrottle(aiBrain, 'ExtractorT3T4MaxParallel', 15) then
+            LOG('[OWPlus-DBG] OWPlusExtractorUpgrade(TECH3->TECH4): OK, tetto fisso applicato (inUpgrade=' .. tostring(UpgradingBuilding) .. '/' .. tostring(maxParallel) .. ')')
+        end
+    else
+        maxParallel = math.max(4, math.floor(table.getn(MassExtractorUnitList) * 0.20))
+    end
     if UpgradingBuilding >= maxParallel then
         return false
     end
@@ -372,6 +392,110 @@ end
 
 CopyOfOldPlatoonClassOWPlusChild = Platoon
 Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
+
+    -- Sess.98 (richiesta esplicita utente, indagine dedicata): subclass di
+    -- 'UnitUpgradeAI' NATIVO (motore, /lua/platoon.lua) -- copia fedele,
+    -- unica differenza un rilascio esplicito dello slot InstanceCount prima
+    -- del controllo 'aiBrain:PlatoonExists(self)'.
+    --
+    -- BUG NATIVO TROVATO: 'RemoveHandle' (che libera lo slot InstanceCount
+    -- del Builder, vedi Builder.lua StoreHandle/RemoveHandle) viene chiamato
+    -- SOLO da dentro 'PlatoonDisband()'. Ma il codice nativo, dopo il loop
+    -- d'attesa fine-upgrade, fa `if not aiBrain:PlatoonExists(self) then
+    -- return end` PRIMA di chiamare PlatoonDisband() -- se la mini-platoon
+    -- "carrier" (1 sola unita', quella che sta per essere sostituita
+    -- dall'upgrade) risulta gia' non-esistente per aiBrain a quel punto
+    -- (l'unita' sorgente viene distrutta+ricreata dall'upgrade, stessa
+    -- meccanica di regola 20b/memoria progetto), il ramo salta interamente
+    -- PlatoonDisband() -- e quindi RemoveHandle() non viene MAI chiamato,
+    -- lo slot InstanceCount resta 'ActivePlatoon' per il resto della
+    -- partita. Confermato in game (sess.98, generatore energia T4,
+    -- InstanceCount=1): primo upgrade riuscito, poi CheckInstanceCount()
+    -- risultato permanentemente false per ~13 minuti successivi nonostante
+    -- gate sempre vero e candidati disponibili (hook diagnostico dedicato su
+    -- PlatoonFormManager.lua). Il fix e' un rilascio esplicito e
+    -- IDEMPOTENTE (PlatoonDisband, se poi eseguito comunque, ritrova
+    -- BuilderHandle=nil e non fa nulla di male chiamando RemoveHandle su un
+    -- builder gia' liberato -- RemoveHandle si limita a riscrivere lo stesso
+    -- stato 'Available').
+    --
+    -- Impatto: essendo un subclass della classe Platoon GLOBALE (stesso
+    -- pattern di ExtractorUpgradeAI sotto), il fix si applica a QUALUNQUE
+    -- builder che usi Plan='UnitUpgradeAI' in tutto il gioco (inclusi quelli
+    -- gia' esistenti con InstanceCount basso, es. Energy/Mass Storage
+    -- Upgrade T2/T3) -- corretto per scope, non e' un bug specifico del
+    -- nuovo builder generatori, e' strutturale al meccanismo nativo stesso.
+    UnitUpgradeAI = function(self)
+        local aiBrain = self:GetBrain()
+        local platoonUnits = self:GetPlatoonUnits()
+        local factionIndex = aiBrain:GetFactionIndex()
+        local FactionToIndex  = { UEF = 1, AEON = 2, CYBRAN = 3, SERAPHIM = 4, NOMADS = 5}
+        local UnitBeingUpgradeFactionIndex = nil
+        local upgradeIssued = false
+        self:Stop()
+        for k, v in platoonUnits do
+            local upgradeID
+            UnitBeingUpgradeFactionIndex = FactionToIndex[v.Blueprint.FactionCategory] or factionIndex
+            if self.PlatoonData.OverideUpgradeBlueprint then
+                local tempUpgradeID = self.PlatoonData.OverideUpgradeBlueprint[UnitBeingUpgradeFactionIndex]
+                if not tempUpgradeID then
+                    -- OverideUpgradeBlueprint vuoto per questa fazione: nessun log (comportamento nativo, silenzioso)
+                elseif type(tempUpgradeID) ~= 'string' then
+                    WARN('[OWPlus-child UnitUpgradeAI] OverideUpgradeBlueprint ' .. tostring(v.UnitId) .. ' failed. (Override unit not present.)')
+                elseif v:CanBuild(tempUpgradeID) then
+                    upgradeID = tempUpgradeID
+                else
+                    WARN('[OWPlus-child UnitUpgradeAI] OverideUpgradeBlueprint ' .. tostring(v.UnitId) .. ':CanBuild( ' .. tempUpgradeID .. ' ) failed. (Override tree not available, upgrading to default instead.)')
+                end
+            end
+            if not upgradeID and EntityCategoryContains(categories.MOBILE, v) then
+                upgradeID = aiBrain:FindUpgradeBP(v.UnitId, UpgradeTemplatesMod.UnitUpgradeTemplates[UnitBeingUpgradeFactionIndex])
+                if not upgradeID then
+                    WARN('[OWPlus-child UnitUpgradeAI] Can\'t find UnitUpgradeTemplate for mobile unit: ' .. tostring(v.UnitId))
+                end
+            elseif not upgradeID then
+                upgradeID = aiBrain:FindUpgradeBP(v.UnitId, UpgradeTemplatesMod.StructureUpgradeTemplates[UnitBeingUpgradeFactionIndex])
+                if not upgradeID then
+                    WARN('[OWPlus-child UnitUpgradeAI] Can\'t find StructureUpgradeTemplate for structure: ' .. tostring(v.UnitId) .. '  faction: ' .. tostring(v.Blueprint.FactionCategory))
+                end
+            end
+            if upgradeID and EntityCategoryContains(categories.STRUCTURE, v) and not v:CanBuild(upgradeID) then
+                WARN('[OWPlus-child UnitUpgradeAI] ' .. tostring(v.UnitId) .. ':CanBuild( ' .. upgradeID .. ' ) failed!')
+                continue
+            end
+            if upgradeID then
+                upgradeIssued = true
+                IssueUpgrade({v}, upgradeID)
+            end
+        end
+        if not upgradeIssued then
+            self:PlatoonDisband()
+            return
+        end
+        local upgrading = true
+        while aiBrain:PlatoonExists(self) and upgrading do
+            WaitSeconds(3)
+            upgrading = false
+            for k, v in platoonUnits do
+                if v and not v.Dead then
+                    upgrading = true
+                end
+            end
+        end
+        -- FIX (vedi commento sopra): rilascio esplicito PRIMA del controllo
+        -- PlatoonExists, che nel nativo puo' saltare interamente
+        -- PlatoonDisband()/RemoveHandle() lasciando lo slot occupato per sempre.
+        if self.BuilderHandle then
+            LOG('[OWPlus-DBG] UnitUpgradeAI: OK, rilascio esplicito InstanceCount slot (fix leak nativo) per builder "' .. tostring(self.BuilderName) .. '"')
+            self.BuilderHandle:RemoveHandle(self)
+            self.BuilderHandle = nil
+        end
+        if not aiBrain:PlatoonExists(self) then
+            return
+        end
+        WaitTicks(1)
+        self:PlatoonDisband()
+    end,
 
     -- Sess.94: subclass di 'ExtractorUpgradeAI' (AI-Uveso, hook/lua/platoon.lua
     -- righe 1073-1156) -- copia fedele del loop coroutine nativo, unica
@@ -503,7 +627,7 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                         -- gia' comprovato funzionante per T1->T2 e T2->T3 sullo stesso tipo
                         -- di unita'. Stesso pattern di trigger (population share 80%) del
                         -- ramo T1->T2 sotto, per coerenza.
-                        if OWPlusLogConditionsMod.OWPlusPopulationShareAtLeast(aiBrain, 0.80,
+                        if OWPlusLogConditionsMod.OWPlusPopulationShareAtLeast(aiBrain, 0.30,
                             categories.MASSEXTRACTION * categories.TECH3,
                             categories.MASSEXTRACTION * (categories.TECH2 + categories.TECH3),
                             'Extractor T2->T3 trigger') then

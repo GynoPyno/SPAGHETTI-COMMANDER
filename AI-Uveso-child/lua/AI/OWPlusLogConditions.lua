@@ -1029,11 +1029,41 @@ function OWPlusDebugHydrocarbonDiag(aiBrain, locationType, label)
         local t1pgens = table.getn(aiBrain:GetListOfUnits(categories.STRUCTURE * categories.TECH1 * categories.ENERGYPRODUCTION - categories.HYDROCARBON, false) or {})
         local hydro = table.getn(aiBrain:GetListOfUnits(categories.STRUCTURE * categories.HYDROCARBON, false) or {})
         local delayOk = UCBCMod.CheckBuildPlattonDelay(aiBrain, 'Energy')
-        local markerOk = MABCMod.CanBuildOnHydro(aiBrain, locationType, 90, -1000, 100, 1, 'AntiSurface', 1)
+        -- Sess.98: 90->9999, coerente con il valore reale usato dal gate (sopra).
+        local markerOk = MABCMod.CanBuildOnHydro(aiBrain, locationType, 9999, -1000, 100, 1, 'AntiSurface', 1)
         LOG('[OWPlus-DBG] HydrocarbonDiag(' .. tostring(label) .. ') t=' .. tostring(GetGameTimeSeconds())
             .. 's, T1pgens=' .. tostring(t1pgens) .. ', hydro=' .. tostring(hydro)
             .. ', CheckBuildPlattonDelay(Energy)=' .. tostring(delayOk)
             .. ', CanBuildOnHydro(' .. tostring(locationType) .. ')=' .. tostring(markerOk))
+    end
+    return true
+end
+
+-- Sess.98: diagnostica NEUTRA (LOG+true, non blocca mai) per il nuovo builder
+-- 'OWPlus Energy Generator Upgrade T4' (EnergyTierExpansion-child) -- T3 e T4
+-- condividono le stesse Categories (stesso schema Jaggeds, 'TECH3' non
+-- 'TECH4', non esiste una vera categoria distinta), quindi il consueto
+-- OWPlusDebugUpgradeProgress (basato su categorie sorgente/destinazione) non
+-- puo' distinguerli. Qui la distinzione avviene per ID UNITA' ESATTO (i 4 ID
+-- T4 sono noti e fissi, definiti in EnergyTierExpansion-child).
+local OWPLUS_T4_ENERGY_GEN_IDS = { ueb1401 = true, uab1401 = true, urb1401 = true, xsb1401 = true }
+
+function OWPlusDebugEnergyGeneratorT4Progress(aiBrain, sourceCategory, label)
+    if OWPlusDebugThrottle(aiBrain, 'EnergyGenT4Progress_' .. tostring(label), 15) then
+        local units = aiBrain:GetListOfUnits(sourceCategory, false) or {}
+        local t3count = 0
+        local t4count = 0
+        for _, u in units do
+            if u and not u.Dead then
+                if OWPLUS_T4_ENERGY_GEN_IDS[string.lower(tostring(u.UnitId))] then
+                    t4count = t4count + 1
+                else
+                    t3count = t3count + 1
+                end
+            end
+        end
+        LOG('[OWPlus-DBG] EnergyGeneratorT4Progress(' .. tostring(label) .. ') T3=' .. tostring(t3count)
+            .. ', T4=' .. tostring(t4count) .. ' (t=' .. tostring(GetGameTimeSeconds()) .. 's)')
     end
     return true
 end

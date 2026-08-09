@@ -1,0 +1,146 @@
+UnitBlueprint{
+    Description = "<LOC urb1401_desc>Advanced Power Generator",
+    AI = {
+        TargetBones = {
+            "Target01",
+            "Target02",
+            "Target03",
+            "Target04",
+        },
+    },
+    Adjacency = "T3PowerGeneratorAdjacencyBuffs",
+    Audio = {
+        ActiveLoop     = Sound { Bank = 'URB',        Cue = 'URB1301_Active',             LodCutoff = 'UnitMove_LodCutoff' },
+        DeathExplosion = Sound { Bank = 'URLDestroy', Cue = 'URB_Destroy_Lrg_PreDestroy', LodCutoff = 'UnitMove_LodCutoff' },
+        Destroyed      = Sound { Bank = 'URLDestroy', Cue = 'URB_Destroy_Huge',           LodCutoff = 'UnitMove_LodCutoff' },
+        DoneBeingBuilt = Sound { Bank = 'URB',        Cue = 'URB1301_Activate',           LodCutoff = 'UnitMove_LodCutoff' },
+        UISelection    = Sound { Bank = 'Interface',  Cue = 'Cybran_Select_Resource',     LodCutoff = 'UnitMove_LodCutoff' },
+    },
+    AverageDensity = 6000,
+    BuildIconSortPriority = 70,
+    Categories = {
+        "BUILTBYTIER3COMMANDER",
+        "BUILTBYTIER3ENGINEER",
+        "CYBRAN",
+        "DRAGBUILD",
+        "ECONOMIC",
+        "ENERGYPRODUCTION",
+        "PRODUCTSC1",
+        "RECLAIMABLE",
+        "SELECTABLE",
+        "SIZE16",
+        "SORTECONOMY",
+        "STRUCTURE",
+        "TECH3",
+        "VISIBLETORECON",
+        "VOLATILE",
+    },
+    Defense = {
+        ArmorType = "Structure",
+        EconomyThreatLevel = 310,
+        Health = 6000,
+        MaxHealth = 6000,
+        RegenRate = 20,
+    },
+    Display = {
+        Abilities = { "<LOC ability_deathaoe>Volatile" },
+        Mesh = {
+            IconFadeInZoom = 130,
+            LODs = {
+                {
+                    LODCutoff = 200,
+                    ShaderName = "Insect",
+                },
+                {
+                    LODCutoff = 300,
+                    ShaderName = "Insect",
+                },
+            },
+        },
+        -- Riusa il modello/texture del T3 (nessun asset 3D nuovo per il v1,
+        -- richiesta esplicita utente) -- stesso meccanismo gia' in uso da
+        -- Jaggeds Infrastructure Pack per BAB1106/BEB1106/BRB1106/BSB1106.
+        PlaceholderMeshName = "URB1301",
+        Tarmacs = {
+            {
+                Albedo = "Tarmacs/Tar12x_cybran_01_albedo",
+                DeathLifetime = 300,
+                FadeOut = 150,
+                Length = 12.8,
+                Normal = "Tarmacs/Tar12x_cybran_01_normals",
+                Orientations = { 0, 90, 180, 270 },
+                RemoveWhenDead = false,
+                Width = 12.8,
+            },
+        },
+        UniformScale = 0.09,
+    },
+    Economy = {
+        -- Sess.98: valori FINALI concordati con l'utente -- produzione alzata
+        -- a 8000 (da 7500), costo massa/energia scalato in proporzione
+        -- (x8000/7500, stessa efficienza 0.0473 energia/sec per energia di
+        -- costo). Build time invariato a 15000 (non parte della richiesta).
+        -- Stessa scala del T4 UEF (baseline T3 identica su tutte le fazioni).
+        AdjacentStructureEnergyMod = -5,
+        BuildCostEnergy = 168960,
+        BuildCostMass = 9216,
+        BuildTime = 15000,
+        ProductionPerSecondEnergy = 8000,
+        RebuildBonusIds = { "urb1401" },
+    },
+    Footprint = {
+        SizeX = 5,
+        SizeZ = 5,
+    },
+    General = {
+        FactionName = "Cybran",
+        Icon = "land",
+        SelectionPriority = 5,
+        TechLevel = "RULEUTL_Secret",
+        UnitName = "<LOC urb1401_name>Ion Reactor Mk.II",
+        UpgradesFrom = "urb1301",
+    },
+    Intel = { VisionRadius = 20 },
+    LifeBarHeight = 0.075,
+    LifeBarOffset = 2.25,
+    LifeBarSize = 5,
+    Physics = {
+        DragCoefficient = 0.2,
+        FlattenSkirt = true,
+        MaxGroundVariation = 1.1,
+        MotionType = "RULEUMT_None",
+        SkirtOffsetX = -1.5,
+        SkirtOffsetZ = -1.5,
+        SkirtSizeX = 8,
+        SkirtSizeZ = 8,
+    },
+    SelectionSizeX = 3.1,
+    SelectionSizeZ = 3.1,
+    SelectionThickness = 0.35,
+    CollisionOffsetY = -0.25,
+    SizeX = 4,
+    SizeY = 3,
+    SizeZ = 4,
+    StrategicIconName = "icon_structure3_energy",
+    StrategicIconSortPriority = 240,
+    Weapon = {
+        {
+            Damage = 5500,
+            DamageFriendly = true,
+            DamageRadius = 10,
+            DamageType = "DeathExplosion",
+            DisplayName = "Death Weapon",
+            DummyWeapon = true,
+            Label = "DeathWeapon",
+            WeaponCategory = "Death",
+        },
+    },
+    Wreckage = {
+        Blueprint = "/props/DefaultWreckage/DefaultWreckage_prop.bp",
+        EnergyMult = 0,
+        HealthMult = 0.9,
+        MassMult = 0.9,
+        ReclaimTimeMultiplier = 1,
+        WreckageLayers = { Land = true },
+    },
+}

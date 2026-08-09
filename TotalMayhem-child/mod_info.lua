@@ -1,0 +1,14 @@
+name = "Total Mayhem - Child"
+uid = "D4E5F6A7-8B9C-4D0E-AF12-3B4C5D6E7F80"
+version = 1
+description = "Rende non costruibile (built by vuoto) 'Overlook'/'Hacker'/'Finther'/'Uyal Ha-Esel' (BRM/BRN/BRO/BRPBT1PERI) e 'Sky-Force' (BRNBAAFAC) -- strutture TotalMayhem costruibili sui depositi di idrocarburo che non producono energia e confondono l'AI al posto della vera centrale"
+author = ""
+selectable = true
+enabled = true
+exclusive = false
+ui_only = false
+requires = { "62e2j64a-TOMA-3652-01370-146as555a8u3" }
+requiresNames = { "Total Mayhem" }
+conflicts = {}
+before = {}
+after = { "62e2j64a-TOMA-3652-01370-146as555a8u3" }

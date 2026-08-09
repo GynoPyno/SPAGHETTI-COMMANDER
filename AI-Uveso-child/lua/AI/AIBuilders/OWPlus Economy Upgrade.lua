@@ -131,4 +131,35 @@ BuilderGroup {
         },
         BuilderType = 'Any',
     },
+
+    -- Sess.98 (richiesta esplicita utente): potenziamento generatori di energia
+    -- T3->T4 (mod standalone EnergyTierExpansion-child) -- risponde al crunch
+    -- energetico segnalato a fine partita (prima di Paragon/equivalente
+    -- Seraphim). Gate PLACEHOLDER: stesso pattern assoluto+ratio gia' in uso
+    -- per Energy Storage Upgrade T2/T3 sopra, per coerenza -- soglie da
+    -- affinare con l'utente (non ancora testate in game).
+    --
+    -- NOTA: a differenza del magazzino ibrido T4 (Jaggeds, distinguibile da T3
+    -- via MASSSTORAGE*ENERGYSTORAGE insieme), il T4 generatore qui ha
+    -- Categories IDENTICHE al T3 (stesso schema Jaggeds: 'TECH3' non 'TECH4',
+    -- non esiste) -- nessun modo pulito di isolarlo via categoria per un
+    -- diagnostico sorgente/destinazione separato. La verifica di progresso
+    -- passa dal solo log del gate sotto (`inUpgrade` sale quando un upgrade
+    -- viene davvero issuato, stesso principio usato per diagnosticare gli
+    -- estrattori in sess.97-98).
+    Builder {
+        BuilderName = 'OWPlus Energy Generator Upgrade T4',
+        PlatoonTemplate = 'OWPlusEnergyGeneratorUpgradeT4',
+        Priority = 18400,
+        InstanceCount = 1,
+        FormRadius = 10000,
+        BuilderConditions = {
+            { OWPlusLogCond, 'OWPlusEnergyStorageAbsoluteGate', { categories.STRUCTURE * categories.ENERGYPRODUCTION * categories.TECH3, 40000, 0.80, 'Energy Generator Upgrade T4' } },
+            -- Sess.98: diagnostica dedicata (distingue T3/T4 per ID esatto,
+            -- vedi OWPlusLogConditions.lua per il motivo) -- richiesta
+            -- esplicita utente prima del test di verifica.
+            { OWPlusLogCond, 'OWPlusDebugEnergyGeneratorT4Progress', { categories.STRUCTURE * categories.ENERGYPRODUCTION * categories.TECH3, 'Energy Generator T3->T4' } },
+        },
+        BuilderType = 'Any',
+    },
 }
