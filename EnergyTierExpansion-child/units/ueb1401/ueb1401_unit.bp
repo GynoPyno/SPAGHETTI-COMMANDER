@@ -103,6 +103,13 @@ UnitBlueprint{
         SizeZ = 5,
     },
     General = {
+        -- Sess.98 (bis): RIMOSSO CommandCaps.RULEUCC_Upgrade=false (tentativo
+        -- precedente per il bug "upgrade ricliccabile su edificio gia' T4") --
+        -- verificato leggendo TUTTI i comandi RULEUCC_* realmente esistenti nel
+        -- motore (grep sul codice nativo estratto): 'RULEUCC_Upgrade' non e'
+        -- MAI tra questi, nome inventato per analogia, il motore lo ignora
+        -- silenziosamente. Causa del bug ancora da confermare -- vedi
+        -- Riassunto_11.md per lo stato dell'indagine.
         FactionName = "UEF",
         Icon = "land",
         SelectionPriority = 5,

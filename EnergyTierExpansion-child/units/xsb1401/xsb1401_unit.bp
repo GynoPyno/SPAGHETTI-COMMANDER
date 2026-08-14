@@ -97,6 +97,8 @@ UnitBlueprint{
         SizeZ = 5,
     },
     General = {
+        -- Sess.98 (bis): vedi ueb1401_unit.bp per la nota (RULEUCC_Upgrade
+        -- rimosso, comando inesistente nel motore).
         FactionName = "Seraphim",
         Icon = "land",
         SelectionPriority = 5,

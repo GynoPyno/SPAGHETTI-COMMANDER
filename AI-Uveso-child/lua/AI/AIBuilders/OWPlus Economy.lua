@@ -13,6 +13,15 @@ local OWPlusLogCond = '/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua'
 
 local MaxCapMass = 0.10  -- 10% del cap unità per estrattori+storage (mirror di Base Mass.lua)
 local MaxCapStructure = 0.12  -- 12% del cap unità per strutture generiche (mirror di Base Energy.lua, riusato da Hydrocarbon Push)
+-- Sess.98 (bis): tetto DEDICATO per i soli magazzini massa (categoria MASSSTORAGE
+-- da sola, non più condivisa con estrattori/fabbriche). Causa trovata in game:
+-- MaxCapMass sopra è condiviso tra STRUCTURE*(MASSEXTRACTION+MASSFABRICATION+
+-- MASSSTORAGE) — con centinaia di estrattori (economia scalata x10) quel 10%
+-- si esaurisce quasi solo con gli estrattori, lasciando pochissimo margine ai
+-- magazzini (fermi a 22 dopo 31 minuti, 120k massa stoccata, +525/s trend
+-- positivo — il gate non guarda affatto l'economia, solo il conteggio unità).
+-- 0.30 scelto come margine ampio indipendente dalla popolazione estrattori.
+local MaxCapMassStorage = 0.30
 
 -- ============================================================== --
 -- ==  Reclaim T1 Pgens — soglia energia 50% (originale: 100%)  == --
@@ -156,7 +165,11 @@ BuilderGroup {
             -- estrattori T2+/T3 (vedi funzione per il perche') -- HaveLessThanUnitsInCategoryBeingBuilt rimossa
             { OWPlusLogCond, 'OWPlusMassStorageBuildThrottle', { 'Mass Storage T1' } },
             -- Sess.94: tetto assoluto (era 16) rimosso su richiesta esplicita utente
-            { UCBC, 'HaveUnitRatioVersusCap',           { MaxCapMass, '<', categories.STRUCTURE * (categories.MASSEXTRACTION + categories.MASSFABRICATION + categories.MASSSTORAGE) }},
+            -- Sess.98 (bis): tetto condiviso con estrattori/fabbriche (MaxCapMass)
+            -- -> tetto DEDICATO solo massa storage (MaxCapMassStorage) -- il
+            -- condiviso si esauriva quasi solo con gli estrattori (vedi definizione
+            -- di MaxCapMassStorage sopra per i dati del test che ha rivelato il problema).
+            { UCBC, 'HaveUnitRatioVersusCap',           { MaxCapMassStorage, '<', categories.STRUCTURE * categories.MASSSTORAGE }},
             -- Sess.98 (richiesta esplicita utente): 60->9999 (praticamente mappa
             -- intera) -- AdjacencyCheck calcola sempre dal punto base del
             -- BuilderManager (mai dalla posizione dell'ingegnere), quindi con
@@ -202,7 +215,8 @@ BuilderGroup {
             -- Sess.98: 60->9999, stesso motivo del builder T1 Eng sopra.
             { UCBC, 'AdjacencyCheck',                   { 'LocationType', categories.MASSEXTRACTION * categories.TECH3, 9999, 'ueb1106' }},
             -- Sess.94: tetto assoluto (era 32) rimosso su richiesta esplicita utente
-            { UCBC, 'HaveUnitRatioVersusCap',           { MaxCapMass, '<', categories.STRUCTURE * (categories.MASSEXTRACTION + categories.MASSFABRICATION + categories.MASSSTORAGE) }},
+            -- Sess.98 (bis): stesso tetto dedicato del builder T1 Eng sopra
+            { UCBC, 'HaveUnitRatioVersusCap',           { MaxCapMassStorage, '<', categories.STRUCTURE * categories.MASSSTORAGE }},
             -- Sess.95 (ter): stesso pavimento leggero del builder T1 Eng sopra
             { OWPlusLogCond, 'OWPlusMassStorageEligible', { 'Mass Storage T2 Build' } },
         },

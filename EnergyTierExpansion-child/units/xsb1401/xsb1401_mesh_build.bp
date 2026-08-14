@@ -1,0 +1,15 @@
+-- Sess.99: vedi ueb1401_mesh_build.bp per la spiegazione completa -- stesso
+-- fix, applicato per fazione, mesh dedicato per la fase di build/upgrade
+-- riusando gli asset del T3 sorgente Seraphim (xsb1301).
+MeshBlueprint {
+    LODs = {
+        {
+            MeshName = '/units/XSB1301/XSB1301_lod0.scm',
+            AlbedoName = '/units/XSB1301/XSB1301_albedo.dds',
+            NormalsName = '/units/XSB1301/XSB1301_normalsTS.dds',
+            SpecularName = '/units/XSB1301/XSB1301_specteam.dds',
+            ShaderName = 'Unit',
+            LODCutoff = 200,
+        },
+    },
+}

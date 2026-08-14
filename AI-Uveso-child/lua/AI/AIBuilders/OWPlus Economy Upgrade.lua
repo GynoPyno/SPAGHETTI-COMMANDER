@@ -33,6 +33,8 @@
 
 local categories = categories
 local OWPlusLogCond = '/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua'
+local EBC = '/lua/editor/EconomyBuildConditions.lua'
+local UCBC = '/lua/editor/UnitCountBuildConditions.lua'
 
 BuilderGroup {
     BuilderGroupName = 'OWPlus Economy Upgrade',
@@ -132,33 +134,42 @@ BuilderGroup {
         BuilderType = 'Any',
     },
 
-    -- Sess.98 (richiesta esplicita utente): potenziamento generatori di energia
-    -- T3->T4 (mod standalone EnergyTierExpansion-child) -- risponde al crunch
-    -- energetico segnalato a fine partita (prima di Paragon/equivalente
-    -- Seraphim). Gate PLACEHOLDER: stesso pattern assoluto+ratio gia' in uso
-    -- per Energy Storage Upgrade T2/T3 sopra, per coerenza -- soglie da
-    -- affinare con l'utente (non ancora testate in game).
+    -- Sess.98 (bis): RISCRITTO -- il vecchio Plan='UnitUpgradeAI' (PlatoonTemplate
+    -- 'OWPlusEnergyGeneratorUpgradeT4') mostrava lo stesso identico sintomo
+    -- CanFormPlatoon=sempre-falso gia' isolato per gli estrattori: gate
+    -- economico vero e stabile per 20+ minuti (log confermato, sess.98 bis),
+    -- 12 candidati T3 liberi, inUpgrade=0, eppure zero nuovi upgrade tentati.
+    -- Sostituito con lo stesso meccanismo Plan='PlatoonMerger'+AIPlan gia'
+    -- usato con successo dagli estrattori (nativo Uveso, 'Base Mass.lua') --
+    -- MAI passa da CanFormPlatoon. Il gate economico (OWPlusEnergyStorageAbsoluteGate)
+    -- ora vive DENTRO 'OWPlusEnergyGeneratorUpgrade' (hook/lua/platoon.lua),
+    -- chiamato dal loop 'OWPlusEnergyGeneratorUpgradeAI' -- qui restano solo
+    -- le condizioni minime per formare/espandere il plotone merger iniziale,
+    -- stesso pattern del builder nativo 'Extractor upgrade >40 mass'.
     --
     -- NOTA: a differenza del magazzino ibrido T4 (Jaggeds, distinguibile da T3
     -- via MASSSTORAGE*ENERGYSTORAGE insieme), il T4 generatore qui ha
     -- Categories IDENTICHE al T3 (stesso schema Jaggeds: 'TECH3' non 'TECH4',
     -- non esiste) -- nessun modo pulito di isolarlo via categoria per un
     -- diagnostico sorgente/destinazione separato. La verifica di progresso
-    -- passa dal solo log del gate sotto (`inUpgrade` sale quando un upgrade
-    -- viene davvero issuato, stesso principio usato per diagnosticare gli
-    -- estrattori in sess.97-98).
+    -- passa dal log dedicato sotto (`OWPlusDebugEnergyGeneratorT4Progress`).
     Builder {
         BuilderName = 'OWPlus Energy Generator Upgrade T4',
-        PlatoonTemplate = 'OWPlusEnergyGeneratorUpgradeT4',
+        PlatoonTemplate = 'AddToEnergyGeneratorUpgradePlatoon',
         Priority = 18400,
         InstanceCount = 1,
         FormRadius = 10000,
         BuilderConditions = {
-            { OWPlusLogCond, 'OWPlusEnergyStorageAbsoluteGate', { categories.STRUCTURE * categories.ENERGYPRODUCTION * categories.TECH3, 40000, 0.80, 'Energy Generator Upgrade T4' } },
+            { EBC, 'GreaterThanEconIncome', { 4.0, -0.0 } },
+            { UCBC, 'HaveGreaterThanArmyPoolWithCategory', { 0, categories.STRUCTURE * categories.ENERGYPRODUCTION * categories.TECH3 } },
+            { UCBC, 'GreaterThanGameTimeSeconds', { 1 * 60 } },
             -- Sess.98: diagnostica dedicata (distingue T3/T4 per ID esatto,
             -- vedi OWPlusLogConditions.lua per il motivo) -- richiesta
             -- esplicita utente prima del test di verifica.
             { OWPlusLogCond, 'OWPlusDebugEnergyGeneratorT4Progress', { categories.STRUCTURE * categories.ENERGYPRODUCTION * categories.TECH3, 'Energy Generator T3->T4' } },
+        },
+        BuilderData = {
+            AIPlan = 'OWPlusEnergyGeneratorUpgradeAI',
         },
         BuilderType = 'Any',
     },

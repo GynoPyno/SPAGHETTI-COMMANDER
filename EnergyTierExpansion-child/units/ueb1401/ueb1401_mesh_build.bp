@@ -1,0 +1,25 @@
+-- Sess.99: mesh dedicato per la fase di build/upgrade -- il motore cerca
+-- automaticamente <BlueprintId>_mesh_build per convenzione di nome (NON
+-- passa da PlaceholderMeshName, che copre solo il mesh finale -- confermato
+-- dal dev.log: "Failed to load mesh for blueprint .../ueb1401_mesh_build"
+-- ripetuto ad ogni tentativo di upgrade, seguito da "Invalid bone index" in
+-- OnStartBeingBuilt sul T4 e poi in OnStopBuild sul vecchio T3, causa root
+-- del bug "vecchio edificio T3 mai despawnato" osservato in game). Riusa gli
+-- stessi asset del T3 sorgente (nessun modello 3D dedicato per il T4,
+-- richiesta esplicita utente) tramite path assoluto verso gli asset vanilla
+-- -- stesso pattern gia' verificato in uso da Antares Unit Pack e BattlePack
+-- per referenziare asset vanilla da una mod esterna (es. BattlePack/
+-- PersonalShields/DEL0204_PersonalShield_mesh.bp: MeshName =
+-- '/units/DEL0204/DEL0204_lod0.scm').
+MeshBlueprint {
+    LODs = {
+        {
+            MeshName = '/units/UEB1301/UEB1301_lod0.scm',
+            AlbedoName = '/units/UEB1301/UEB1301_albedo.dds',
+            NormalsName = '/units/UEB1301/UEB1301_normalsTS.dds',
+            SpecularName = '/units/UEB1301/UEB1301_specteam.dds',
+            ShaderName = 'Unit',
+            LODCutoff = 200,
+        },
+    },
+}

@@ -75,16 +75,23 @@ PlatoonTemplate {
     }
 }
 
--- Sess.98 (richiesta esplicita utente): generatore energia T4 (nuova mod
--- standalone EnergyTierExpansion-child, non Jaggeds). Sorgente T3 vanilla
--- (ueb1301 & co.), stesso meccanismo IssueUpgrade via General.UpgradesTo.
+-- Sess.98 (bis): RIMOSSO 'OWPlusEnergyGeneratorUpgradeT4' (Plan='UnitUpgradeAI')
+-- -- log confermato: gate economico vero e stabile per 20+ minuti consecutivi
+-- (stored=1.9M/40000, inUpgrade=0, cap=2, 12 candidati T3 liberi) eppure zero
+-- nuovi upgrade tentati -- stesso identico sintomo CanFormPlatoon=sempre-falso
+-- gia' isolato per gli estrattori (vedi RIMOSSO sopra). Sostituito dal
+-- meccanismo Plan='PlatoonMerger'+AIPlan (nativo Uveso, 'Base Mass.lua' +
+-- 'AddToMassExtractorUpgradePlatoon') che gli estrattori usano gia' con
+-- successo per T1->T2->T3: MAI passa da CanFormPlatoon (assegnazione
+-- permanente al plotone merger via GlobalSquads, non formazione per-candidato)
+-- e non usa BuilderHandle/InstanceCount (elimina anche il rischio leak visto
+-- in sess.98). Vedi hook/lua/platoon.lua per il nuovo metodo
+-- 'OWPlusEnergyGeneratorUpgradeAI' e 'OWPlus Economy Upgrade.lua' per il
+-- builder aggiornato.
 PlatoonTemplate {
-    Name = 'OWPlusEnergyGeneratorUpgradeT4',
-    Plan = 'UnitUpgradeAI',
-    FactionSquads = {
-        UEF = { { 'ueb1301', 0, 1, 'attack', 'None' } },
-        Aeon = { { 'uab1301', 0, 1, 'attack', 'None' } },
-        Cybran = { { 'urb1301', 0, 1, 'attack', 'None' } },
-        Seraphim = { { 'xsb1301', 0, 1, 'attack', 'None' } },
-    }
+    Name = 'AddToEnergyGeneratorUpgradePlatoon',
+    Plan = 'PlatoonMerger',
+    GlobalSquads = {
+        { categories.STRUCTURE * categories.ENERGYPRODUCTION * categories.TECH3, 1, 300, 'support', 'none' }
+    },
 }

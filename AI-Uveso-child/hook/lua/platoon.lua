@@ -13,7 +13,18 @@
 -- NOTA: NON si usa aiBrain.BuilderManagers per le sub-location perché DeadBaseMonitor
 -- rimuove ogni manager non-MAIN senza ingegneri/fabbriche dopo 5 secondi dalla creazione.
 
-local AIBuildStructures = import('/lua/AI/aibuildstructures.lua')
+-- Sess.98 (bis): case corretto -- era '/lua/AI/aibuildstructures.lua' (A/I
+-- maiuscole), ma OGNI hook su questo file (sia AI-Uveso sia il nostro,
+-- aggiunto in questa stessa sessione) e' registrato con path minuscolo
+-- '/lua/ai/aibuildstructures.lua'. La funzione nativa import() (system/
+-- import.lua) tenta prima il path ESATTO, poi fa fallback al minuscolo --
+-- un mismatch di case qui rischia di risolvere a una copia del modulo
+-- diversa da quella con gli hook applicati, a seconda dell'ordine di
+-- caricamento. Sospettato (non confermato al 100%) come causa della
+-- rottura del sistema OWPlusDispersedBuildAI (basette diagonali BASE_NE/
+-- SE/SW/NW, "zero strutture costruite" sistematico) -- fix a rischio
+-- minimo comunque corretto per coerenza col resto del progetto.
+local AIBuildStructures = import('/lua/ai/aibuildstructures.lua')
 -- Fase 9-F30: modulo nostro (non un file hookato del motore/di un'altra mod),
 -- quindi nessun rischio di load-order come per aiarchetype-managerloader.lua —
 -- sicuro da importare qui a livello di file.
@@ -238,6 +249,16 @@ end
 -- classe 'ExtractorUpgradeAI' piu' sotto, che chiama QUESTA funzione al posto
 -- di 'UUtils.ExtractorUpgrade'.
 local function OWPlusExtractorUpgrade(self, aiBrain, MassExtractorUnitList, ratio, techLevel, UnitUpgradeTemplates, StructureUpgradeTemplates)
+    -- Sess.99: import mancante -- il ramo TECH3->TECH4 (sotto) usa
+    -- OWPlusLogConditionsMod ma questa funzione non lo importava mai (a
+    -- differenza di TUTTE le altre funzioni del file che ne fanno uso, ognuna
+    -- con il proprio 'local ... = import(...)'). Root cause del bug "0 T4 su
+    -- 188 estrattori": al primo trigger utile il motore lanciava "access to
+    -- nonexistent global variable" alla riga del tetto fisso TECH3 piu' sotto,
+    -- e quell'errore terminava per sempre l'intero coroutine ExtractorUpgradeAI
+    -- (confermato: nessuna riga OWPlusExtractorUpgrade/ExtractorUpgradeAI nel
+    -- log dopo il crash, per il resto della partita).
+    local OWPlusLogConditionsMod = import('/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua')
     -- Do we have the eco to upgrade ?
     -- Sess.94: nome nudo non visibile qui (isolamento _G per modulo, stesso
     -- motivo di UpgradeTemplates sopra) -- accesso tramite UUtils importato.
@@ -390,6 +411,126 @@ local function OWPlusExtractorUpgrade(self, aiBrain, MassExtractorUnitList, rati
     return false
 end
 
+-- Sess.98 (bis): helper per il generatore energia T3->T4, chiamato dal nuovo
+-- metodo 'OWPlusEnergyGeneratorUpgradeAI' sotto -- copia semplificata di
+-- 'OWPlusExtractorUpgrade' sopra (stesso schema: candidato piu' vicino a MAIN,
+-- FactionCategory, FindUpgradeBP+CanBuild, IssueUpgrade diretto, MAI
+-- CanFormPlatoon). Non riusa OWPlusExtractorUpgrade direttamente: quella ha
+-- logica specifica massa (MassRatioCheckPositive, pausa estrattori, requisito
+-- magazzini adiacenti T2->T3) non pertinente qui -- il gate economico proprio
+-- del generatore energia (OWPlusEnergyStorageAbsoluteGate, gia' negoziato con
+-- l'utente in sess.98) resta la fonte di verita' unica, richiamato qui invece
+-- di duplicarne la logica.
+-- Sess.98 (bis): whitelist ID T4 -- il T4 ha ANCORA 'TECH3' tra le sue
+-- Categories (nessun TECH4 nativo, stesso schema Jaggeds), quindi
+-- 'EnergyGeneratorUnitList' (categories.STRUCTURE*ENERGYPRODUCTION*TECH3)
+-- include ANCHE i T4 gia' completati. Senza questo filtro venivano scansionati
+-- ad ogni ciclo, generando un warning 'Can't find StructureUpgradeTemplate'
+-- inutile (osservato 2781 volte in un test da 35 minuti) -- innocuo per la
+-- logica (il warning non porta mai a un IssueUpgrade, verificato nei log: mai
+-- un successo con source='ueb1401'), ma rumore puro da eliminare.
+local OWPLUS_T4_ENERGY_GEN_IDS_PLATOON = { ueb1401 = true, uab1401 = true, urb1401 = true, xsb1401 = true }
+
+local function OWPlusEnergyGeneratorUpgrade(self, aiBrain, EnergyGeneratorUnitList, StructureUpgradeTemplates)
+    local OWPlusLogConditionsMod = import('/mods/AI-Uveso-child/lua/AI/OWPlusLogConditions.lua')
+    local UpgradingBuilding = 0
+    for k, v in EnergyGeneratorUnitList do
+        if v and not v.Dead and not v:BeenDestroyed() and v:IsUnitState('Upgrading') then
+            UpgradingBuilding = UpgradingBuilding + 1
+        end
+    end
+    if not OWPlusLogConditionsMod.OWPlusEnergyStorageAbsoluteGate(aiBrain, categories.STRUCTURE * categories.ENERGYPRODUCTION * categories.TECH3, 40000, 0.80, 'Energy Generator Upgrade T4') then
+        return false
+    end
+    local BasePosition = aiBrain.BuilderManagers['MAIN'].Position
+    local factionIndex = aiBrain:GetFactionIndex()
+    local FactionToIndex = { UEF = 1, AEON = 2, CYBRAN = 3, SERAPHIM = 4, NOMADS = 5, ARM = 6, CORE = 7 }
+    local DistanceToBase, LowestDistanceToBase, upgradeID, upgradeBuilding, UnitPos
+    for k, v in EnergyGeneratorUnitList do
+        if not v or v.Dead or v:BeenDestroyed() or v:IsPaused() or v:GetFractionComplete() < 1 or v:IsUnitState('Upgrading')
+            or OWPLUS_T4_ENERGY_GEN_IDS_PLATOON[string.lower(tostring(v:GetUnitId()))]
+        then
+            continue
+        end
+        UnitPos = v:GetPosition()
+        DistanceToBase = VDist2(BasePosition[1] or 0, BasePosition[3] or 0, UnitPos[1] or 0, UnitPos[3] or 0)
+        if not LowestDistanceToBase or DistanceToBase < LowestDistanceToBase then
+            local UnitBeingUpgradeFactionIndex = FactionToIndex[v.Blueprint.FactionCategory] or factionIndex
+            local TempID = aiBrain:FindUpgradeBP(v:GetUnitId(), StructureUpgradeTemplates[UnitBeingUpgradeFactionIndex])
+            if not TempID then
+                AIWarn('[OWPlusEnergyGeneratorUpgrade] ERROR: Can\'t find StructureUpgradeTemplate for structure: ' .. repr(v:GetUnitId()))
+            elseif not v:CanBuild(TempID) then
+                AIWarn('[OWPlusEnergyGeneratorUpgrade] ERROR: Can\'t upgrade structure with StructureUpgradeTemplate: ' .. repr(v:GetUnitId()))
+            else
+                upgradeID = TempID
+                upgradeBuilding = v
+                LowestDistanceToBase = DistanceToBase
+            end
+        end
+    end
+    if upgradeID and upgradeBuilding then
+        -- Sess.98 (ter): aggiunto EntityId (identificatore univoco dell'ISTANZA,
+        -- diverso da GetUnitId che e' il tipo di blueprint) e posizione --
+        -- richiesta esplicita utente dopo aver osservato in game un
+        -- ri-potenziamento sullo stesso edificio nonostante il log AI risultasse
+        -- pulito (nessun doppio tentativo sullo stesso UnitId). Se lo stesso
+        -- EntityId compare due volte in questo log, e' la PROVA diretta che e'
+        -- la stessa istanza fisica issuata due volte -- se invece EntityId e
+        -- posizione sono sempre diversi, il fenomeno osservato non viene dal
+        -- nostro IssueUpgrade e va cercato altrove (probabile residuo visivo
+        -- lato client dello stesso bug di refresh gia' confermato: nome/UI
+        -- rimasti T3 nonostante produzione 8000 = T4 reale).
+        local upos = upgradeBuilding:GetPosition()
+        LOG('[OWPlus-DBG] OWPlusEnergyGeneratorUpgrade: OK, upgrade issuato su "' .. tostring(upgradeBuilding:GetUnitId())
+            .. '" -> "' .. tostring(upgradeID) .. '" (EntityId=' .. tostring(upgradeBuilding:GetEntityId())
+            .. ', pos=' .. tostring(math.floor(upos[1])) .. ',' .. tostring(math.floor(upos[3])) .. ')')
+        IssueUpgrade({upgradeBuilding}, upgradeID)
+        -- Sess.99: rete di sicurezza esplicita -- confermato nel dev.log che il T4
+        -- fallisce a caricare il proprio mesh_build (asset mai creato per gli id
+        -- custom), lo script nativo OnStartBeingBuilt crasha su di esso, e lo
+        -- stesso errore si propaga a OnStopBuild sul VECCHIO edificio T3 --
+        -- impedendo la sua distruzione nativa di fine-upgrade (osservato in game
+        -- dall'utente coi trucchi di teletrasporto: due entita' fisiche sovrapposte,
+        -- il vecchio T3 con mesh che continua a produrre la sua quota). Il pattern
+        -- nativo (UnitUpgradeAI sopra, righe 576-585) aspetta 'v.Dead' come segnale
+        -- di completamento upgrade -- qui replichiamo lo stesso segnale con un
+        -- timeout, e se scade verifichiamo che il T4 sia davvero presente e
+        -- completo prima di forzare la distruzione esplicita del vecchio edificio
+        -- (idempotente: se il motore lo ha gia' distrutto da solo, upgradeBuilding.
+        -- Dead e' gia' true e il thread esce subito senza fare nulla).
+        local upgradeTargetPos = upos
+        ForkThread(function()
+            local waited = 0
+            while not upgradeBuilding.Dead and waited < 90 do
+                WaitSeconds(3)
+                waited = waited + 3
+            end
+            if not upgradeBuilding.Dead then
+                local nearby = aiBrain:GetUnitsAroundPoint(categories.STRUCTURE * categories.ENERGYPRODUCTION, upgradeTargetPos, 5, 'Ally') or {}
+                local t4Found = false
+                for _, u in nearby do
+                    if u and not u.Dead and not u:BeenDestroyed()
+                        and OWPLUS_T4_ENERGY_GEN_IDS_PLATOON[string.lower(tostring(u:GetUnitId()))]
+                        and u:GetFractionComplete() >= 1 then
+                        t4Found = true
+                        break
+                    end
+                end
+                if t4Found then
+                    LOG('[OWPlus-DBG] OWPlusEnergyGeneratorUpgrade: WARN, vecchio edificio T3 ancora vivo dopo '
+                        .. tostring(waited) .. 's dall\'upgrade (bug mesh_build T4) e T4 completo confermato nelle vicinanze -- distruzione esplicita forzata')
+                    upgradeBuilding:Destroy()
+                else
+                    LOG('[OWPlus-DBG] OWPlusEnergyGeneratorUpgrade: WARN, T3 ancora vivo dopo timeout ma nessun T4 completo trovato nelle vicinanze -- distruzione NON forzata (upgrade probabilmente ancora in corso)')
+                end
+            end
+        end)
+        coroutine.yield(10)
+        return true
+    end
+    return false
+end
+
 CopyOfOldPlatoonClassOWPlusChild = Platoon
 Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
 
@@ -495,6 +636,34 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
         end
         WaitTicks(1)
         self:PlatoonDisband()
+    end,
+
+    -- Sess.98 (bis): metodo AIPlan custom per il generatore energia T3->T4,
+    -- assegnato via BuilderData.AIPlan al plotone persistente formato da
+    -- 'AddToEnergyGeneratorUpgradePlatoon' (Plan='PlatoonMerger'). Loop
+    -- semplificato rispetto a 'ExtractorUpgradeAI' sotto (nessuna pausa
+    -- estrattori, nessun ratio massa -- non pertinenti qui): rilegge la lista
+    -- LIVE dei generatori T3 ad ogni ciclo (non self:GetPlatoonUnits(), che
+    -- include anche generatori gia' aggiornati a T4 rimasti storicamente nel
+    -- plotone merger) e delega il gate/selezione a 'OWPlusEnergyGeneratorUpgrade'.
+    OWPlusEnergyGeneratorUpgradeAI = function(self)
+        local aiBrain = self:GetBrain()
+        LOG('[OWPlus-DBG] OWPlusEnergyGeneratorUpgradeAI: OK, thread avviato (bypass CanFormPlatoon via PlatoonMerger, stesso pattern estrattori)')
+        while aiBrain:PlatoonExists(self) do
+            while not aiBrain:IsOpponentAIRunning() do
+                coroutine.yield(10)
+            end
+            local EnergyGeneratorUnitList = aiBrain:GetListOfUnits(categories.STRUCTURE * categories.ENERGYPRODUCTION * categories.TECH3, false, false)
+            OWPlusEnergyGeneratorUpgrade(self, aiBrain, EnergyGeneratorUnitList, UpgradeTemplatesMod.StructureUpgradeTemplates)
+            coroutine.yield(10)
+            for k, v in self:GetPlatoonUnits() do
+                if not v or v.Dead or v:BeenDestroyed() then
+                    coroutine.yield(1)
+                    self:PlatoonDisbandNoAssign()
+                    return
+                end
+            end
+        end
     end,
 
     -- Sess.94: subclass di 'ExtractorUpgradeAI' (AI-Uveso, hook/lua/platoon.lua
@@ -627,7 +796,7 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                         -- gia' comprovato funzionante per T1->T2 e T2->T3 sullo stesso tipo
                         -- di unita'. Stesso pattern di trigger (population share 80%) del
                         -- ramo T1->T2 sotto, per coerenza.
-                        if OWPlusLogConditionsMod.OWPlusPopulationShareAtLeast(aiBrain, 0.30,
+                        if OWPlusLogConditionsMod.OWPlusPopulationShareAtLeast(aiBrain, 0.15,
                             categories.MASSEXTRACTION * categories.TECH3,
                             categories.MASSEXTRACTION * (categories.TECH2 + categories.TECH3),
                             'Extractor T2->T3 trigger') then

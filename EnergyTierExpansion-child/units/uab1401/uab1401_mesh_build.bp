@@ -1,0 +1,15 @@
+-- Sess.99: vedi ueb1401_mesh_build.bp per la spiegazione completa -- stesso
+-- fix, applicato per fazione, mesh dedicato per la fase di build/upgrade
+-- riusando gli asset del T3 sorgente Aeon (uab1301).
+MeshBlueprint {
+    LODs = {
+        {
+            MeshName = '/units/UAB1301/UAB1301_lod0.scm',
+            AlbedoName = '/units/UAB1301/UAB1301_albedo.dds',
+            NormalsName = '/units/UAB1301/UAB1301_normalsTS.dds',
+            SpecularName = '/units/UAB1301/UAB1301_specteam.dds',
+            ShaderName = 'Unit',
+            LODCutoff = 200,
+        },
+    },
+}
