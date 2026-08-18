@@ -796,7 +796,13 @@ Platoon = Class(CopyOfOldPlatoonClassOWPlusChild) {
                         -- gia' comprovato funzionante per T1->T2 e T2->T3 sullo stesso tipo
                         -- di unita'. Stesso pattern di trigger (population share 80%) del
                         -- ramo T1->T2 sotto, per coerenza.
-                        if OWPlusLogConditionsMod.OWPlusPopulationShareAtLeast(aiBrain, 0.15,
+                        -- Sess.99: 0.15->0.40 (richiesta esplicita utente) -- deadlock
+                        -- economico osservato in game: gli estrattori T4 consumano
+                        -- cosi' tanta energia che gli ingegneri non riescono piu' ad
+                        -- avanzare a T3, l'AI resta bloccata a costruire solo generatori
+                        -- T2. Soglia piu' alta ritarda il trigger T3->T4, dando piu'
+                        -- margine all'economia energetica prima che il salto scatti.
+                        if OWPlusLogConditionsMod.OWPlusPopulationShareAtLeast(aiBrain, 0.40,
                             categories.MASSEXTRACTION * categories.TECH3,
                             categories.MASSEXTRACTION * (categories.TECH2 + categories.TECH3),
                             'Extractor T2->T3 trigger') then
