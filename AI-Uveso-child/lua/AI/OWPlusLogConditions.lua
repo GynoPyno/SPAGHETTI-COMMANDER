@@ -49,7 +49,10 @@ end
 -- senza toccare gli avamposti gia' esistenti in partita -- stesso pattern e
 -- stesso motivo dei due flag sopra (interruttore per isolare test senza dover
 -- commentare/rimuovere codice, checklist-sviluppo.md sez.2).
-OWPlusOutpostExpansionDisabled = true
+-- Sess.99: riattivato (richiesta esplicita utente) -- serve la generazione
+-- avamposti attiva per poter riprodurre il sospetto desync (sess.98, ancora
+-- non diagnosticato) e ottenerne il log.
+OWPlusOutpostExpansionDisabled = false
 
 function OWPlusOutpostExpansionAllowed()
     if OWPlusOutpostExpansionDisabled then
