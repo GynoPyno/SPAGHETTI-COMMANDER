@@ -52,7 +52,10 @@ end
 -- Sess.99: riattivato (richiesta esplicita utente) -- serve la generazione
 -- avamposti attiva per poter riprodurre il sospetto desync (sess.98, ancora
 -- non diagnosticato) e ottenerne il log.
-OWPlusOutpostExpansionDisabled = false
+-- Sess.99 (bis): ridisattivato -- log del desync ottenuto (partita
+-- riprodotta con successo), la mitigazione temporanea torna attiva mentre
+-- si lavora sulla diagnosi.
+OWPlusOutpostExpansionDisabled = true
 
 function OWPlusOutpostExpansionAllowed()
     if OWPlusOutpostExpansionDisabled then
